@@ -22,6 +22,10 @@
       progressPercent:num(data.progressPercent),ksbCompleted:num(data.ksbCompleted),ksbTotal:num(data.ksbTotal),
       assignmentsCompleted:num(data.assignmentsCompleted),assignmentsTotal:num(data.assignmentsTotal),
       otjHours:num(data.otjHours),otjRequired:num(data.otjRequired),academyScore:num(data.academyScore),epaStatus:String(data.epaStatus||''),
+      ragStatus:String(data.ragStatus||''),reviewStatus:String(data.reviewStatus||''),
+      newEvidenceCount:num(data.newEvidenceCount),newKsbCount:num(data.newKsbCount),
+      evidenceTotal:num(data.evidenceTotal),epaReadiness:data.epaReadiness&&typeof data.epaReadiness==='object'?data.epaReadiness:null,
+      progressSnapshot:data.progressSnapshot&&typeof data.progressSnapshot==='object'?data.progressSnapshot:null,
       learnerReflection:String(data.learnerReflection||''),
       previousTargets:Array.isArray(data.previousTargets)?data.previousTargets.slice(0,10).map(t=>({text:String(t.text||t.target||t.title||''),status:String(t.status||'To review')})):[],
       suggestedTargets:Array.isArray(data.suggestedTargets)?data.suggestedTargets.slice(0,5).map(t=>String(t.text||t.target||t.title||t)) : []
@@ -43,18 +47,32 @@
   function snapshotFromApp(){
     const snap=typeof reviewMateSnapshot==='function'?reviewMateSnapshot():{};
     const active=typeof activeCourseReviewMateReview==='function'?activeCourseReviewMateReview():null;
-    const progress=snap.progress||{};
-    const academy=snap.academy||{};
-    const epa=snap.epa||{};
+    const progress=snap.progress||{},academy=snap.academy||{},epa=snap.epa||{},evidence=snap.evidence||{};
     const targets=(active?.targets||[]).slice(0,5).map(t=>({text:t.title||t.details||'',status:typeof reviewTargetComplete==='function'&&reviewTargetComplete(t)?'Achieved':'In progress'}));
     const suggested=typeof buildReviewMateTargets==='function'?buildReviewMateTargets().slice(0,5).map(t=>t.title||t.details||''):[];
+    const previousSnapshot=active?.snapshot||{};
+    const newEvidence=Math.max(0,Number(evidence.items||0)-Number(previousSnapshot.evidence?.items||0));
+    const newKsbs=Math.max(0,Number(progress.ksbCompleted||0)-Number(previousSnapshot.progress?.ksbCompleted||0));
+    const elapsed=Number(progress.red),timeRatio=Number.isFinite(elapsed)?elapsed/100:null;
+    const expectedAssignments=timeRatio===null?null:Math.min(Number(progress.total||0),Math.max(0,Math.round(Number(progress.total||0)*timeRatio)));
+    const expectedKsbs=timeRatio===null?null:Math.min(Number(progress.ksbTotal||0),Math.max(0,Math.round(Number(progress.ksbTotal||0)*timeRatio)));
+    const ratios=[];
+    if(expectedAssignments!==null)ratios.push(expectedAssignments?Number(progress.completed||0)/expectedAssignments:1);
+    if(expectedKsbs!==null)ratios.push(expectedKsbs?Number(progress.ksbCompleted||0)/expectedKsbs:1);
+    if(Number(snap.otj?.expected||0)>0)ratios.push(Number(snap.otj?.total||0)/Number(snap.otj.expected));
+    const average=ratios.length?ratios.reduce((a,b)=>a+Math.min(1.2,b),0)/ratios.length:0;
+    const rag=timeRatio===null?'Amber':average>=1?'Green':average>=.8?'Amber':'Red';
+    const reviewStatus=timeRatio===null?'Course dates needed':average>=1?'On or ahead of target':average>=.8?'Close to target':'Behind target';
     return makeSnapshot({
       course:COURSE?.name||'',standardVersion:COURSE?.version||COURSE?.standardVersion||'',
       reviewPeriod:`Generated ${new Date().toLocaleDateString('en-GB')}`,
-      progressPercent:progress.green,ksbCompleted:progress.ksbCompleted,ksbTotal:progress.ksbTotal,
-      assignmentsCompleted:progress.completed,assignmentsTotal:progress.total,
-      otjHours:snap.otj?.total,otjRequired:snap.otj?.expected,
-      academyScore:academy.tests?null:null,epaStatus:epa.overall!=null?`${epa.overall}% ready`:'',
+      progressPercent:Number(progress.green||0),ksbCompleted:Number(progress.ksbCompleted||0),ksbTotal:Number(progress.ksbTotal||0),
+      assignmentsCompleted:Number(progress.completed||0),assignmentsTotal:Number(progress.total||0),
+      otjHours:Number(Number(snap.otj?.total||0).toFixed(1)),otjRequired:Number(Number(snap.otj?.expected||0).toFixed(1)),
+      academyScore:academy.tests?null:null,epaStatus:epa.overall!=null?`${Math.round(epa.overall)}% ready`:'Not available',
+      epaReadiness:epa.overall!=null?{overall:Math.round(epa.overall),knowledge:epa.knowledge,discussion:epa.discussion,practical:epa.practical}:null,
+      ragStatus:rag,reviewStatus,newEvidenceCount:newEvidence,newKsbCount:newKsbs,evidenceTotal:Number(evidence.items||0),
+      progressSnapshot:{rag,reviewStatus,progressPercent:Number(progress.green||0),assignmentsCompleted:Number(progress.completed||0),assignmentsTotal:Number(progress.total||0),ksbCompleted:Number(progress.ksbCompleted||0),ksbTotal:Number(progress.ksbTotal||0),otjHours:Number(Number(snap.otj?.total||0).toFixed(1)),otjRequired:Number(Number(snap.otj?.expected||0).toFixed(1)),timeElapsed:Number.isFinite(elapsed)?elapsed:null},
       learnerReflection:'',previousTargets:targets,suggestedTargets:suggested
     });
   }
@@ -65,7 +83,7 @@
   function showShare(){
     let snapshot;try{snapshot=snapshotFromApp()}catch(error){toast?.(error.message);return}
     const text=JSON.stringify(snapshot),qrOk=text.length<2900;
-    const {modal}=showModal(`<div class="review-transfer-head"><div><div class="number">PSEUDONYMISED REVIEW SNAPSHOT</div><h2>Share review data</h2><p>No learner name, contact details, evidence files, signatures, health or safeguarding information are included.</p></div><button class="modal-close" data-review-transfer-close aria-label="Close">×</button></div><div class="review-transfer-summary"><span><small>Course</small><strong>${esc(snapshot.course||'Course')}</strong></span><span><small>Progress</small><strong>${snapshot.progressPercent??0}%</strong></span><span><small>${COURSE?.nvqUnits?'LOs':'KSBs'}</small><strong>${snapshot.ksbCompleted??0}/${snapshot.ksbTotal??0}</strong></span><span><small>Assignments</small><strong>${snapshot.assignmentsCompleted??0}/${snapshot.assignmentsTotal??0}</strong></span></div>${qrOk?'<div class="review-transfer-qr" id="reviewTransferQr"></div>':'<div class="review-transfer-warning">This snapshot is too large for a reliable QR. Download the file instead.</div>'}<div class="btn-row"><button class="btn secondary" id="copyReviewSnapshot">Copy transfer text</button><button class="btn" id="downloadReviewSnapshot">Download .apreview</button></div><p class="review-transfer-note">The snapshot expires after 24 hours. The assessor selects the learner locally in Assessor+.</p>`);
+    const {modal}=showModal(`<div class="review-transfer-head"><div><div class="number">PSEUDONYMISED REVIEW SNAPSHOT</div><h2>Share review data</h2><p>No learner name, contact details, evidence files, signatures, health or safeguarding information are included.</p></div><button class="modal-close" data-review-transfer-close aria-label="Close">×</button></div><div class="review-transfer-summary"><span><small>Course</small><strong>${esc(snapshot.course||'Course')}</strong></span><span><small>Progress</small><strong>${snapshot.progressPercent??0}%</strong></span><span><small>${COURSE?.nvqUnits?'LOs':'KSBs'}</small><strong>${snapshot.ksbCompleted??0}/${snapshot.ksbTotal??0}</strong></span><span><small>Assignments</small><strong>${snapshot.assignmentsCompleted??0}/${snapshot.assignmentsTotal??0}</strong></span><span><small>RAG</small><strong>${esc(snapshot.ragStatus||'Not set')}</strong></span><span><small>New evidence</small><strong>${snapshot.newEvidenceCount??0}</strong></span></div>${qrOk?'<div class="review-transfer-qr" id="reviewTransferQr"></div>':'<div class="review-transfer-warning">This snapshot is too large for a reliable QR. Download the file instead.</div>'}<div class="btn-row"><button class="btn secondary" id="copyReviewSnapshot">Copy transfer text</button><button class="btn" id="downloadReviewSnapshot">Download .apreview</button></div><p class="review-transfer-note">The snapshot expires after 24 hours. The assessor selects the learner locally in Assessor+.</p>`);
     if(qrOk&&global.ApprenticeQR){const area=modal.querySelector('#reviewTransferQr');area.appendChild(global.ApprenticeQR.toCanvas(text,300))}
     modal.querySelector('#downloadReviewSnapshot').onclick=()=>download(`ApprenticePlus-Review-Snapshot-${new Date().toISOString().slice(0,10)}.apreview`,JSON.stringify({format:'APREVIEW_PACKAGE',version:1,payload:snapshot},null,2));
     modal.querySelector('#copyReviewSnapshot').onclick=async()=>{try{await navigator.clipboard.writeText(text);toast?.('Review transfer text copied')}catch{const ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove();toast?.('Review transfer text copied')}};

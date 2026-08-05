@@ -1,5 +1,5 @@
-const CACHE='apprentice-plus-review-transfer-v1-8';
-const CURRENT_VERSION='V1.8';
+const CACHE='apprentice-plus-review-transfer-v1-9';
+const CURRENT_VERSION='V1.9';
 const RELEASE_NOTES_URL='./release-notes.json';
 const FALLBACK_UPDATE_INFO={
  version:CURRENT_VERSION,
