@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#58b51f">
+  <meta name="description" content="Apprentice+ local evidence pack builder">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="favicon-32.png" type="image/png" sizes="32x32">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="stylesheet" href="styles.css?v=1.0">
+  <title>Apprentice+</title>
+  <script>
+  (() => {
+    const desktopQuery = window.matchMedia('(min-width: 960px) and (pointer: fine)');
+    const applyDesktopMode = () => {
+      const desktop = desktopQuery.matches;
+      const width = window.innerWidth || document.documentElement.clientWidth || 0;
+      const scale = desktop ? (width >= 1600 ? 80 : width >= 1280 ? 90 : 100) : 100;
+      document.documentElement.classList.toggle('desktop-mode', desktop);
+      document.documentElement.classList.remove('desktop-scale-80','desktop-scale-90','desktop-scale-100');
+      if (desktop) document.documentElement.classList.add(`desktop-scale-${scale}`);
+      document.documentElement.dataset.layoutMode = desktop ? 'desktop' : 'mobile';
+      document.documentElement.dataset.desktopScale = String(scale);
+    };
+    applyDesktopMode();
+    desktopQuery.addEventListener?.('change', applyDesktopMode);
+    window.addEventListener('resize', applyDesktopMode, {passive:true});
+  })();
+  </script>
+</head>
+<body>
+  <noscript><div class="noscript">Apprentice+ requires JavaScript.</div></noscript>
+  <div id="app"></div>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <!-- Isolated notification bell: intentionally outside #app so Apprentice+ renders cannot replace it. -->
+  <button type="button" id="notificationBell" class="notification-bell no-print" aria-label="Open notifications" aria-controls="notificationBellPanel" aria-expanded="false">
+    <span class="notification-bell-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9Z"/><path d="M10 21h4"/></svg></span>
+    <span class="notification-bell-count" aria-label="1 unread notification">1</span>
+  </button>
+
+  <div id="notificationBellBackdrop" class="notification-bell-backdrop no-print" hidden></div>
+  <section id="notificationBellPanel" class="notification-bell-panel no-print" role="dialog" aria-modal="true" aria-labelledby="notificationBellTitle" hidden>
+    
+    <header class="notification-bell-header">
+      <div>
+        <p class="notification-bell-kicker">Apprentice+</p>
+        <h2 id="notificationBellTitle">Notifications</h2>
+      </div>
+      <button type="button" id="notificationBellClose" class="notification-bell-close" aria-label="Close notifications">×</button>
+    </header>
+    <div class="notification-bell-list" id="notificationBellList">
+      <article class="notification-bell-item unread" data-notification-id="welcome">
+        <div class="notification-bell-item-content">
+          <span class="notification-bell-item-icon" aria-hidden="true">🔔</span>
+          <div>
+            <strong>Notifications are ready</strong>
+            <p>This bell will show important Apprentice+ messages without changing the app logo or main navigation.</p>
+            <small>Just now</small>
+          </div>
+        </div>
+      </article>
+      <article class="notification-bell-item unread notification-update-item" id="notificationUpdateItem" hidden>
+        <div class="notification-bell-item-content">
+          <span class="notification-bell-item-icon update" aria-hidden="true">↑</span>
+          <div>
+            <strong>App update available</strong>
+            <p class="notification-update-version" id="notificationUpdateVersion">A new Apprentice+ version is ready.</p>
+            <div class="notification-update-whats-new"><b>What’s new</b><ul id="notificationUpdateFeatures"></ul></div>
+            <button type="button" class="notification-update-button" id="notificationOpenUpdate">View update</button>
+          </div>
+        </div>
+      </article>
+    </div>
+    <footer class="notification-bell-footer"><button type="button" id="notificationSettingsButton">Notification settings</button><button type="button" id="notificationClearButton">Clear</button></footer>
+  </section>
+
+  <script src="qrcode-browser.js?v=1.0"></script>
+  <script src="pdf-generator.js?v=1.0"></script>
+  <script src="specification-sheet.js?v=1.0"></script>
+  <script src="functional-skills-bank.js?v=1.0"></script>
+  <script src="trade-courses-bank.js?v=1.0"></script>
+  <script src="mcq-question-bank.js?v=1.0"></script>
+  <script src="mcq-engine.js?v=1.0"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-analytics-compat.js"></script>
+  <script src="analytics-foundation.js?v=1.0"></script>
+  <script src="app.js?v=1.0"></script>
+  <script src="analytics-integration.js?v=1.0"></script>
+  <script>
+  (() => {
+    const bell = document.getElementById('notificationBell');
+    const panel = document.getElementById('notificationBellPanel');
+    const backdrop = document.getElementById('notificationBellBackdrop');
+    const closeButton = document.getElementById('notificationBellClose');
+    const list = document.getElementById('notificationBellList');
+    const count = bell?.querySelector('.notification-bell-count');
+    const updateItem = document.getElementById('notificationUpdateItem');
+    const updateVersion = document.getElementById('notificationUpdateVersion');
+    const updateFeatures = document.getElementById('notificationUpdateFeatures');
+    const openUpdateButton = document.getElementById('notificationOpenUpdate');
+    const settingsButton = document.getElementById('notificationSettingsButton');
+    const clearButton = document.getElementById('notificationClearButton');
+    if (!bell || !panel || !backdrop || !closeButton || !list || !count) return;
+
+    const settingsKey = 'apprenticeplus.appSettings.v1';
+    const getNotificationSettings = () => {
+      try { return {enabled:true,updates:true,epa:true,assignments:true,certificates:true,otj:true,reminders:true,projects:true,reviews:true,learning:true,...(JSON.parse(localStorage.getItem(settingsKey)||'{}').notifications||{})}; }
+      catch { return {enabled:true,updates:true,epa:true,assignments:true,certificates:true,otj:true,reminders:true,projects:true,reviews:true,learning:true}; }
+    };
+    const applyNotificationSettings = () => {
+      const settings = getNotificationSettings();
+      bell.hidden = !settings.enabled;
+      if (!settings.enabled) closeNotifications?.(true);
+      if (updateItem) updateItem.hidden = !settings.enabled || !settings.updates || updateItem.dataset.updateAvailable !== '1';
+      updateCount();
+    };
+
+    const deletedKey = 'apprenticeplus.notifications.deleted.v1';
+    let deleted = [];
+    let closeTimer = 0;
+    let panelOpen = false;
+    try { deleted = JSON.parse(localStorage.getItem(deletedKey) || '[]'); } catch { deleted = []; }
+    list.querySelectorAll('[data-notification-id]').forEach(item => {
+      if (deleted.includes(item.dataset.notificationId)) item.remove();
+    });
+    const updateCount = () => {
+      const total = list.querySelectorAll('.notification-bell-item:not([hidden])').length;
+      count.textContent = String(total);
+      count.hidden = total === 0;
+      count.setAttribute('aria-label', `${total} notification${total === 1 ? '' : 's'}`);
+      bell.setAttribute('aria-label', total ? `Open notifications, ${total} available` : 'Open notifications');
+      const empty = list.querySelector('.notification-bell-empty');
+      if (!total && !empty) list.insertAdjacentHTML('beforeend', '<div class="notification-bell-empty"><strong>No notifications</strong><p>New Apprentice+ messages will appear here.</p></div>');
+      if (total && empty) empty.remove();
+    };
+    const deleteNotification = item => {
+      const id = item.dataset.notificationId;
+      if (id && !deleted.includes(id)) {
+        deleted.push(id);
+        try { localStorage.setItem(deletedKey, JSON.stringify(deleted)); } catch {}
+      }
+      item.classList.add('deleting');
+      window.setTimeout(() => { item.remove(); updateCount(); }, 180);
+    };
+    const attachSwipe = item => {
+      if (!item || item.dataset.swipeReady === '1') return;
+      item.dataset.swipeReady = '1';
+      const content = item.querySelector('.notification-bell-item-content');
+      if (!content) return;
+      let pointerId = null, startX = 0, startY = 0, currentX = 0, currentY = 0, dragging = false, horizontal = false;
+      const reset = () => {
+        if (pointerId !== null) { try { item.releasePointerCapture(pointerId); } catch {} }
+        pointerId = null; dragging = false; horizontal = false;
+        item.classList.remove('swiping','swipe-left','swipe-right');
+        content.style.transform = '';
+      };
+      item.addEventListener('pointerdown', event => {
+        if (event.target.closest('button')) return;
+        if (event.pointerType === 'mouse' && event.button !== 0) return;
+        pointerId = event.pointerId;
+        startX = currentX = event.clientX; startY = currentY = event.clientY;
+        dragging = true; horizontal = false;
+        try { item.setPointerCapture(pointerId); } catch {}
+      }, {passive:true});
+      item.addEventListener('pointermove', event => {
+        if (!dragging || event.pointerId !== pointerId) return;
+        currentX = event.clientX; currentY = event.clientY;
+        const dx = currentX - startX, dy = currentY - startY;
+        if (!horizontal && Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
+        if (!horizontal && Math.abs(dy) > Math.abs(dx)) { reset(); return; }
+        horizontal = true; item.classList.add('swiping');
+        item.classList.toggle('swipe-left', dx < 0);
+        item.classList.toggle('swipe-right', dx > 0);
+        content.style.transform = `translateX(${Math.max(-125, Math.min(125, dx))}px)`;
+        if (event.cancelable) event.preventDefault();
+      }, {passive:false});
+      const finish = event => {
+        if (!dragging || (event && event.pointerId !== pointerId)) return;
+        const dx = currentX - startX;
+        if (horizontal && Math.abs(dx) >= 72) deleteNotification(item); else reset();
+      };
+      item.addEventListener('pointerup', finish);
+      item.addEventListener('pointercancel', reset);
+      item.addEventListener('lostpointercapture', () => { if (dragging) reset(); });
+    };
+    list.querySelectorAll('.notification-bell-item').forEach(attachSwipe);
+    const refreshDynamicNotifications = () => {
+      list.querySelectorAll('[data-notification-id]').forEach(item => {
+        if (deleted.includes(item.dataset.notificationId)) item.remove();
+        else attachSwipe(item);
+      });
+      updateCount();
+    };
+    window.addEventListener('apprenticeplus:notifications-refresh', refreshDynamicNotifications);
+
+    const closeNotifications = (immediate = false) => {
+      clearTimeout(closeTimer); panelOpen = false;
+      panel.classList.remove('open');
+      bell.setAttribute('aria-expanded', 'false');
+      document.body.classList.remove('notification-panel-open');
+      const finish = () => { if (!panelOpen) { panel.hidden = true; backdrop.hidden = true; } };
+      if (immediate) finish(); else closeTimer = window.setTimeout(finish, 180);
+    };
+    const openNotifications = () => {
+      clearTimeout(closeTimer); panelOpen = true;
+      panel.hidden = false; backdrop.hidden = false;
+      bell.setAttribute('aria-expanded', 'true');
+      document.body.classList.add('notification-panel-open');
+      requestAnimationFrame(() => { if (panelOpen) panel.classList.add('open'); });
+    };
+
+    const showUpdateNotification = info => {
+      if (!updateItem) return;
+      const version = String(info?.version || 'A new version');
+      const updateId = `app-update-${version.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
+      if (deleted.includes(updateId)) return;
+      updateItem.dataset.notificationId = updateId;
+      updateItem.dataset.updateAvailable = '1';
+      const features = Array.isArray(info?.features) && info.features.length ? info.features : ['Performance improvements and minor fixes.'];
+      updateVersion.textContent = `${version} is ready to install.`;
+      updateFeatures.innerHTML = features.slice(0, 8).map(feature => `<li>${String(feature).replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]))}</li>`).join('');
+      updateItem.hidden = !getNotificationSettings().enabled || !getNotificationSettings().updates; attachSwipe(updateItem); updateCount();
+    };
+    window.addEventListener('apprenticeplus:update-ready', event => showUpdateNotification(event.detail));
+    if (window.apprenticePlusPendingUpdateInfo) showUpdateNotification(window.apprenticePlusPendingUpdateInfo);
+    openUpdateButton?.addEventListener('click', () => {
+      closeNotifications();
+      window.setTimeout(() => { if (typeof window.openUpdateReadyModal === 'function') window.openUpdateReadyModal(); }, 190);
+    });
+    applyNotificationSettings();
+    window.addEventListener('apprenticeplus:settings-changed', () => { applyNotificationSettings(); queueMicrotask(() => window.refreshAppNotifications?.()); });
+    window.addEventListener('storage', event => { if (event.key === settingsKey) { applyNotificationSettings(); window.refreshAppNotifications?.(); } });
+
+    bell.addEventListener('click', openNotifications);
+    closeButton.addEventListener('click', () => closeNotifications());
+    backdrop.addEventListener('click', () => closeNotifications());
+    settingsButton?.addEventListener('click',()=>{ closeNotifications(); window.setTimeout(()=>{ if(window.__apprenticePlusOpenNotificationSettings) window.__apprenticePlusOpenNotificationSettings(); },190); });
+    clearButton?.addEventListener('click',()=>{ list.querySelectorAll('.notification-bell-item:not([hidden])').forEach(item=>deleteNotification(item)); });
+    document.addEventListener('keydown', event => { if (event.key === 'Escape' && panelOpen) closeNotifications(); });
+    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && !panelOpen) closeNotifications(true); });
+    window.addEventListener('pageshow', () => { if (!panelOpen) closeNotifications(true); });
+  })();
+  </script>
+
+</body>
+</html>
