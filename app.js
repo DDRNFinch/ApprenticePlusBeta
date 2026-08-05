@@ -245,7 +245,7 @@ function learnerPromptTitle(assignmentNumber,code,fallback){
  return LEARNER_PROMPTS[COURSE.id]?.[assignmentNumber]?.[code]||fallback;
 }
 
-const APP_VERSION='V1.7';
+const APP_VERSION='V1.8';
 const PORTFOLIO_UPLOAD_LIMIT_BYTES=1_000_000_000;
 const PORTFOLIO_SAFE_TARGET_BYTES=900_000_000;
 const APP_VIDEO_BITS_PER_SECOND=1_400_000;
