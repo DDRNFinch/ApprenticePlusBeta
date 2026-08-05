@@ -11,3 +11,7 @@ It demonstrates:
 - displaying the agreed targets and next review date.
 
 To integrate it into Apprentice+, the actual current Apprentice+ ZIP is required. The reusable logic is in `review-transfer.js`.
+
+
+## V2.0
+Learner profile Maths and English college-attendance controls now govern whether ReviewMate may create Functional Skills Academy targets.
