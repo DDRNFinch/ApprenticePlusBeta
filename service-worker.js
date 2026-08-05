@@ -1,4 +1,4 @@
-const CACHE='apprentice-plus-v1.8-learner-id-qr';
+const CACHE='apprentice-plus-attendance-removed';
 const CURRENT_VERSION='V1.8';
 const RELEASE_NOTES_URL='./release-notes.json';
 const FALLBACK_UPDATE_INFO={
