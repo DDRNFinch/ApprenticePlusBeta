@@ -1,6 +1,21 @@
 {
-  "latest": "V1.5",
+  "latest": "V1.6",
   "releases": [
+    {
+      "version": "V1.6",
+      "date": "2026-08-05",
+      "title": "One-Tap Attendance Check-In",
+      "features": [
+        "A new Attendance tool lets learners check into an Assessor+ register with one tap.",
+        "The learner's permanent 16-digit ID is saved on their device and reused for future sessions.",
+        "Each check-in records the session code, exact time, verified location and a device identifier.",
+        "Tutor session links can open Apprentice+ directly on the Attendance screen with the session already selected.",
+        "Recent successful check-ins remain visible on the learner's device."
+      ],
+      "items": [
+        "Added configurable attendance-service connection and organisation-key support for the Assessor+ register system."
+      ]
+    },
     {
       "version": "V1.5",
       "date": "2026-08-04",

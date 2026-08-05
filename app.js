@@ -245,7 +245,7 @@ function learnerPromptTitle(assignmentNumber,code,fallback){
  return LEARNER_PROMPTS[COURSE.id]?.[assignmentNumber]?.[code]||fallback;
 }
 
-const APP_VERSION='V1.5';
+const APP_VERSION='V1.6';
 const PORTFOLIO_UPLOAD_LIMIT_BYTES=1_000_000_000;
 const PORTFOLIO_SAFE_TARGET_BYTES=900_000_000;
 const APP_VIDEO_BITS_PER_SECOND=1_400_000;
@@ -950,6 +950,7 @@ async function load(){
   state.section=null;
  }
  navigationReady=true;
+ applyAttendanceLink();
  const restoredScroll=restoredApplied?Number(restored?.scrollY)||0:0;
  const initial=navigationSnapshot(restoredScroll);lastNavigationSignature=navigationSignature(initial);history.replaceState(initial,'');
  render();requestAnimationFrame(()=>window.scrollTo(0,restoredScroll));await importBrandingFromHash();if(!state.profile)showOnboarding()
@@ -959,7 +960,7 @@ async function saveProfile(){await putStore('profile',state.profile)}
 
 
 function shell(content){
- const resourceViews=['resources','notepad','tools','measuremate','materialmate','drawingmate','cadmate','skillscard','feedbackmate','projectmate','otjmate','remindmate','reviewmate','learning-support','settings'];
+ const resourceViews=['resources','notepad','tools','measuremate','materialmate','drawingmate','cadmate','skillscard','feedbackmate','projectmate','otjmate','remindmate','reviewmate','attendance','learning-support','settings'];
  const reportViews=['academy','library','trade-courses','trade-test','trade-result','functional-skills','certificates','academy-knowledge','knowledge-slides'];
  const active=resourceViews.includes(state.view)?'resources':reportViews.includes(state.view)?'academy':'course';
  const firstName=state.profile?.fullName?.split(' ')?.[0]||'Learner';
@@ -1035,7 +1036,7 @@ function ensureVideoSubmissionBottomSpacer(){
 const REMOVED_APPRENTICE_PASS_KEY='apprenticeplus.permanentPass.v1';
 try{localStorage.removeItem(REMOVED_APPRENTICE_PASS_KEY)}catch{}
 
-function render(){const pageSignature=currentPageSignature();recordNavigation();window.ApprenticeAnalytics?.trackScreen(state.view||'unknown');if(state.view==='resources')renderResources();else if(state.view==='notepad')renderNotepad();else if(state.view==='tools')renderTools();else if(state.view==='measuremate')renderMeasureMate();else if(state.view==='materialmate')renderMaterialMate();else if(state.view==='drawingmate')renderDrawingMate();else if(state.view==='cadmate')renderCADMate();else if(state.view==='skillscard')renderSkillsCard();else if(state.view==='feedbackmate')renderFeedbackMate();else if(state.view==='projectmate')renderProjectMate();else if(state.view==='otjmate')renderOTJMate();else if(state.view==='remindmate')renderRemindMate();else if(state.view==='reviewmate')renderReviewMate();else if(state.view==='learning-support')renderLearningSupport();else if(state.view==='settings')renderSettings();else if(state.view==='home')renderHome();else if(state.view==='assignment')renderAssignment();else if(state.view==='academy')renderAcademy();else if(state.view==='library'||state.view==='trade-courses')renderTradeCourses();else if(state.view==='trade-test')renderTradeCourseTest();else if(state.view==='trade-result')renderTradeCourseResult();else if(state.view==='functional-skills')renderFunctionalSkills();else if(state.view==='knowledge-slides')renderKnowledgeSlides();else if(state.view==='academy-knowledge')renderAcademyKnowledge();else if(state.view==='functional-test')renderFunctionalSkillsTest();else if(state.view==='functional-result')renderFunctionalSkillsResult();else if(state.view==='certificates')renderCertificates();else if(state.view==='lesson')renderAcademyLesson();else if(state.view==='epa')renderEpaMockHome();else if(state.view==='epa-results')renderEpaResults();else if(state.view==='epa-test')renderEpaMockTest();else if(state.view==='epa-result')renderEpaMockResult();else if(state.view==='epa-discussion')renderEpaDiscussion();else if(state.view==='epa-discussion-result')renderEpaDiscussionResult();else if(state.view==='epa-practical')renderEpaPractical();else if(state.view==='knowledge-test')renderAssignmentKnowledgeTest();else if(state.view==='knowledge-result')renderAssignmentKnowledgeResult();else if(state.view==='walkthrough')renderWalkthrough();else renderSection();ensureVideoSubmissionBottomSpacer();enhanceVoiceToText(app);applyAccessibilityToCurrentView();syncReadAloudControl();attachPageHelp();scrollNewPageToTop(pageSignature);queueMicrotask(refreshAppNotifications)}
+function render(){const pageSignature=currentPageSignature();recordNavigation();window.ApprenticeAnalytics?.trackScreen(state.view||'unknown');if(state.view==='resources')renderResources();else if(state.view==='notepad')renderNotepad();else if(state.view==='tools')renderTools();else if(state.view==='measuremate')renderMeasureMate();else if(state.view==='materialmate')renderMaterialMate();else if(state.view==='drawingmate')renderDrawingMate();else if(state.view==='cadmate')renderCADMate();else if(state.view==='skillscard')renderSkillsCard();else if(state.view==='feedbackmate')renderFeedbackMate();else if(state.view==='projectmate')renderProjectMate();else if(state.view==='otjmate')renderOTJMate();else if(state.view==='remindmate')renderRemindMate();else if(state.view==='reviewmate')renderReviewMate();else if(state.view==='attendance')renderAttendanceCheckIn();else if(state.view==='learning-support')renderLearningSupport();else if(state.view==='settings')renderSettings();else if(state.view==='home')renderHome();else if(state.view==='assignment')renderAssignment();else if(state.view==='academy')renderAcademy();else if(state.view==='library'||state.view==='trade-courses')renderTradeCourses();else if(state.view==='trade-test')renderTradeCourseTest();else if(state.view==='trade-result')renderTradeCourseResult();else if(state.view==='functional-skills')renderFunctionalSkills();else if(state.view==='knowledge-slides')renderKnowledgeSlides();else if(state.view==='academy-knowledge')renderAcademyKnowledge();else if(state.view==='functional-test')renderFunctionalSkillsTest();else if(state.view==='functional-result')renderFunctionalSkillsResult();else if(state.view==='certificates')renderCertificates();else if(state.view==='lesson')renderAcademyLesson();else if(state.view==='epa')renderEpaMockHome();else if(state.view==='epa-results')renderEpaResults();else if(state.view==='epa-test')renderEpaMockTest();else if(state.view==='epa-result')renderEpaMockResult();else if(state.view==='epa-discussion')renderEpaDiscussion();else if(state.view==='epa-discussion-result')renderEpaDiscussionResult();else if(state.view==='epa-practical')renderEpaPractical();else if(state.view==='knowledge-test')renderAssignmentKnowledgeTest();else if(state.view==='knowledge-result')renderAssignmentKnowledgeResult();else if(state.view==='walkthrough')renderWalkthrough();else renderSection();ensureVideoSubmissionBottomSpacer();enhanceVoiceToText(app);applyAccessibilityToCurrentView();syncReadAloudControl();attachPageHelp();scrollNewPageToTop(pageSignature);queueMicrotask(refreshAppNotifications)}
 
 let activeSpeechRecognition=null;
 let activeSpeechButton=null;
@@ -4576,7 +4577,8 @@ function renderResources(){
    ['openOTJMate','note',hoursMate,`Record ${hoursLong} and export new entries.`,pendingOtj,'teal'],
    ['openProjectMate','project','ProjectMate','Generate, quote and complete customer-style jobs.',0,'amber'],
    ['openReviewMate','revision','ReviewMate','Create live targets or conduct a complete signed progress review.',reviewMatePendingCount(),'emerald'],
-   ['openRemindMate','revision','RemindMate','Save review targets and receive due-date reminders.',dueReminders,'rose']
+   ['openRemindMate','revision','RemindMate','Save review targets and receive due-date reminders.',dueReminders,'rose'],
+   ['openAttendance','course','Attendance','One-tap check-in for today’s class.',0,'purple']
   ]},
   {title:'Support',copy:'Get help and manage Apprentice+.',tools:[
    ['openFeedbackMate','note','FeedbackMate','Suggest an idea or report an issue.',0,'cyan'],
@@ -4596,8 +4598,55 @@ function renderResources(){
  document.getElementById('openOTJMate').onclick=()=>{state.view='otjmate';state.otjMateTab='home';state.editingOtjId=null;render();window.scrollTo(0,0)};
  document.getElementById('openReviewMate').onclick=()=>{state.view='reviewmate';state.reviewMateTab='targets';state.reviewMateDraft=null;state.reviewMatePlusDraft=null;render();window.scrollTo(0,0)};
  document.getElementById('openRemindMate').onclick=()=>{state.view='remindmate';state.remindMateTab='home';state.editingReminderId=null;render();window.scrollTo(0,0)};
+ document.getElementById('openAttendance').onclick=()=>{state.view='attendance';render();window.scrollTo(0,0)};
  document.getElementById('openNotepad').onclick=()=>{state.view='notepad';state.editingNoteId=null;render();window.scrollTo(0,0)};
  document.getElementById('openSettings').onclick=()=>{state.view='settings';render();window.scrollTo(0,0)};
+}
+
+
+const ATTENDANCE_SETTINGS_KEY='apprenticeplus.attendance.v1';
+const ATTENDANCE_HISTORY_KEY='apprenticeplus.attendanceHistory.v1';
+function attendanceSettings(){try{return {...{learnerId:'',endpoint:'',organisationKey:'',sessionId:'',deviceId:''},...JSON.parse(localStorage.getItem(ATTENDANCE_SETTINGS_KEY)||'{}')}}catch{return {learnerId:'',endpoint:'',organisationKey:'',sessionId:'',deviceId:''}}}
+function saveAttendanceSettings(value){localStorage.setItem(ATTENDANCE_SETTINGS_KEY,JSON.stringify(value))}
+function attendanceHistory(){try{return JSON.parse(localStorage.getItem(ATTENDANCE_HISTORY_KEY)||'[]')}catch{return []}}
+function saveAttendanceHistory(items){localStorage.setItem(ATTENDANCE_HISTORY_KEY,JSON.stringify(items.slice(0,30)))}
+function attendanceDeviceId(){const settings=attendanceSettings();if(settings.deviceId)return settings.deviceId;const id=typeof crypto?.randomUUID==='function'?crypto.randomUUID():`${Date.now()}-${Math.random().toString(36).slice(2)}`;settings.deviceId=id;saveAttendanceSettings(settings);return id}
+function cleanAttendanceId(value){return String(value||'').replace(/\D/g,'').slice(0,16)}
+function formatAttendanceId(value){return cleanAttendanceId(value).replace(/(\d{4})(?=\d)/g,'$1 ').trim()}
+function attendanceLocation(){return new Promise((resolve,reject)=>{if(!navigator.geolocation)return reject(new Error('Location is not supported on this device.'));navigator.geolocation.getCurrentPosition(position=>resolve({latitude:position.coords.latitude,longitude:position.coords.longitude,accuracy:Math.round(position.coords.accuracy||0)}),error=>reject(new Error(error.code===1?'Location permission was not allowed.':'Your location could not be confirmed.')), {enableHighAccuracy:true,timeout:15000,maximumAge:30000})})}
+async function submitAttendanceCheckIn(settings,status){
+ const learnerId=cleanAttendanceId(settings.learnerId),sessionId=String(settings.sessionId||'').trim(),endpoint=String(settings.endpoint||'').trim().replace(/\/$/,'');
+ if(learnerId.length!==16)throw new Error('Enter your 16-digit learner ID first.');
+ if(!sessionId)throw new Error('Enter or open the session link supplied by your tutor.');
+ if(!endpoint)throw new Error('The attendance service has not been connected.');
+ status.textContent='Confirming your location…';
+ const location=await attendanceLocation();
+ status.textContent='Sending your check-in…';
+ const payload={learnerId,sessionId,checkedAt:new Date().toISOString(),deviceId:attendanceDeviceId(),...location};
+ const headers={'Content-Type':'application/json'};if(settings.organisationKey)headers['X-Organisation-Key']=settings.organisationKey;
+ const response=await fetch(endpoint+'/checkins',{method:'POST',headers,body:JSON.stringify(payload)});
+ if(!response.ok){let message='The check-in service could not accept this attendance.';try{const body=await response.json();if(body?.message)message=body.message}catch{}throw new Error(message)}
+ const record={...payload,displayTime:new Date(payload.checkedAt).toLocaleString('en-GB',{dateStyle:'medium',timeStyle:'short'})};
+ saveAttendanceHistory([record,...attendanceHistory().filter(item=>!(item.sessionId===record.sessionId&&item.learnerId===record.learnerId))]);
+ return record;
+}
+function renderAttendanceCheckIn(){
+ const settings=attendanceSettings(),history=attendanceHistory();
+ const rows=history.slice(0,5).map(item=>`<div class="attendance-history-row"><span><strong>${esc(item.displayTime||new Date(item.checkedAt).toLocaleString('en-GB'))}</strong><small>Session ${esc(item.sessionId)}</small></span><b>Checked in</b></div>`).join('');
+ app.innerHTML=shell(`<button class="back no-print" id="backAttendance">← Toolbox</button><div class="section-heading attendance-heading"><div><div class="number">Attendance</div><h2>Check in</h2><p class="muted">Open Apprentice+ when you arrive, confirm once, and your tutor’s register updates automatically.</p></div></div><section class="card panel attendance-card"><div class="attendance-checkin-hero"><span class="attendance-pin">✓</span><div><small>ONE-TAP REGISTER</small><h3>Ready to check in?</h3><p>Your learner ID, time and verified location are sent securely to the active register.</p></div></div><div class="panel-body attendance-fields"><label>Your 16-digit learner ID<input class="input" id="attendanceLearnerId" inputmode="numeric" autocomplete="off" maxlength="19" placeholder="0000 0000 0000 0000" value="${esc(formatAttendanceId(settings.learnerId))}"></label><label>Session code<input class="input" id="attendanceSessionId" autocomplete="off" placeholder="Open the tutor link or paste the session code" value="${esc(settings.sessionId)}"></label><button type="button" class="btn attendance-checkin-button" id="attendanceCheckIn">Check in now</button><div class="attendance-status" id="attendanceStatus" aria-live="polite">Location is only checked when you press the button.</div><details class="attendance-connection"><summary>Attendance connection</summary><label>Service address<input class="input" id="attendanceEndpoint" type="url" placeholder="https://attendance.example.org" value="${esc(settings.endpoint)}"></label><label>Organisation key <span class="muted">(if supplied)</span><input class="input" id="attendanceOrganisationKey" autocomplete="off" value="${esc(settings.organisationKey)}"></label><button type="button" class="btn secondary" id="saveAttendanceConnection">Save connection</button></details></div></section><section class="card panel"><div class="panel-body"><div class="attendance-history-title"><div><strong>Recent check-ins</strong><small>Stored on this device</small></div></div><div class="attendance-history">${rows||'<p class="muted">No attendance check-ins recorded yet.</p>'}</div></div></section>`);
+ const learner=document.getElementById('attendanceLearnerId'),session=document.getElementById('attendanceSessionId'),endpoint=document.getElementById('attendanceEndpoint'),key=document.getElementById('attendanceOrganisationKey'),status=document.getElementById('attendanceStatus'),button=document.getElementById('attendanceCheckIn');
+ learner.addEventListener('input',()=>{learner.value=formatAttendanceId(learner.value)});
+ const collect=()=>({...attendanceSettings(),learnerId:cleanAttendanceId(learner.value),sessionId:session.value.trim(),endpoint:endpoint.value.trim(),organisationKey:key.value.trim()});
+ document.getElementById('saveAttendanceConnection').onclick=()=>{const next=collect();saveAttendanceSettings(next);status.className='attendance-status success';status.textContent='Attendance connection saved on this device.'};
+ button.onclick=async()=>{button.disabled=true;status.className='attendance-status';try{const next=collect();saveAttendanceSettings(next);const record=await submitAttendanceCheckIn(next,status);status.className='attendance-status success';status.innerHTML=`<strong>Checked in</strong><br>${esc(record.displayTime)}`;button.textContent='Checked in';setTimeout(renderAttendanceCheckIn,1200)}catch(error){status.className='attendance-status error';status.textContent=error.message||'Check-in failed.';button.disabled=false}};
+ document.getElementById('backAttendance').onclick=()=>{state.view='resources';render()};
+}
+function applyAttendanceLink(){
+ const params=new URLSearchParams(location.search),session=params.get('attendanceSession')||params.get('sessionId'),endpoint=params.get('attendanceEndpoint'),key=params.get('organisationKey');
+ if(!session&&!endpoint)return false;
+ const settings=attendanceSettings();if(session)settings.sessionId=session;if(endpoint)settings.endpoint=endpoint;if(key)settings.organisationKey=key;saveAttendanceSettings(settings);state.view='attendance';
+ try{history.replaceState(history.state,'',location.pathname+location.hash)}catch{}
+ return true;
 }
 
 function renderCADMate(){
