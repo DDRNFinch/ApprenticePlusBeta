@@ -2896,11 +2896,6 @@ body.dual-ruler-open{overflow:hidden;overscroll-behavior:none}
 @media(max-width:420px){.toolbox-app-section{padding-inline:10px}.toolbox-app-section .phone-app-grid{column-gap:8px}}
 
 
-/* V1.5.55 — analytics diagnostics in Admin Mode */
-.analytics-status-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:14px}.analytics-status-grid>div{display:flex;flex-direction:column;gap:4px;padding:12px;border:1px solid var(--line);border-radius:14px;background:var(--card)}.analytics-status-grid span{font-size:.76rem;color:var(--muted);font-weight:700}.analytics-status-grid strong{font-size:1rem;color:var(--ink)}.analytics-status-grid .analytics-active{color:#16823a}.analytics-status-grid .analytics-warning{color:#b46908}.app-dark-mode .analytics-status-grid>div{background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.1)}@media(max-width:420px){.analytics-status-grid{grid-template-columns:1fr 1fr}}
-
-.analytics-toggle-row{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:13px 2px;border-top:1px solid var(--line)}.analytics-toggle-row span{display:flex;flex-direction:column;gap:3px}.analytics-toggle-row small{color:var(--muted);font-weight:500}.analytics-toggle-row input{width:22px;height:22px;accent-color:var(--green)}.analytics-privacy{margin:12px 0;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:var(--card)}.analytics-privacy summary{font-weight:800;cursor:pointer}.analytics-privacy p{margin:10px 0 0;color:var(--muted);line-height:1.45}.analytics-recent{margin:14px 0}.analytics-recent h4{margin:0 0 8px}.analytics-recent>div{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px solid var(--line)}.analytics-recent code{font-size:.78rem;overflow-wrap:anywhere}.analytics-recent span{font-size:.76rem;color:var(--muted);white-space:nowrap}.app-version-bottom{border:0;background:transparent;color:inherit;font:inherit;cursor:pointer}
-
 
 /* V1.5.57 — Admin Mode mobile scrolling fix */
 .admin-modal{
@@ -2931,22 +2926,6 @@ body.dual-ruler-open{overflow:hidden;overscroll-behavior:none}
 .developer-summary{background:linear-gradient(135deg,#102b32,#174851);color:#fff}
 .developer-summary span,.developer-summary small{color:rgba(255,255,255,.75)}
 .developer-summary .admin-status{background:rgba(255,255,255,.14);color:#fff;border-color:rgba(255,255,255,.18)}
-
-/* V1.5.59 useful owner analytics */
-.owner-period-title{margin:4px 0 10px;font-size:12px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:#4d665d}
-.owner-summary-grid{margin-bottom:18px}
-.owner-analytics-columns{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:4px 0 14px}
-.owner-analytics-card{border:1px solid rgba(15,35,40,.09);border-radius:18px;padding:14px;background:#fff;margin-bottom:12px}
-.owner-analytics-card h4{margin:0 0 10px;font-size:15px;color:#0f2328}
-.owner-ranking,.owner-recent-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px solid rgba(15,35,40,.07)}
-.owner-ranking:last-child,.owner-recent-row:last-child{border-bottom:0}
-.owner-ranking span{display:flex;align-items:center;gap:8px;min-width:0;font-size:13px;text-transform:none}
-.owner-ranking span b{display:grid;place-items:center;width:22px;height:22px;border-radius:8px;background:#eef9e9;color:#209537;font-size:11px;flex:0 0 auto}
-.owner-ranking strong{font-size:14px;color:#0f2328}
-.owner-recent-row span{font-size:13px;font-weight:700;color:#203b36}
-.owner-recent-row small{font-size:11px;color:#72817c;white-space:nowrap}
-.analytics-status-grid.compact{margin:12px 0}
-@media(max-width:560px){.owner-analytics-columns{grid-template-columns:1fr}}
 
 
 /* V1.5.66 Skills Card skill mapping and counts */
