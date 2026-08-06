@@ -111,27 +111,10 @@
         "All course assignments are included every time, together with every saved evidence pack, PDF, photo, video, voice recording and RPL record currently held on the device.",
         "The Academy PDF now contains the learner's complete saved test and Knowledge Slide history, with NEW labels on activity completed since the previous confirmed upload.",
         "The learning-hours PDF now contains the complete OTJ or GLH history on every upload.",
-        "NEW evidence stamps and the Monthly Summary continue to identify only evidence, KSBs or LOs, RPL, learning hours and Academy activity added since the last confirmed upload.",
-        "The complete coursework restore file remains included in every monthly ZIP."
+        "NEW evidence stamps and the Monthly Summary continue to identify only evidence, KSBs or LOs, RPL, learning hours and Academy activity added since the last confirmed upload."
       ],
       "items": [
         "A monthly ZIP can now replace the previous online portfolio copy in full while retaining a clear audit of what is new this month."
-      ]
-    },
-    {
-      "version": "V1.1",
-      "date": "2026-08-04",
-      "title": "Restore Coursework",
-      "features": [
-        "Added Restore Coursework to the password-protected Admin Mode.",
-        "Every monthly portfolio ZIP now includes a compressed ApprenticePlus-Coursework-Restore.aplus recovery file.",
-        "The recovery file preserves learner details, selected course, all course evidence, Academy and EPA test history, RPL, ReviewMate, OTJ or GLH activity, settings, college branding and separately stored recordings.",
-        "A learner can select their latest monthly ZIP on a blank or replacement device and restore the complete Apprentice+ installation.",
-        "Restore validates the backup before making changes and requires two confirmations before replacing local data.",
-        "After a successful restore, Apprentice+ restarts using the recovered learner profile and coursework state."
-      ],
-      "items": [
-        "Existing monthly evidence PDFs and organised portfolio files remain unchanged alongside the new recovery file."
       ]
     },
     {
