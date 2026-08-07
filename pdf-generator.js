@@ -142,6 +142,10 @@ async function generateEvidencePackPDF({course, assignment, profile, sections, b
     const criterionText={};skillCriteria().forEach(skill=>skill.criteria.forEach((criterion,i)=>criterionText[`${skill.code}::${i+1}`]=`${skill.code} practical mark ${i+1} - ${criterion}`));
     return Object.entries(d?.scores||{}).filter(([,score])=>Number(score)>0).map(([code,score])=>`${criterionText[code]||code}: ${score} / 5`).join('\n');
   }
+  function witnessRatingDetails(d){
+    const labels={1:'Training required',2:'Satisfactory',3:'Competent'};
+    return Object.entries(d?.scores||{}).filter(([,score])=>Number(score)>0).map(([code,score])=>`${code}: ${score} / 3 - ${labels[Number(score)]||''}`.trim()).join('\n');
+  }
   function recordingDetails(d,mediaLabel){return Object.entries(d?.recordings||{}).filter(([,rec])=>rec?.data).map(([code,rec])=>`${code}: ${mediaLabel} included${rec.duration?` - ${rec.duration}`:''}${Number(rec.size)>0?` - ${Math.max(1,Math.round(Number(rec.size)/1024))} KB`:''}${rec.date?` - recorded ${rec.date}`:''}${rec.type?` - ${rec.type}`:''}${d.notes?.[code]?`\nNotes: ${d.notes[code]}`:''}`).join('\n\n')}
   function fileDetails(d){return (d?.files||[]).map((file,i)=>`${i+1}. ${file.evidenceName||file.name||'Evidence file'}${file.name&&file.evidenceName?` - original file: ${file.name}`:''}${file.type?` - ${file.type}`:''}${Number(file.size)>0?` - ${Math.round(Number(file.size)/1024)} KB`:''}`).join('\n')}
   function captionDetails(d){const rows=[];for(const [code,value] of Object.entries(d?.captions||{})){if(String(value||'').trim())rows.push(`${code}: ${value}`)}for(const [code,photo] of Object.entries(d?.outcomePhotos||{})){if(photo?.data)rows.push(`${code}: ${linkedPhotoFileName(code,0)}`)}for(const [code,photos] of Object.entries(d?.skillPhotos||{}))(photos||[]).forEach((photo,i)=>{if(photo?.data)rows.push(`${code} photo ${i+1}: ${linkedPhotoFileName(code,i)}`)});(d?.photos||[]).forEach((photo,i)=>{if(photo?.data)rows.push(`Photo ${i+1}: ${linkedRecordPhotoFileName(d,i)}`)});return rows.join('\n')}
@@ -275,7 +279,7 @@ async function generateEvidencePackPDF({course, assignment, profile, sections, b
   // Witness testimony: preserve every field without repeating it on a summary page.
   for(let i=0;i<(sections.witness||[]).length;i++){
     const d=sections.witness[i],v=i+1;
-    await addCompleteEvidenceRecord({title:`Witness Testimony · WT${v}`,version:`Attempt ${v}`,date:d.date,type:'Witness Testimony',fields:[['Evidence source',d.type],['Name',d.personName],['Role',d.role],['Preferred contact details',d.contactDetails||d.organisation],['Activity witnessed',d.activity],['KSBs observed',selectedKsbDetails(d)],['All marks awarded',scoredDetails(d)],['Witness Testimony / Additional Comments',d.feedback],['Additional Comments',d.additionalComments],['Attached files',fileDetails(d)],['Photographs and captions',captionDetails(d)]],signatureTitle:`${d.type||'Witness'} signature`,signatureData:d.signature});
+    await addCompleteEvidenceRecord({title:`Witness Testimony · WT${v}`,version:`Attempt ${v}`,date:d.date,type:'Witness Testimony',fields:[['Evidence source',d.type],['Name',d.personName],['Role',d.role],['Preferred contact details',d.contactDetails||d.organisation],['Activity witnessed',d.activity],['KSBs observed',selectedKsbDetails(d)],['Ratings',witnessRatingDetails(d)],['Witness Testimony / Additional Comments',d.feedback],['Additional Comments',d.additionalComments],['Attached files',fileDetails(d)],['Photographs and captions',captionDetails(d)]],signatureTitle:`${d.type||'Witness'} signature`,signatureData:d.signature});
     await addSubmittedPhotoPages(d,`Witness Testimony · WT${v}`,`Attempt ${v}`,d.date,'Witness Testimony');
     await addFilePreviewPages(d,`Witness Testimony · WT${v}`,`Attempt ${v}`,d.date,'Witness Testimony');
   }
