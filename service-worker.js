@@ -5,7 +5,7 @@ const FALLBACK_UPDATE_INFO={
  version:CURRENT_VERSION,
  features:['This update includes Apprentice+ improvements and fixes.']
 };
-const APP_SHELL=['./','./index.html','./styles.css?v=1.0','./qrcode-browser.js?v=1.0','./pdf-generator.js?v=1.0','./specification-sheet.js?v=1.0','./functional-skills-bank.js?v=1.0','./trade-courses-bank.js?v=1.0','./mcq-question-bank.js?v=1.0','./mcq-engine.js?v=1.0','./app.js?v=1.0','./review-transfer.js?v=1.0','./release-notes.json','./technical-drawing-viewer.html','./cadmate.html','./manifest.json','./manifest.webmanifest','./drawings/BWKAS1.png','./drawings/BWKAS2.png','./drawings/BWKAS3.png','./drawings/PMOAS9.png','./logo-apprentice-plus.png','./icon-192.png','./icon-512.png','./icon-1024.png','./apple-touch-icon.png','./favicon-32.png','./favicon-64.png'];
+const APP_SHELL=['./','./index.html','./styles.css?v=1.1','./qrcode-browser.js?v=1.1','./pdf-generator.js?v=1.1','./specification-sheet.js?v=1.1','./functional-skills-bank.js?v=1.1','./trade-courses-bank.js?v=1.1','./mcq-question-bank.js?v=1.1','./mcq-engine.js?v=1.1','./app.js?v=1.1','./review-transfer.js?v=1.1','./release-notes.json','./technical-drawing-viewer.html','./cadmate.html','./manifest.json','./manifest.webmanifest','./drawings/BWKAS1.png','./drawings/BWKAS2.png','./drawings/BWKAS3.png','./drawings/PMOAS9.png','./logo-apprentice-plus.png','./icon-192.png','./icon-512.png','./icon-1024.png','./apple-touch-icon.png','./favicon-32.png','./favicon-64.png'];
 
 async function loadUpdateInfo(){
  try{
