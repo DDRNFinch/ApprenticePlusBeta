@@ -3836,3 +3836,6 @@ html.desktop-mode .nvq-six-evidence.evidence-grid{grid-template-columns:repeat(2
 .otj-suggestion:focus-visible{outline:3px solid rgba(15,118,110,.25);outline-offset:2px}
 .evidence-icon-otj{display:grid;place-items:center}
 @media(max-width:600px){.otj-suggestion-grid{grid-template-columns:1fr}}
+
+/* Verified evidence: Employer / Assessor / RPL */
+@media(min-width:720px){.evidence-choice-grid.verified-three-way{grid-template-columns:repeat(3,minmax(0,1fr))}.evidence-choice-dialog:has(.verified-three-way){width:min(760px,100%)}}
