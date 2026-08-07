@@ -1,6 +1,21 @@
 {
-  "latest": "V2.0",
+  "latest": "V2.2",
   "releases": [
+    {
+      "version": "V2.2",
+      "date": "2026-08-07",
+      "title": "NVQ Course Parity",
+      "features": [
+        "NVQ courses now follow the same learner journey and progress structure as apprenticeship courses.",
+        "Learning Outcomes replace KSBs throughout NVQ course progress and evidence mapping.",
+        "Guided Learning Hours replace OTJ throughout NVQ progress and recording.",
+        "The EPA navigation position becomes NVQ Completion for NVQ learners, with live Evidence Pack, Learning Outcome and GLH progress.",
+        "Apprenticeship courses keep their existing KSB, OTJ and EPA behaviour unchanged."
+      ],
+      "items": [
+        "Corrected remaining apprenticeship-only labels in the NVQ learner journey."
+      ]
+    },
     {
       "version": "V2.0",
       "date": "2026-08-05",
@@ -1224,19 +1239,20 @@
       ]
     }
   },
-  "latestVersion": "V2.0",
+  "latestVersion": "V2.2",
   "releaseDetails": {
-    "version": "V2.0",
-    "date": "2026-08-05",
-    "title": "Maths and English Target Controls",
+    "version": "V2.2",
+    "date": "2026-08-07",
+    "title": "NVQ Course Parity",
     "features": [
-      "Learner details now include simple college-attendance tickboxes for Maths and English.",
-      "ReviewMate only creates Maths Academy test targets when Maths attendance is ticked.",
-      "ReviewMate only creates English Academy test targets when English attendance is ticked.",
-      "Unticked Functional Skills subjects are excluded from both test and Knowledge Slide targets."
+      "NVQ courses now follow the same learner journey and progress structure as apprenticeship courses.",
+      "Learning Outcomes replace KSBs throughout NVQ course progress and evidence mapping.",
+      "Guided Learning Hours replace OTJ throughout NVQ progress and recording.",
+      "The EPA navigation position becomes NVQ Completion for NVQ learners, with live Evidence Pack, Learning Outcome and GLH progress.",
+      "Apprenticeship courses keep their existing KSB, OTJ and EPA behaviour unchanged."
     ],
     "items": [
-      "Added learner-controlled Functional Skills target eligibility without changing existing Academy results."
+      "Corrected remaining apprenticeship-only labels in the NVQ learner journey."
     ]
   },
   "1.9": [
@@ -1254,6 +1270,21 @@
     ],
     "items": [
       "Added learner-controlled Functional Skills target eligibility without changing existing Academy results."
+    ]
+  },
+  "2.2": {
+    "version": "V2.2",
+    "date": "2026-08-07",
+    "title": "NVQ Course Parity",
+    "features": [
+      "NVQ courses now follow the same learner journey and progress structure as apprenticeship courses.",
+      "Learning Outcomes replace KSBs throughout NVQ course progress and evidence mapping.",
+      "Guided Learning Hours replace OTJ throughout NVQ progress and recording.",
+      "The EPA navigation position becomes NVQ Completion for NVQ learners, with live Evidence Pack, Learning Outcome and GLH progress.",
+      "Apprenticeship courses keep their existing KSB, OTJ and EPA behaviour unchanged."
+    ],
+    "items": [
+      "Corrected remaining apprenticeship-only labels in the NVQ learner journey."
     ]
   }
 }
