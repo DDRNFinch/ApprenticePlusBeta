@@ -1,4 +1,4 @@
-const CACHE='apprentice-plus-beta-v2-1-shared-photo-evidence';
+const CACHE='apprentice-plus-beta-v2-1-shared-photo-video-evidence';
 const CURRENT_VERSION='V2.1';
 const RELEASE_NOTES_URL='./release-notes.json';
 const FALLBACK_UPDATE_INFO={
