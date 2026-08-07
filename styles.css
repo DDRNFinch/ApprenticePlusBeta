@@ -4187,3 +4187,107 @@ html:not(.tour-phone-scale) body #app > .shell > .bottom-nav{
 /* V2.5 persistent admin + homepage-only version label */
 .app-version-bottom{display:block!important;width:max-content!important;max-width:100%;margin:30px auto 12px!important;padding:0!important;border:0!important;background:transparent!important;box-shadow:none!important;border-radius:0!important;color:#8b9491!important;font:500 11px/1.4 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",sans-serif!important;letter-spacing:.02em!important;text-align:center!important;appearance:none!important;-webkit-appearance:none!important;}
 .combined-ring-centre small{margin:0!important;font-size:.72rem!important;font-weight:700!important;letter-spacing:.06em!important;}
+
+/* V2.6 — unified section titles + course identity tile */
+.section-heading,
+.academy-hero,
+.academy-destination-head,
+.assignment-title,
+.epa-hero,
+.epa-test-head,
+.toolbox-group-heading{
+  box-sizing:border-box;
+}
+.section-heading:not(.course-logo-title-tile),
+.academy-hero,
+.academy-destination-head,
+.assignment-title,
+.epa-hero,
+.epa-test-head{
+  margin:0 0 14px;
+  padding:16px 17px;
+  border:1px solid #e1e7e3;
+  border-radius:18px;
+  background:#fff;
+  box-shadow:0 5px 16px rgba(20,48,30,.045);
+}
+.section-heading .number,
+.academy-hero .number,
+.academy-destination-head .number,
+.assignment-title .number,
+.epa-hero .number,
+.epa-test-head .number{
+  margin:0 0 4px;
+  color:#6c7771;
+  font-size:.68rem;
+  font-weight:800;
+  letter-spacing:.09em;
+  text-transform:uppercase;
+}
+.section-heading h2,
+.academy-hero h2,
+.academy-destination-head h2,
+.assignment-title h2,
+.epa-hero h2,
+.epa-test-head h2{
+  margin:0;
+  color:#17231c;
+  font-size:1.34rem;
+  line-height:1.15;
+  letter-spacing:-.025em;
+}
+.section-heading p,
+.academy-hero p,
+.academy-destination-head p,
+.assignment-title p,
+.epa-hero p,
+.epa-test-head p{
+  margin:6px 0 0;
+  color:#6b756f;
+  font-size:.76rem;
+  line-height:1.45;
+}
+.course-logo-title-tile{
+  position:relative;
+  display:grid;
+  grid-template-columns:56px minmax(0,1fr);
+  align-items:center;
+  gap:14px;
+  margin:2px 0 16px;
+  padding:15px 17px;
+  overflow:hidden;
+  border:1px solid #b8d9b3;
+  border-radius:20px;
+  background:linear-gradient(135deg,#f4fbf1 0%,#e8f7e4 54%,#dff2d9 100%);
+  box-shadow:0 8px 22px rgba(57,126,45,.10),inset 0 1px 0 rgba(255,255,255,.92);
+}
+.course-logo-title-tile:after{
+  content:"";
+  position:absolute;
+  inset:0 auto 0 0;
+  width:6px;
+  background:linear-gradient(#8ed845,#58b51f 55%,#2f8b18);
+}
+.course-logo-title-mark{
+  width:54px;
+  height:54px;
+  display:grid;
+  place-items:center;
+  overflow:hidden;
+  border-radius:15px;
+  background:#fff;
+  border:1px solid rgba(55,126,45,.14);
+  box-shadow:0 4px 12px rgba(54,118,45,.10);
+}
+.course-logo-title-mark img{width:100%;height:100%;object-fit:cover}
+.course-logo-title-copy{min-width:0}
+.course-logo-title-copy .number{margin:0 0 3px;color:#4c9128;font-size:.67rem;font-weight:850;letter-spacing:.10em;text-transform:uppercase}
+.course-logo-title-copy h2{margin:0;color:#183b1d;font-size:1.22rem;line-height:1.15;letter-spacing:-.025em}
+.course-logo-title-copy p{margin:6px 0 0;color:#55705a;font-size:.72rem;font-weight:650}
+@media(max-width:520px){
+  .section-heading:not(.course-logo-title-tile),.academy-hero,.academy-destination-head,.assignment-title,.epa-hero,.epa-test-head{padding:14px 15px;border-radius:16px}
+  .section-heading h2,.academy-hero h2,.academy-destination-head h2,.assignment-title h2,.epa-hero h2,.epa-test-head h2{font-size:1.2rem}
+  .course-logo-title-tile{grid-template-columns:48px minmax(0,1fr);gap:11px;padding:13px 14px 13px 17px;border-radius:18px}
+  .course-logo-title-mark{width:46px;height:46px;border-radius:13px}
+  .course-logo-title-copy h2{font-size:1.08rem}
+}

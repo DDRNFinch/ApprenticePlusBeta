@@ -1,5 +1,5 @@
-const CACHE='apprentice-plus-v2-5-navigation-admin-v1';
-const CURRENT_VERSION='V2.5';
+const CACHE='apprentice-plus-v2-6-unified-titles-hours-v1';
+const CURRENT_VERSION='V2.6';
 const RELEASE_NOTES_URL='./release-notes.json';
 const FALLBACK_UPDATE_INFO={
  version:CURRENT_VERSION,
