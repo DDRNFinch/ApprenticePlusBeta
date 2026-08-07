@@ -3935,3 +3935,97 @@ textarea{min-height:96px}
 .version-item{padding:9px 0}
 .signature-pad{height:120px;border-radius:12px}
 @media(max-width:460px){.shell{padding:11px 9px 32px}.course-card{padding:13px}.evidence-tile,.nvq-six-evidence .evidence-tile{min-height:118px;padding:10px}.panel{padding:11px}.btn{padding:9px 10px}.input,textarea,select{padding:9px 10px}.witness-three-score .score-button small{font-size:7px}}
+
+/* Uniform evidence tiles */
+.learner-evidence-grid{align-items:stretch}
+.learner-evidence-grid .evidence-tile{
+  display:flex;
+  flex-direction:column;
+  min-height:128px;
+  height:100%;
+  padding:11px 12px 10px;
+  text-align:left;
+}
+.learner-evidence-grid .evidence-tile-heading{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px!important;
+  min-height:40px;
+  margin:0 0 7px!important;
+}
+.learner-evidence-grid .evidence-tile-heading .tile-icon{
+  flex:0 0 38px;
+  width:38px;
+  height:38px;
+  margin:0;
+}
+.learner-evidence-grid .evidence-ksb-pills{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:4px;
+  min-height:22px;
+  margin-left:auto;
+}
+.learner-evidence-grid .evidence-ksb-pill{
+  min-width:22px;
+  height:22px;
+  padding:0 6px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:999px;
+  font-size:9px;
+  font-weight:900;
+  line-height:1;
+}
+.learner-evidence-grid .evidence-tile h3{
+  min-height:34px;
+  margin:0 0 4px;
+  display:flex;
+  align-items:flex-start;
+  font-size:14px;
+  line-height:1.18;
+}
+.learner-evidence-grid .evidence-tile p{
+  margin-top:auto;
+  min-height:28px;
+  font-size:10.5px;
+  line-height:1.25;
+  display:-webkit-box;
+  -webkit-line-clamp:2;
+  -webkit-box-orient:vertical;
+  overflow:hidden;
+}
+.learner-evidence-grid .evidence-tile-otj .evidence-tile-heading::after{
+  content:"LEARNING";
+  margin-left:auto;
+  border-radius:999px;
+  padding:5px 7px;
+  background:var(--soft);
+  color:var(--muted);
+  font-size:8px;
+  line-height:1;
+  font-weight:900;
+  letter-spacing:.05em;
+}
+.learner-evidence-grid .evidence-tile-verified{padding-top:11px}
+.learner-evidence-grid .tile-ribbon{
+  top:7px;
+  right:7px;
+  padding:3px 6px;
+  font-size:7px;
+  line-height:1;
+  border-radius:999px;
+  transform:none;
+}
+.learner-evidence-grid .evidence-tile-verified .evidence-tile-heading{
+  padding-right:58px;
+}
+@media(max-width:460px){
+  .learner-evidence-grid .evidence-tile{min-height:122px;padding:10px}
+  .learner-evidence-grid .evidence-tile h3{min-height:32px;font-size:13px}
+  .learner-evidence-grid .evidence-tile p{min-height:26px;font-size:10px}
+  .learner-evidence-grid .evidence-tile-heading .tile-icon{width:36px;height:36px;flex-basis:36px}
+}
