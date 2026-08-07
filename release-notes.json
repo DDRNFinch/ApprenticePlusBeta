@@ -1,8 +1,8 @@
 {
-  "latest": "V2.10",
+  "latest": "V2.11",
   "releases": [
     {
-      "version": "V2.10",
+      "version": "V2.11",
       "date": "2026-08-08",
       "title": "PDF preview and photo evidence fixes",
       "notes": [

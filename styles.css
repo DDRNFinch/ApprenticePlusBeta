@@ -4368,3 +4368,8 @@ html:not(.tour-phone-scale) body #app > .shell > .bottom-nav{
  .main-logo-title-tile h2{font-size:1.15rem}
  .course-list-summary,.epa-section-intro{font-size:.69rem}
 }
+
+/* V2.11 — EV cards must remain interactive after evidence is saved */
+.assignment-card[data-open]{cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;user-select:none}
+.assignment-card[data-open]>*{pointer-events:none}
+.assignment-card[data-open]:focus-visible{outline:3px solid rgba(88,181,31,.32);outline-offset:3px}

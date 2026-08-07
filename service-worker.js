@@ -1,5 +1,5 @@
 const CACHE='apprentice-plus-v2-10-evidence-preview-fix-v1';
-const CURRENT_VERSION='V2.10';
+const CURRENT_VERSION='V2.11';
 const RELEASE_NOTES_URL='./release-notes.json';
 const FALLBACK_UPDATE_INFO={
  version:CURRENT_VERSION,
