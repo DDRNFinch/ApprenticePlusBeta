@@ -2,6 +2,15 @@
   "latest": "V2.11",
   "releases": [
     {
+      "version": "V2.12",
+      "date": "2026-08-08",
+      "title": "EV tile interaction fix",
+      "changes": [
+        "Evidence Pack tiles are now native buttons and remain clickable after evidence is saved.",
+        "Course-level click handling no longer depends on each tile's completion or evidence state."
+      ]
+    },
+    {
       "version": "V2.11",
       "date": "2026-08-08",
       "title": "PDF preview and photo evidence fixes",
