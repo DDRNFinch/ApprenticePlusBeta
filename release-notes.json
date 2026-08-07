@@ -1,6 +1,17 @@
 {
-  "latest": "V2.7",
+  "latest": "V2.8",
   "releases": [
+    {
+      "version": "V2.8",
+      "date": "2026-08-08",
+      "title": "Uniform sections and EPA layout",
+      "features": [
+        "Home, Course, EPA/NVQ and Toolkit now use the same green Apprentice+ logo title tile with only the section wording changing.",
+        "EPA is now presented as a standalone main section without a Home back button on its landing screen.",
+        "EPA practice tiles use one consistent visual style and spacing, including Scores and Results.",
+        "Updated the in-app information guide and quick tour to match the current four-section navigation and evidence workflow."
+      ]
+    },
     {
       "version": "V2.7",
       "date": "2026-08-08",

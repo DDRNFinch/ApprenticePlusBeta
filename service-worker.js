@@ -1,5 +1,5 @@
-const CACHE='apprentice-plus-v2-7-pdf-preview-glh-v1';
-const CURRENT_VERSION='V2.7';
+const CACHE='apprentice-plus-v2-8-unified-sections-epa-v1';
+const CURRENT_VERSION='V2.8';
 const RELEASE_NOTES_URL='./release-notes.json';
 const FALLBACK_UPDATE_INFO={
  version:CURRENT_VERSION,
