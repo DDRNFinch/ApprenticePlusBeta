@@ -48,7 +48,7 @@
  function assembleAssessment({questions,count=15,allowedKsbs=[],recentIds=[]}){
   const allowed=new Set(allowedKsbs),recent=new Set(recentIds);
   const usable=(questions||[]).filter(q=>validateQuestion(q).valid&&(!allowed.size||allowed.has(q.ksb)));
-  if(usable.length<count)throw new Error(`This assignment needs at least ${count} usable questions; ${usable.length} are available.`);
+  if(usable.length<count)throw new Error(`This Evidence Pack needs at least ${count} usable questions; ${usable.length} are available.`);
   const fresh=usable.filter(q=>!recent.has(q.id));
   const source=fresh.length>=count?fresh:usable;
   const byKsb=distribute(source,q=>q.ksb||'unmapped');
