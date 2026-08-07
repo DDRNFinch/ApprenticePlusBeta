@@ -1,5 +1,5 @@
-const CACHE='apprentice-plus-v2-8-unified-sections-epa-v1';
-const CURRENT_VERSION='V2.8';
+const CACHE='apprentice-plus-v2-9-unified-evidence-pack-v1';
+const CURRENT_VERSION='V2.9';
 const RELEASE_NOTES_URL='./release-notes.json';
 const FALLBACK_UPDATE_INFO={
  version:CURRENT_VERSION,

@@ -1,6 +1,17 @@
 {
-  "latest": "V2.8",
+  "latest": "V2.9",
   "releases": [
+    {
+      "version": "V2.9",
+      "title": "Unified evidence PDF pack",
+      "date": "2026-08-08",
+      "notes": [
+        "Redesigned apprenticeship and NVQ evidence PDFs as one consistent compact document pack.",
+        "Updated PDF headings and evidence keys to match the current learner-facing evidence types.",
+        "Compressed OTJ and GLH evidence logs while retaining learner, course, assignment, activity, hours and mapped KSB/LO information.",
+        "Individual evidence PDF previews now omit portfolio cover/index pages and show only the evidence record and its necessary attachments."
+      ]
+    },
     {
       "version": "V2.8",
       "date": "2026-08-08",
