@@ -3825,3 +3825,14 @@ html.desktop-mode .nvq-six-evidence.evidence-grid{grid-template-columns:repeat(2
 .walkthrough-review-row span{display:grid;gap:3px;min-width:0}
 .walkthrough-review-row strong{font-size:14px}
 .walkthrough-review-row small{color:var(--muted,#667085);line-height:1.35}
+
+/* Assignment OTJ replacement for Upload Evidence */
+.assignment-otj-guidance{margin-bottom:16px}
+.assignment-otj-guidance h3{margin:6px 0 4px}
+.otj-suggestion-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:14px}
+.otj-suggestion{appearance:none;text-align:left;border:1px solid var(--border,#d8dde3);background:var(--card,#fff);color:inherit;border-radius:14px;padding:13px;cursor:pointer}
+.otj-suggestion strong{display:block;margin-bottom:5px}
+.otj-suggestion span{display:block;font-size:.9rem;line-height:1.35;color:var(--muted,#667085)}
+.otj-suggestion:focus-visible{outline:3px solid rgba(15,118,110,.25);outline-offset:2px}
+.evidence-icon-otj{display:grid;place-items:center}
+@media(max-width:600px){.otj-suggestion-grid{grid-template-columns:1fr}}
