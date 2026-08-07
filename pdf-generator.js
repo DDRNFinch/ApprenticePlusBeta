@@ -35,7 +35,6 @@ async function generateEvidencePackPDF({course, assignment, profile, sections, b
     const c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d');const [sectionName,sectionColour]=pdfSectionFor(title);x._sectionColour=sectionColour;x._sectionName=sectionName;
     x.fillStyle=WHITE;x.fillRect(0,0,W,H);
     x.fillStyle='#F3F5F4';x.fillRect(0,0,W,1);
-    drawLogo(x,apprenticeLogo,M,38,126,54);
     if(collegeLogo)drawLogo(x,collegeLogo,W-M-390,38,142,50);
     drawPdfStamp(x,title);
     x.fillStyle=MUTED;x.font='600 13px Arial';x.fillText(`${clean(course.standard||'')}  ·  Level ${clean(course.level||'-')}`,M,116);
