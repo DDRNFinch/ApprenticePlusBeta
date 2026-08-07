@@ -303,7 +303,8 @@ async function generateEvidencePackPDF({course, assignment, profile, sections, b
 
   footerAll();
   if(assignmentRpl)pages.forEach(p=>drawRecordedPriorLearningStamp(p.ctx));
-  const jpegPages=pages.map(p=>dataUrlBytes(p.canvas.toDataURL('image/jpeg',0.90)));
+  const previewPages=pages.map(p=>p.canvas.toDataURL('image/jpeg',0.86));
+  const jpegPages=previewPages.map(dataUrlBytes);
   const pdf=makeImagePDF(jpegPages,W,H);
   const safe=clean(profile.fullName).replace(/[^a-z0-9]+/gi,'-').replace(/^-|-$/g,'');
   const pdfName=`${safe||'Learner'}-Assignment-${assignment.n}-Evidence-Pack.pdf`;
@@ -319,11 +320,11 @@ async function generateEvidencePackPDF({course, assignment, profile, sections, b
     walkthroughVideos.forEach(({code,summary,rec,attempt,newType})=>{const ext=mediaExtension(rec.type,rec.name,'video',rec.data),newMark=isNewEvidence(newType,attempt)?'NEW EVIDENCE - ':'',base=safeZipName(`${newMark}${code} - ${summary||'Video evidence'}`),name=uniqueMediaName(base,ext,used);entries.push({name:`KSB Video Evidence/${name}`,data:dataUrlBytes(rec.data)})});
     audios.forEach(({code,rec,attempt},i)=>{const ext=mediaExtension(rec.type,'','audio',rec.data),newMark=isNewEvidence('professionalDiscussion',attempt)?'NEW EVIDENCE - ':'',base=safeZipName(`${newMark}${code} - Professional Discussion - Attempt ${attempt}`),name=uniqueMediaName(base,ext,used);entries.push({name:`KSB Voice Notes/${name}`,data:dataUrlBytes(rec.data)})});
     const packageName=`${safe||'Learner'}-Assignment-${assignment.n}-Complete-Evidence-Package.zip`;
-    if(returnPackage)return {assignmentNumber:assignment.n,pdfName,entries,packageName};
+    if(returnPackage)return {assignmentNumber:assignment.n,pdfName,entries,packageName,previewPages};
     await downloadBlob(makeZipBlob(entries),'application/zip',packageName);
   }else{
     const entries=[{name:pdfName,data:pdf}];
-    if(returnPackage)return {assignmentNumber:assignment.n,pdfName,entries,packageName:pdfName};
+    if(returnPackage)return {assignmentNumber:assignment.n,pdfName,entries,packageName:pdfName,previewPages};
     await downloadBlob(pdf,'application/pdf',pdfName);
   }
 }
@@ -424,7 +425,7 @@ async function generateNVQEvidencePackPDF({course, assignment, profile, sections
 
   const total=pages.length;pages.forEach((p,i)=>{const x=p.ctx;x.fillStyle='#D9DEDC';x.fillRect(M,H-72,W-2*M,1);x.fillStyle=MUTED;x.font='500 13px Arial';x.fillText('Apprentice+ · NVQ Evidence Portfolio',M,H-34);x.textAlign='right';x.fillText(`${i+1} / ${total}`,W-M,H-34);x.textAlign='left'});
   if(assignmentRpl)pages.forEach(p=>drawRecordedPriorLearningStamp(p.ctx));
-  const jpegPages=pages.map(p=>dataUrlBytes(p.canvas.toDataURL('image/jpeg',0.90))),pdf=makeImagePDF(jpegPages,W,H),safe=clean(profile.fullName).replace(/[^a-z0-9]+/gi,'-').replace(/^-|-$/g,''),unit=String(assignment.unit||assignment.n).replace(/[^a-z0-9-]+/gi,'-'),pdfName=`${safe||'Learner'}-NVQ-Unit-${unit}-Evidence-Pack.pdf`;
+  const previewPages=pages.map(p=>p.canvas.toDataURL('image/jpeg',0.86)),jpegPages=previewPages.map(dataUrlBytes),pdf=makeImagePDF(jpegPages,W,H),safe=clean(profile.fullName).replace(/[^a-z0-9]+/gi,'-').replace(/^-|-$/g,''),unit=String(assignment.unit||assignment.n).replace(/[^a-z0-9-]+/gi,'-'),pdfName=`${safe||'Learner'}-NVQ-Unit-${unit}-Evidence-Pack.pdf`;
   const walkthroughVideos=[];for(let vi=0;vi<(sections.discussion||[]).length;vi++){const version=sections.discussion[vi];for(const [code,rec] of Object.entries(version.recordings||{}))if(isVideoRecording(rec))walkthroughVideos.push({code,rec,attempt:vi+1,type:'video',newType:'discussion'})}
   for(let vi=0;vi<(sections.walkthrough||[]).length;vi++){const rec=sections.walkthrough[vi];if(rec?.data)walkthroughVideos.push({code:rec.code||`KSB ${vi+1}`,rec,attempt:vi+1,type:'video',newType:'walkthrough'})}
   for(let vi=0;vi<(sections.professionalDiscussion||[]).length;vi++){const version=sections.professionalDiscussion[vi];for(const [code,rec] of Object.entries(version.recordings||{}))if(rec?.data)walkthroughVideos.push({code,rec,attempt:vi+1,type:'audio',newType:'professionalDiscussion'})}
@@ -434,11 +435,11 @@ async function generateNVQEvidencePackPDF({course, assignment, profile, sections
     walkthroughVideos.forEach(({code,rec,attempt,type,newType},i)=>{const mime=String(rec.type||'video/webm'),ext=mime.includes('mp4')?'.mp4':mime.includes('ogg')?'.ogg':mime.startsWith('audio/')?(mime.includes('mp4')?'.m4a':'.webm'):'.webm',label=type==='audio'?'Professional Discussion':'Video Walkthrough',newMark=isNewEvidence(newType,attempt)?'NEW EVIDENCE - ':'',base=safeZipName(`${newMark}Attempt ${attempt} - ${code} ${label}`);let name=`${base}${ext}`;if(used.has(name.toLowerCase()))name=`${base}-${i+1}${ext}`;used.add(name.toLowerCase());entries.push({name:`${label} Recordings/${name}`,data:dataUrlBytes(rec.data)})});
     evidenceFiles.forEach(({file,attempt,sectionName},i)=>{const original=String(file.name||''),dot=original.lastIndexOf('.'),ext=dot>0?original.slice(dot):String(file.type||'').startsWith('image/')?'.jpg':'.bin',newMark=isNewEvidence(sectionName,attempt)?'NEW EVIDENCE - ':'',base=safeZipName(`${newMark}${file.evidenceName||file.name||`Evidence file ${i+1}`}`);let name=`${base}${ext}`;if(used.has(name.toLowerCase()))name=`${base}-${i+1}${ext}`;used.add(name.toLowerCase());entries.push({name:`${sectionName==='witness'?'Witness':'Supporting'} Evidence Files/${name}`,data:dataUrlBytes(file.data)})});
     const packageName=`${safe||'Learner'}-NVQ-Unit-${unit}-Evidence-Package.zip`;
-    if(returnPackage)return {assignmentNumber:assignment.n,pdfName,entries,packageName};
+    if(returnPackage)return {assignmentNumber:assignment.n,pdfName,entries,packageName,previewPages};
     await downloadBlob(makeZipBlob(entries),'application/zip',packageName);
   }else{
     const entries=[{name:pdfName,data:pdf}];
-    if(returnPackage)return {assignmentNumber:assignment.n,pdfName,entries,packageName:pdfName};
+    if(returnPackage)return {assignmentNumber:assignment.n,pdfName,entries,packageName:pdfName,previewPages};
     await downloadBlob(pdf,'application/pdf',pdfName);
   }
 }

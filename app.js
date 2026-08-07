@@ -245,7 +245,7 @@ function learnerPromptTitle(assignmentNumber,code,fallback){
  return LEARNER_PROMPTS[COURSE.id]?.[assignmentNumber]?.[code]||fallback;
 }
 
-const APP_VERSION='V2.6';
+const APP_VERSION='V2.7';
 const PORTFOLIO_UPLOAD_LIMIT_BYTES=1_000_000_000;
 const PORTFOLIO_SAFE_TARGET_BYTES=900_000_000;
 const APP_VIDEO_BITS_PER_SECOND=1_400_000;
@@ -3473,11 +3473,11 @@ function renderAssignmentKnowledgeResult(){
 }
 
 function renderNvqCompletion(){
- const p=courseProgressStats(),glh=otjProgressStats(),timePct=courseTimePercent();
+ const p=courseProgressStats(),glh=otjProgressStats(),timePct=courseTimePercent(),glhCompletionTarget=glh.fullExpected*0.60;
  const loPct=p.ksbTotal?Math.round((p.ksbCompleted/p.ksbTotal)*100):0;
  const packPct=p.total?Math.round((p.completed/p.total)*100):0;
  const glhPct=glh.expected?Math.min(100,Math.round((glh.total/glh.expected)*100)):(glh.total>0?100:0);
- const complete=p.completed>=p.total&&p.ksbCompleted>=p.ksbTotal&&(!glh.fullExpected||glh.total>=glh.fullExpected);
+ const complete=p.completed>=p.total&&p.ksbCompleted>=p.ksbTotal&&(!glhCompletionTarget||glh.total>=glhCompletionTarget);
  const row=(label,value,detail)=>`<div class="review-tracker-row"><div class="review-tracker-copy"><strong>${label}</strong><small>${detail}</small></div><div class="review-tracker-meter"><span style="width:${Math.max(0,Math.min(100,value))}%"></span></div><b>${Math.max(0,Math.min(100,value))}%</b></div>`;
  app.innerHTML=shell(`<section class="epa-hero"><div class="number">${esc(COURSE.name)} · ${esc(COURSE.standard)}</div><h2>NVQ Completion</h2><p>Your qualification progress uses Learning Outcomes in place of KSBs and Guided Learning Hours in place of OTJ.</p></section><section class="card panel"><div class="panel-body"><div class="review-quick-status ${complete?'green':'neutral'}"><span>Qualification status</span><strong>${complete?'NVQ requirements complete':'NVQ in progress'}</strong><small>${complete?'All Evidence Packs, Learning Outcomes and required GLH are complete.':'Complete the remaining Evidence Packs, Learning Outcomes and GLH shown below.'}</small></div><div class="review-tracker-list">${row('Evidence Packs',packPct,`${p.completed} of ${p.total} complete`)}${row('Learning Outcomes',loPct,`${p.ksbCompleted} of ${p.ksbTotal} complete`)}${row('Guided Learning Hours',glhPct,`${glh.total.toFixed(1)} of ${glh.expected.toFixed(1)} hrs required by now · ${glh.fullExpected.toFixed(1)} hrs full course`)}${timePct===null?'':row('Time on course',timePct,`${timePct}% elapsed`)}</div></div></section>`);
 }
@@ -5218,10 +5218,21 @@ function submittedEvidencePreviewHtml(a){
  return `<section class="submitted-evidence-panel"><div class="submitted-evidence-head"><div><div class="number">SUBMITTED EVIDENCE</div><h3>Individual PDF previews</h3></div><span>${rows.length} item${rows.length===1?'':'s'}</span></div><div class="submitted-evidence-list">${rows.map(row=>`<button type="button" class="submitted-evidence-row" data-evidence-preview="${esc(row.section)}" data-evidence-index="${row.index}" ${row.otjId?`data-otj-id="${esc(row.otjId)}"`:''}><span class="submitted-evidence-icon">${appIcon(row.section==='otj'?'academy':row.section==='statement'?'statement':row.section==='professionalDiscussion'?'microphone':row.section==='walkthrough'||row.section==='discussion'?'video':row.section==='photos'?'camera':'supporting')}</span><span class="submitted-evidence-copy"><strong>${esc(row.label)}</strong><small>${esc(row.detail)}${row.date?` · ${esc(formatShortDate(row.date))}`:''}</small></span><span class="submitted-evidence-action">Preview PDF</span></button>`).join('')}</div></section>`;
 }
 function closeEvidencePdfPreview(){const modal=document.getElementById('evidencePdfPreviewModal');if(!modal)return;const url=modal.dataset.objectUrl;if(url)URL.revokeObjectURL(url);modal.remove()}
+function createLearningHoursEntryPreview(entry){
+ const W=1240,H=1754,M=86,c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d'),short=learningHoursShortLabel(),title=learningHoursEntryLabel();
+ x.fillStyle='#ffffff';x.fillRect(0,0,W,H);x.fillStyle='#0f766e';x.fillRect(0,0,W,18);x.fillStyle='#0f2328';x.font='800 42px Arial';x.fillText(title,M,92);x.fillStyle='#657273';x.font='18px Arial';x.fillText(`${state.profile?.fullName||'Learner'} · ${COURSE.name}`,M,130);
+ x.fillStyle='#f4f7f5';x.fillRect(M,170,W-2*M,96);x.fillStyle='#657273';x.font='700 15px Arial';x.fillText('DATE',M+22,202);x.fillText('HOURS',M+360,202);x.fillText('LOCATION',M+660,202);x.fillStyle='#0f2328';x.font='800 22px Arial';x.fillText(formatShortDate(entry.date),M+22,238);x.fillText(`${Number(entry.hours||0).toFixed(1)} hrs`,M+360,238);x.fillText(String(entry.place||'Learning').replace(/^./,v=>v.toUpperCase()),M+660,238);
+ const wrap=(value,maxW)=>{x.font='20px Arial';const words=String(value||'—').split(/\s+/),lines=[];let line='';for(const word of words){const test=line?`${line} ${word}`:word;if(x.measureText(test).width>maxW&&line){lines.push(line);line=word}else line=test}if(line)lines.push(line);return lines};
+ let y=340;const block=(heading,value)=>{x.fillStyle='#0f2328';x.font='800 22px Arial';x.fillText(heading,M,y);y+=42;x.fillStyle='#263b3b';x.font='20px Arial';for(const line of wrap(value,W-2*M)){x.fillText(line,M,y);y+=31}y+=36};
+ block('What did you do?',entry.did||'—');block('What did you learn?',entry.learned||'—');
+ if(entry.loCodes?.length){block('Learning Outcomes',entry.loCodes.join(', '))}
+ x.strokeStyle='#d9dedc';x.beginPath();x.moveTo(M,H-92);x.lineTo(W-M,H-92);x.stroke();x.fillStyle='#657273';x.font='15px Arial';x.fillText(`Apprentice+ · ${short} evidence`,M,H-54);x.textAlign='right';x.fillText('Individual evidence record',W-M,H-54);x.textAlign='left';
+ return c.toDataURL('image/jpeg',0.9)
+}
 async function makeIndividualEvidencePdf(a,section,index,otjId=''){
  if(section==='otj'){
   const entry=otjEntries().find(item=>String(item.id)===String(otjId));if(!entry)throw new Error(`${learningHoursShortLabel()} entry not found`);
-  return {bytes:createMonthlyOtjPdf([entry],null),name:`${safeZipName(state.profile?.fullName||'Learner')}-${learningHoursShortLabel()}-${entry.date||isoToday()}-${Number(entry.hours||0).toFixed(1)}hrs.pdf`};
+  return {bytes:createMonthlyOtjPdf([entry],null),name:`${safeZipName(state.profile?.fullName||'Learner')}-${learningHoursShortLabel()}-${entry.date||isoToday()}-${Number(entry.hours||0).toFixed(1)}hrs.pdf`,previewPages:[createLearningHoursEntryPreview(entry)]};
  }
  const sections={practical:[],photos:[],statement:[],discussion:[],professionalDiscussion:[],witness:[],supporting:[],walkthrough:[]};
  if(section==='walkthrough'){
@@ -5231,13 +5242,14 @@ async function makeIndividualEvidencePdf(a,section,index,otjId=''){
  }
  const result=await generateEvidencePackPDF({course:COURSE,assignment:a,profile:state.profile,sections,branding:state.branding,returnPackage:true,assignmentRpl:false,rplKsbCodes:[]});
  const pdf=(result.entries||[]).find(entry=>/\.pdf$/i.test(entry.name));if(!pdf?.data)throw new Error('PDF could not be generated');
- const label=friendlyEvidenceSection(section).replace(/[^a-z0-9]+/gi,'-').replace(/^-|-$/g,'');return {bytes:pdf.data,name:`${safeZipName(state.profile?.fullName||'Learner')}-${assignmentCardCode(a)}-${label}-Attempt-${index+1}.pdf`};
+ const label=friendlyEvidenceSection(section).replace(/[^a-z0-9]+/gi,'-').replace(/^-|-$/g,'');return {bytes:pdf.data,name:`${safeZipName(state.profile?.fullName||'Learner')}-${assignmentCardCode(a)}-${label}-Attempt-${index+1}.pdf`,previewPages:result.previewPages||[]};
 }
 async function openEvidencePdfPreview(a,section,index,otjId=''){
  closeEvidencePdfPreview();toast('Preparing PDF preview...');
  try{
-  const {bytes,name}=await makeIndividualEvidencePdf(a,section,index,otjId),blob=new Blob([bytes],{type:'application/pdf'}),url=URL.createObjectURL(blob),modal=document.createElement('div');
-  modal.className='modal evidence-pdf-preview-modal';modal.id='evidencePdfPreviewModal';modal.dataset.objectUrl=url;modal.innerHTML=`<section class="modal-card evidence-pdf-preview-card" role="dialog" aria-modal="true" aria-label="PDF preview"><div class="evidence-pdf-preview-head"><div><div class="number">PDF PREVIEW</div><h2>${esc(friendlyEvidenceSection(section==='otj'?'otj':section))}</h2></div><button type="button" class="icon-close-button" id="closeEvidencePdfPreview" aria-label="Close PDF preview">${appIcon('close')}</button></div><iframe class="evidence-pdf-frame" src="${url}" title="Evidence PDF preview"></iframe><div class="evidence-pdf-preview-actions"><a class="btn evidence-pdf-download" href="${url}" download="${esc(name)}">Download individual PDF</a><button type="button" class="btn secondary" id="closeEvidencePdfPreviewBottom">Close</button></div></section>`;
+  const {bytes,name,previewPages=[]}=await makeIndividualEvidencePdf(a,section,index,otjId),blob=new Blob([bytes],{type:'application/pdf'}),url=URL.createObjectURL(blob),modal=document.createElement('div');
+  const pageHtml=previewPages.length?previewPages.map((src,i)=>`<figure class="evidence-pdf-page"><img src="${src}" alt="PDF preview page ${i+1}"><figcaption>Page ${i+1} of ${previewPages.length}</figcaption></figure>`).join(''):`<div class="evidence-pdf-preview-unavailable"><strong>Preview prepared</strong><p>The PDF is ready to download.</p></div>`;
+  modal.className='modal evidence-pdf-preview-modal';modal.id='evidencePdfPreviewModal';modal.dataset.objectUrl=url;modal.innerHTML=`<section class="modal-card evidence-pdf-preview-card" role="dialog" aria-modal="true" aria-label="PDF preview"><div class="evidence-pdf-preview-head"><div><div class="number">PDF PREVIEW</div><h2>${esc(friendlyEvidenceSection(section==='otj'?'otj':section))}</h2></div><button type="button" class="icon-close-button" id="closeEvidencePdfPreview" aria-label="Close PDF preview">${appIcon('close')}</button></div><div class="evidence-pdf-pages" aria-label="PDF pages">${pageHtml}</div><div class="evidence-pdf-preview-actions"><a class="btn evidence-pdf-download" href="${url}" download="${esc(name)}">Download individual PDF</a><button type="button" class="btn secondary" id="closeEvidencePdfPreviewBottom">Close</button></div></section>`;
   document.body.appendChild(modal);modal.onclick=e=>{if(e.target===modal)closeEvidencePdfPreview()};document.getElementById('closeEvidencePdfPreview').onclick=closeEvidencePdfPreview;document.getElementById('closeEvidencePdfPreviewBottom').onclick=closeEvidencePdfPreview;
  }catch(error){console.error('Individual evidence PDF preview failed',error);toast(`Unable to create PDF preview${error?.message?`: ${error.message}`:''}`)}
 }
