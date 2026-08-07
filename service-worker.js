@@ -1,4 +1,4 @@
-const CACHE='apprentice-plus-beta-evidence-v2-3-four-tab-navigation';
+const CACHE='apprentice-plus-beta-gdpr-v2-0-privacy';
 const CURRENT_VERSION='V2.0';
 const RELEASE_NOTES_URL='./release-notes.json';
 const FALLBACK_UPDATE_INFO={

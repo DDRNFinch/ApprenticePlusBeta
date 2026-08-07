@@ -4,8 +4,11 @@
     {
       "version": "V2.0",
       "date": "2026-08-05",
-      "title": "Maths and English Target Controls",
+      "title": "Privacy-first Apprentice+ V2.0",
       "features": [
+        "Removed Firebase and Google Analytics from Apprentice+.",
+        "Removed third-party FeedbackMate form submission; feedback now opens the learner chosen email app for review before sending.",
+        "Added Privacy & Data controls for a local data copy and permanent on-device erasure.",
         "Learner details now include simple college-attendance tickboxes for Maths and English.",
         "ReviewMate only creates Maths Academy test targets when Maths attendance is ticked.",
         "ReviewMate only creates English Academy test targets when English attendance is ticked.",
@@ -316,7 +319,8 @@
         "Plan Courses 1 and 2 respond to the selected pier size.",
         "Returns remain disabled and Stretcher bond remains selected for Brick Pier construction.",
         "All V1.6.32 recording-format and monthly-upload changes are retained."
-      ]
+      ],
+      "features": []
     },
     {
       "version": "V1.6.32",
@@ -329,7 +333,8 @@
         "Recorded media is checked for a valid container, non-zero size and recording duration before being saved.",
         "Audio and video evidence displays its detected format beside the built-in playback controls.",
         "Monthly assignment folders preserve the correct recording extension for Windows and browser playback."
-      ]
+      ],
+      "features": []
     },
     {
       "version": "V1.6.31",
@@ -341,7 +346,8 @@
         "New OTJMate evidence is exported as one PDF per entry in a separate OTJ folder.",
         "Removed unreliable local-file hyperlinks from the monthly summary.",
         "Kept file and folder names short to avoid Windows path-length errors."
-      ]
+      ],
+      "features": []
     },
     {
       "version": "V1.6.29",
@@ -353,7 +359,8 @@
         "Shortened the ZIP name, folder paths and media filenames to prevent Windows path-length extraction errors.",
         "The monthly pack now contains only assignments with new evidence or new RPL since the previous confirmed upload.",
         "Included all new OTJMate entries since the previous confirmed upload inside the single monthly summary."
-      ]
+      ],
+      "features": []
     },
     {
       "version": "V1.6.27",
@@ -365,7 +372,8 @@
         "Disabled returns and locked stretcher bond while Brick Pier is selected.",
         "Added Brick on Edge at 102.5 mm high and rendered Soldier Course on both front and rear elevations.",
         "Applied Bond Detail, Material Hatching and Outline Only consistently across pier front, rear, plan, section and sheet views."
-      ]
+      ],
+      "features": []
     },
     {
       "version": "V1.6.26",
@@ -376,7 +384,8 @@
         "Desktop guides show a larger live Apprentice+ preview beside a scrollable explanation panel with persistent navigation controls.",
         "Added Left and Right Arrow keyboard navigation, Escape to close, and backdrop-click closing on desktop.",
         "First-run guided tours now use the same desktop-responsive presentation and remain unchanged on mobile."
-      ]
+      ],
+      "features": []
     },
     {
       "version": "V1.6.25",
@@ -387,7 +396,8 @@
         "Moves the main navigation into a permanent left-hand desktop rail while preserving the existing mobile bottom navigation.",
         "Expands assignment, evidence, Toolbox and Academy grids to use the available desktop width.",
         "Returns to the mobile layout automatically when the browser window is narrowed or opened on a touch-first device."
-      ]
+      ],
+      "features": []
     },
     {
       "version": "V1.6.24",
@@ -398,7 +408,8 @@
         "KSBs at 1/2 and Learning Outcomes at 1/3 or 2/3 now immediately advance the yellow ring.",
         "Green progress now counts only fully completed KSBs at 2/2 or Learning Outcomes at 3/3.",
         "Repeated KSB codes combine distinct evidence collected across assignments without double-counting the same evidence type."
-      ]
+      ],
+      "features": []
     },
     {
       "version": "V1.6.23",
@@ -408,7 +419,8 @@
         "Added the course selector to first sign-in so learners start on the correct course.",
         "Made employer, mentor or assessor, portfolio website, course start date and planned end date visible during signup.",
         "Kept these additional profile fields optional while retaining name, signature and agreement as required."
-      ]
+      ],
+      "features": []
     },
     {
       "version": "V1.6.22",
@@ -419,7 +431,8 @@
         "Monthly ZIPs now include a separate OTJMate PDF containing only entries added since the last confirmed upload.",
         "The confirmed monthly snapshot now records OTJMate entry IDs to prevent duplicate OTJ evidence in future ZIPs.",
         "Monthly upload stats now show new OTJ entry count and hours."
-      ]
+      ],
+      "features": []
     },
     {
       "version": "V1.6.21",
@@ -430,7 +443,8 @@
         "Photographic Evidence selections now refresh immediately so photo controls appear without leaving the page.",
         "Practical Assessment 1–5 marking remains locked until the related Skill or Behaviour tick is selected.",
         "Professional Discussion now has separate Start recording and Stop recording controls with a live timer and no pause function."
-      ]
+      ],
+      "features": []
     },
     {
       "version": "V1.6.20",
@@ -440,7 +454,8 @@
         "Rebuilt from the stable V1.6.18 application code.",
         "Removed the purple Submitted ribbons using isolated styling instead of modifying assignment rendering logic.",
         "Retained RPL, assessor-only and witness-only ribbons, submission records, completion logic and monthly portfolio data."
-      ]
+      ],
+      "features": []
     },
     {
       "version": "V1.6.18",
@@ -451,7 +466,8 @@
         "Restored Open Online Portfolio after every successful monthly download.",
         "Restored Evidence Uploaded Online after every successful monthly download, including after earlier confirmed uploads.",
         "Kept the previous confirmed upload date and baseline until the new upload is explicitly confirmed."
-      ]
+      ],
+      "features": []
     },
     {
       "version": "V1.6.17",
@@ -461,7 +477,8 @@
         "New video walkthrough files in monthly portfolio ZIPs are prefixed NEW EVIDENCE.",
         "New professional discussion voice recordings are prefixed NEW EVIDENCE.",
         "Attached-media index pages also identify newly added recordings."
-      ]
+      ],
+      "features": []
     },
     {
       "version": "V1.6.16",
@@ -472,7 +489,8 @@
         "Assessor comments, photographs and scroll position remain unchanged while marking.",
         "Mobile tap highlights and unwanted focus styling have been removed from score controls.",
         "Assessment summary and development comments update in place only when requested."
-      ]
+      ],
+      "features": []
     },
     {
       "version": "V1.6.15",
@@ -483,7 +501,8 @@
         "Skill KSBs have been removed from learner-statement selection.",
         "All photo controls and photo requirements have been removed from learner statements.",
         "Learner-statement PDFs no longer include photo pages."
-      ]
+      ],
+      "features": []
     },
     {
       "version": "V1.6.14",
@@ -493,7 +512,8 @@
         "Removed the per-assignment Download Evidence Package workflow.",
         "Monthly portfolio summaries now identify newly awarded Recognition of Prior Learning as RPL units.",
         "Monthly upload confirmation now records included assignments as uploaded online."
-      ]
+      ],
+      "features": []
     },
     {
       "version": "V1.6.13",
@@ -776,7 +796,8 @@
         "Restored the missing editable preset list helper required by the workshop-sheet builder.",
         "Developer Mode now stays open if the builder encounters an error instead of closing silently.",
         "Updated the app and service-worker cache versions to load the corrected files."
-      ]
+      ],
+      "features": []
     },
     {
       "version": "V1.5.78",
@@ -785,7 +806,8 @@
       "items": [
         "Fixed the developer Create college task sheet button so it reliably closes Developer Mode and opens the workshop-sheet builder.",
         "Updated app and stylesheet asset versions to force the corrected files to load instead of an older cached copy."
-      ]
+      ],
+      "features": []
     },
     {
       "version": "V1.5.77",
@@ -805,7 +827,8 @@
         "Added reliable two-finger pinch zoom and one-finger panning in the full-screen drawing viewer.",
         "Double-tap now resets the drawing to fit the screen.",
         "Reworked A4 PDF export to open in the device PDF viewer and trigger a download for better Android PWA support."
-      ]
+      ],
+      "features": []
     },
     {
       "version": "V1.5.75",
@@ -818,7 +841,8 @@
         "Calculates estimated brick quantity and build time at 25 bricks per hour.",
         "Rounds to an editable recommended assessment time with complexity allowances.",
         "Adds strict orthographic, plan and section rules to copied brickwork prompts."
-      ]
+      ],
+      "features": []
     },
     {
       "version": "V1.5.74",
@@ -828,7 +852,8 @@
         "Added editable preset dropdowns for trade-specific wall types, bonds, materials, joints, fixings, adhesives and finishes.",
         "Added calculated brick-length and course-height dimension presets while keeping every value manually editable.",
         "Added broader standard dimension and time presets for carpentry, joinery and property maintenance drawings."
-      ]
+      ],
+      "features": []
     },
     {
       "version": "V1.5.73",
@@ -884,7 +909,8 @@
         "Technical drawings open in a full-screen viewer with zoom, browser and save options.",
         "Missing drawings display a clear coming-soon message instead of a broken image.",
         "Generated SVG drawings are no longer displayed in Practical Assessment specifications."
-      ]
+      ],
+      "features": []
     },
     {
       "version": "V1.5.68",
@@ -896,7 +922,8 @@
         "Source type, achieved grade and completion date are shown at a glance.",
         "ProjectMate skill mapping now uses the actual task title only, preventing boilerplate instructions from creating unrelated skills.",
         "Open buttons still link directly to the saved Practical Assessment or ProjectMate task."
-      ]
+      ],
+      "features": []
     },
     {
       "version": "V1.5.67",
@@ -907,7 +934,8 @@
         "Each skill opens a popup listing the Practical Assessments and ProjectMate tasks that contributed to the count.",
         "Each source shows the concise task title, source type and achieved grade.",
         "Open buttons take the learner directly to the saved source assessment or ProjectMate task."
-      ]
+      ],
+      "features": []
     },
     {
       "version": "V1.5.66",
@@ -919,7 +947,8 @@
         "Highest grade retained for each skill",
         "Distinction, Merit and Pass ranking",
         "Practical Assessments and graded ProjectMate tasks included"
-      ]
+      ],
+      "features": []
     },
     {
       "version": "V1.5.65",
@@ -935,84 +964,14 @@
       ]
     },
     {
-      "version": "V1.5.64",
-      "title": "Named analytics cleanup and update reliability",
-      "features": [
-        "Removed remaining generic feature_open and feature_exit analytics events.",
-        "Replaced generic assessment, export, file and media events with readable feature-specific event names.",
-        "Reduced duplicate analytics events so Firebase reports are easier to understand.",
-        "Added a new service-worker cache and immediate activation to ensure this update replaces V1.5.62/V1.5.63 reliably.",
-        "Continues to exclude learner identities, evidence content, answers, photos, videos, audio, signatures and files."
-      ]
-    },
-    {
-      "version": "V1.5.63",
-      "title": "Analytics Event Cleanup",
-      "date": "2026-07-31",
-      "items": [
-        "Updated the visible app build and service-worker cache to V1.5.63.",
-        "Reduced reliance on generic analytics events and prioritised named feature, completion, export and submission events.",
-        "Kept anonymous analytics only and continued excluding learner identity, evidence content, media and files."
-      ]
-    },
-    {
-      "version": "V1.5.62",
-      "title": "Course Analytics Events",
-      "date": "2026-07-31",
-      "items": [
-        "Added clear anonymous events for assignment opens, assignment completions and course progress views.",
-        "Added named events for assignment search opens, searches, suggested terms and selected results.",
-        "Added course selection, Settings section, certificate view/export and learner profile events.",
-        "Added one-time anonymous completion detection so completed assignments are counted without sending learner evidence.",
-        "Only course identifiers, assignment numbers, feature names and non-personal status values are sent."
-      ]
-    },
-    {
-      "version": "V1.5.61",
-      "title": "Evidence Analytics Events",
-      "date": "2026-07-31",
-      "items": [
-        "Added clear anonymous events for every evidence submission type.",
-        "Added named events for photographic evidence photos, video walkthrough clips and professional discussion recordings.",
-        "Added anonymous evidence retake, package export, whole-portfolio export and upload-confirmation events.",
-        "Events include only non-personal counts, evidence type, assignment number and course identifier.",
-        "Names, emails, typed evidence, answers, photos, videos, audio, signatures and file contents remain excluded."
-      ]
-    },
-    {
-      "version": "V1.5.60",
-      "title": "Core Named Analytics Events",
-      "date": "2026-07-31",
-      "items": [
-        "Replaced vague ui_action and field_changed reporting with clear feature-specific event names.",
-        "Added readable open events for Home, Toolbox, Academy, Trade Courses, Functional Skills, EPA and every Toolbox mini app.",
-        "Added named started and completed events for Trade Course, Functional Skills, EPA Knowledge, EPA Discussion, EPA Practical and assignment knowledge tests.",
-        "Added meaningful feature action events for starts, completions, saves, exports, downloads, searches, retakes and submissions.",
-        "Continued excluding names, emails, typed content, answers, evidence, media, signatures, files and precise location."
-      ]
-    },
-    {
-      "version": "V1.5.59",
-      "title": "Useful Analytics Dashboard",
-      "date": "2026-07-31",
-      "items": [
-        "Replaced raw developer event lists with a practical usage summary for the current device.",
-        "Added today and seven-day totals for sessions, time used, assessments, evidence saves and document exports.",
-        "Added rankings for the most-used Toolbox apps and most-visited screens.",
-        "Added readable recent activity while keeping names, emails, evidence content and media excluded.",
-        "Kept Firebase connection and queue checks available inside a compact privacy and diagnostics section."
-      ]
-    },
-    {
       "version": "V1.5.58",
       "title": "Hidden Developer Mode",
       "date": "2026-07-31",
       "items": [
-        "Removed analytics developer tools from the existing Admin Mode screen.",
         "Added a separate hidden Developer Mode unlocked by tapping the app version seven times.",
-        "Kept Firebase diagnostics, queue controls, recent anonymous events and privacy details inside the hidden screen only.",
         "Kept Admin Mode focused on course management, college branding, RPL and data controls."
-      ]
+      ],
+      "features": []
     },
     {
       "version": "V1.5.57",
@@ -1022,51 +981,8 @@
         "Fixed Admin Mode so the full screen scrolls correctly on phones and tablets.",
         "Added smooth touch scrolling and safe-area spacing for mobile devices.",
         "Kept the Admin Mode header visible while scrolling through the controls."
-      ]
-    },
-    {
-      "version": "V1.5.56",
-      "title": "Analytics Developer Tools",
-      "date": "2026-07-31",
-      "items": [
-        "Unlock developer tools by tapping the app version seven times.",
-        "View Firebase connection, queue size, recent anonymous event names and last successful send.",
-        "Enable or disable anonymous analytics on the current device.",
-        "Test offline queueing, send a test event, flush queued events and clear the queue.",
-        "View a clear privacy summary showing what is and is not collected."
-      ]
-    },
-    {
-      "version": "V1.5.55",
-      "title": "Analytics Optimisation and Diagnostics",
-      "date": "2026-07-31",
-      "features": [
-        "Added dashboard-ready anonymous engagement summaries and Firebase user properties for app version and platform.",
-        "Added an Admin Mode analytics status panel showing Firebase connection, queued events and session event totals.",
-        "Added test, retry, refresh and clear-queue controls for verifying analytics without exposing learner data.",
-        "Expanded the offline queue and retained strict filtering of personal details, evidence content and media."
-      ]
-    },
-    {
-      "version": "V1.5.54",
-      "title": "Full Anonymous Analytics Integration",
-      "features": [
-        "Anonymous interaction tracking across every current app screen and feature flow.",
-        "Assessment starts and completions across Trade Courses, Functional Skills, assignment knowledge and EPA.",
-        "Anonymous evidence, video, media, Toolbox, search, certificate, PDF and export activity tracking.",
-        "No learner details, entered answers, evidence content, photos, videos, audio, signatures or contact details are sent."
-      ]
-    },
-    {
-      "version": "V1.5.53",
-      "title": "Anonymous Analytics Foundation",
-      "date": "2026-07-31",
-      "features": [
-        "Added Firebase Analytics infrastructure without learner accounts or portfolio syncing.",
-        "Added anonymous app, session, version and automatic screen usage tracking.",
-        "Added offline event queuing with automatic retry when internet access returns.",
-        "Added privacy filtering that excludes personal details and evidence content."
-      ]
+      ],
+      "features": []
     },
     {
       "version": "V1.5.51",
@@ -1156,7 +1072,8 @@
         "The bottom navigation now moves out of the way when the phone keyboard opens instead of being pushed upward.",
         "OTJ entries can be deleted with confirmation and totals refresh immediately.",
         "Archived OTJ PDFs can now be deleted without deleting their underlying entries; those entries become available for export again."
-      ]
+      ],
+      "features": []
     },
     {
       "version": "V1.5.40",
@@ -1166,7 +1083,8 @@
         "Restyled the College, Workplace and Other OTJ selectors to match the current Apprentice+ visual design.",
         "All blank signature boxes now require a deliberate press to unlock before drawing, preventing accidental marks while scrolling.",
         "Applied the same press-to-sign protection to learner onboarding and profile signatures."
-      ]
+      ],
+      "features": []
     },
     {
       "version": "V1.5.39",
@@ -1175,7 +1093,8 @@
       "changes": [
         "EPA readiness remains visible but no longer affects the red, amber or green review status.",
         "Review status is now calculated only from assignments, KSBs or learning outcomes, and off-the-job training against today's expected progress."
-      ]
+      ],
+      "features": []
     },
     {
       "version": "V1.5.38",
@@ -1222,27 +1141,22 @@
       "title": "Hidden Developer Mode",
       "date": "2026-07-31",
       "items": [
-        "Removed analytics developer tools from the existing Admin Mode screen.",
         "Added a separate hidden Developer Mode unlocked by tapping the app version seven times.",
-        "Kept Firebase diagnostics, queue controls, recent anonymous events and privacy details inside the hidden screen only.",
         "Kept Admin Mode focused on course management, college branding, RPL and data controls."
       ]
     },
     "V1.5.59": {
       "version": "V1.5.59",
-      "title": "Useful Analytics Dashboard",
       "date": "2026-07-31",
       "items": [
         "Replaced raw developer event lists with a practical usage summary for the current device.",
         "Added today and seven-day totals for sessions, time used, assessments, evidence saves and document exports.",
         "Added rankings for the most-used Toolbox apps and most-visited screens.",
-        "Added readable recent activity while keeping names, emails, evidence content and media excluded.",
-        "Kept Firebase connection and queue checks available inside a compact privacy and diagnostics section."
+        "Added readable recent activity while keeping names, emails, evidence content and media excluded."
       ]
     },
     "V1.5.60": {
       "version": "V1.5.60",
-      "title": "Core Named Analytics Events",
       "date": "2026-07-31",
       "items": [
         "Replaced vague ui_action and field_changed reporting with clear feature-specific event names.",
