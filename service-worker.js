@@ -1,5 +1,5 @@
-const CACHE='apprentice-plus-v2-3-portfolio-style-v1';
-const CURRENT_VERSION='V2.3';
+const CACHE='apprentice-plus-v2-4-evidence-preview-v1';
+const CURRENT_VERSION='V2.4';
 const RELEASE_NOTES_URL='./release-notes.json';
 const FALLBACK_UPDATE_INFO={
  version:CURRENT_VERSION,

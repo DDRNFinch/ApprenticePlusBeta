@@ -1,6 +1,14 @@
 {
-  "latest": "V2.3",
+  "latest": "V2.4",
   "releases": [
+    {
+      "version": "V2.4",
+      "date": "2026-08-07",
+      "changes": [
+        "Main navigation now remains fixed to the viewport while page content scrolls.",
+        "Submitted assignment evidence now has individual PDF preview and download controls, including OTJ and GLH entries."
+      ]
+    },
     {
       "version": "V2.3",
       "date": "2026-08-07",
@@ -1252,9 +1260,17 @@
         "Returns remain disabled and Stretcher bond remains selected for Brick Pier construction.",
         "All V1.6.32 recording-format and monthly-upload changes are retained."
       ]
+    },
+    "2.4": {
+      "version": "V2.4",
+      "date": "2026-08-07",
+      "changes": [
+        "Fixed navigation while scrolling",
+        "Individual evidence PDF previews including OTJ/GLH"
+      ]
     }
   },
-  "latestVersion": "V2.3",
+  "latestVersion": "V2.4",
   "releaseDetails": {
     "version": "V2.3",
     "date": "2026-08-07",
