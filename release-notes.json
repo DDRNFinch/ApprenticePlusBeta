@@ -1,6 +1,21 @@
 {
-  "latest": "V2.2",
+  "latest": "V2.3",
   "releases": [
+    {
+      "version": "V2.3",
+      "date": "2026-08-07",
+      "title": "Clean Portfolio Export",
+      "features": [
+        "Redesigned downloaded portfolios across apprenticeship and NVQ courses with a cleaner, minimal document style.",
+        "Replaced large decorative badges, coloured bands and heavy page furniture with restrained labels, hairline dividers and whitespace.",
+        "Introduced a simpler apprenticeship portfolio cover with clearer hierarchy and learner details.",
+        "Updated evidence metadata, section headings and footers for a quieter, modern professional layout.",
+        "Kept evidence content, mappings, signatures, photographs, RPL marking and NEW EVIDENCE indicators intact."
+      ],
+      "items": [
+        "Portfolio export presentation updated only; assessment and evidence behaviour is unchanged."
+      ]
+    },
     {
       "version": "V2.2",
       "date": "2026-08-07",
@@ -1239,20 +1254,20 @@
       ]
     }
   },
-  "latestVersion": "V2.2",
+  "latestVersion": "V2.3",
   "releaseDetails": {
-    "version": "V2.2",
+    "version": "V2.3",
     "date": "2026-08-07",
-    "title": "NVQ Course Parity",
+    "title": "Clean Portfolio Export",
     "features": [
-      "NVQ courses now follow the same learner journey and progress structure as apprenticeship courses.",
-      "Learning Outcomes replace KSBs throughout NVQ course progress and evidence mapping.",
-      "Guided Learning Hours replace OTJ throughout NVQ progress and recording.",
-      "The EPA navigation position becomes NVQ Completion for NVQ learners, with live Evidence Pack, Learning Outcome and GLH progress.",
-      "Apprenticeship courses keep their existing KSB, OTJ and EPA behaviour unchanged."
+      "Redesigned downloaded portfolios across apprenticeship and NVQ courses with a cleaner, minimal document style.",
+      "Replaced large decorative badges, coloured bands and heavy page furniture with restrained labels, hairline dividers and whitespace.",
+      "Introduced a simpler apprenticeship portfolio cover with clearer hierarchy and learner details.",
+      "Updated evidence metadata, section headings and footers for a quieter, modern professional layout.",
+      "Kept evidence content, mappings, signatures, photographs, RPL marking and NEW EVIDENCE indicators intact."
     ],
     "items": [
-      "Corrected remaining apprenticeship-only labels in the NVQ learner journey."
+      "Portfolio export presentation updated only; assessment and evidence behaviour is unchanged."
     ]
   },
   "1.9": [
@@ -1285,6 +1300,21 @@
     ],
     "items": [
       "Corrected remaining apprenticeship-only labels in the NVQ learner journey."
+    ]
+  },
+  "2.3": {
+    "version": "V2.3",
+    "date": "2026-08-07",
+    "title": "Clean Portfolio Export",
+    "features": [
+      "Redesigned downloaded portfolios across apprenticeship and NVQ courses with a cleaner, minimal document style.",
+      "Replaced large decorative badges, coloured bands and heavy page furniture with restrained labels, hairline dividers and whitespace.",
+      "Introduced a simpler apprenticeship portfolio cover with clearer hierarchy and learner details.",
+      "Updated evidence metadata, section headings and footers for a quieter, modern professional layout.",
+      "Kept evidence content, mappings, signatures, photographs, RPL marking and NEW EVIDENCE indicators intact."
+    ],
+    "items": [
+      "Portfolio export presentation updated only; assessment and evidence behaviour is unchanged."
     ]
   }
 }
