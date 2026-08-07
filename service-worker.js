@@ -1,5 +1,5 @@
-const CACHE='apprentice-plus-beta-gdpr-v2-0-privacy';
-const CURRENT_VERSION='V2.0';
+const CACHE='apprentice-plus-beta-gdpr-v2-1-glh';
+const CURRENT_VERSION='V2.1';
 const RELEASE_NOTES_URL='./release-notes.json';
 const FALLBACK_UPDATE_INFO={
  version:CURRENT_VERSION,
