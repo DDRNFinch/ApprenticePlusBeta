@@ -1,6 +1,14 @@
 {
-  "latest": "V2.41",
+  "latest": "V2.42",
   "releases": [
+    {
+      "version": "V2.42",
+      "date": "2026-08-08",
+      "title": "Fixed navigation bar",
+      "features": [
+        "Bottom navigation is locked to the viewport and no longer moves with page scrolling."
+      ]
+    },
     {
       "version": "V2.41",
       "date": "2026-08-08",

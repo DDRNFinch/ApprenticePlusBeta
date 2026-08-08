@@ -5233,3 +5233,29 @@ p,.muted,.subtitle{line-height:1.48}
 .course-share-name{font-weight:780;font-size:1.05rem;color:#1d2b22;margin:5px 0 9px}
 .course-file-download{width:100%!important;margin:14px 0 8px!important;display:flex!important;align-items:center;justify-content:center;gap:7px}
 .course-file-hint{font-size:.72rem;color:#77847b;margin:0 0 14px}
+
+/* V2.42 — lock bottom navigation to the viewport */
+.bottom-nav{
+  position:fixed!important;
+  left:50%!important;
+  right:auto!important;
+  bottom:max(14px,env(safe-area-inset-bottom))!important;
+  transform:translateX(-50%)!important;
+  width:min(500px,calc(100vw - 20px))!important;
+  max-width:500px!important;
+  margin:0!important;
+  z-index:9999!important;
+  pointer-events:auto!important;
+  will-change:auto!important;
+}
+body,.shell{
+  overflow-x:hidden;
+}
+.shell{
+  padding-bottom:calc(112px + env(safe-area-inset-bottom))!important;
+}
+@media(min-width:900px){
+  .bottom-nav{
+    left:calc(50% + var(--desktop-rail-width,0px)/2)!important;
+  }
+}
