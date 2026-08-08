@@ -1,6 +1,15 @@
 {
-  "latest": "V2.29",
+  "latest": "V2.30",
   "releases": [
+    {
+      "version": "V2.30",
+      "date": "2026-08-08",
+      "title": "Full-width monthly and MCQ layouts",
+      "features": [
+        "Monthly Upload now fills the full available card width.",
+        "EPA and other MCQ answer rows now fill the full question-card width instead of leaving unused space on the right."
+      ]
+    },
     {
       "version": "V2.29",
       "date": "2026-08-08",

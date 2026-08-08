@@ -4963,3 +4963,39 @@ p,.muted,.subtitle{line-height:1.48}
 .notification-bell-item{position:relative}
 .notification-bell-item-content{position:relative;z-index:1}
 .notification-bell-item.deleting{opacity:0;transform:scale(.97);transition:.18s ease!important}
+
+/* V2.30 — full-width Monthly Upload and MCQ layouts */
+.monthly-portfolio-card.monthly-portfolio-mini{
+  width:100%!important;
+  max-width:none!important;
+  margin-left:0!important;
+  margin-right:0!important;
+  justify-self:stretch!important;
+}
+.monthly-portfolio-mini .monthly-mini-top,
+.monthly-portfolio-mini .monthly-mini-delta,
+.monthly-portfolio-mini .monthly-mini-size,
+.monthly-portfolio-mini .monthly-mini-actions{
+  width:100%!important;
+  max-width:none!important;
+}
+.epa-test-head,
+.epa-progress,
+.epa-question.panel,
+.epa-options,
+.epa-option,
+.epa-option>span,
+.mcq-question-actions{
+  width:100%!important;
+  max-width:none!important;
+  box-sizing:border-box!important;
+  justify-self:stretch!important;
+}
+.epa-option{
+  padding-right:0!important;
+  display:block!important;
+}
+.epa-option.selected{padding-right:0!important}
+.epa-option>span{display:grid!important}
+.mcq-question-actions{display:grid!important;grid-template-columns:1fr 1fr!important;gap:12px!important}
+.mcq-question-actions .btn{width:100%!important;max-width:none!important}
