@@ -245,7 +245,7 @@ function learnerPromptTitle(assignmentNumber,code,fallback){
  return LEARNER_PROMPTS[COURSE.id]?.[assignmentNumber]?.[code]||fallback;
 }
 
-const APP_VERSION='V2.18';
+const APP_VERSION='V2.19';
 const PORTFOLIO_UPLOAD_LIMIT_BYTES=1_000_000_000;
 const PORTFOLIO_SAFE_TARGET_BYTES=900_000_000;
 const APP_VIDEO_BITS_PER_SECOND=1_400_000;
@@ -5271,7 +5271,18 @@ async function buildDirectEvidencePreviewPages(a,section,item,index=0){
  for(let f=15;f>=10;f--){const txt=estimateTextHeight(f),remaining=contentBottom-y-txt;if(!imageObjs.length||remaining>=220){bodyFont=f;lineH=f+5;photoArea=imageObjs.length?Math.max(220,remaining-8):0;break}}
  const maxTextBottom=imageObjs.length?contentBottom-photoArea-10:contentBottom;
  for(const [heading,value] of blocks){if(y>maxTextBottom-34)break;x.fillStyle='#52605f';x.font=`700 ${headingFont}px Arial`;x.fillText(clean(heading).toUpperCase(),M,y);y+=headingGap;x.fillStyle='#172426';x.font=`400 ${bodyFont}px Arial`;const lines=wrap(x,value,W-2*M,`400 ${bodyFont}px Arial`);for(const line of lines){if(y+lineH>maxTextBottom)break;x.fillText(line,M,y);y+=lineH}y+=7}
- if(imageObjs.length){const top=Math.max(y+4,maxTextBottom+4),available=Math.max(180,contentBottom-top),count=imageObjs.length,cols=count<=3?count:count<=4?2:3,rows=Math.ceil(count/cols),gap=12,cellW=(W-2*M-gap*(cols-1))/cols,cellH=(available-gap*(rows-1))/rows;for(let i=0;i<count;i++){const {img,label}=imageObjs[i],colIdx=i%cols,rowIdx=Math.floor(i/cols),px=M+colIdx*(cellW+gap),py=top+rowIdx*(cellH+gap),captionH=24,imgH=Math.max(50,cellH-captionH);x.fillStyle='#f4f6f5';x.fillRect(px,py,cellW,imgH);const scale=Math.min(cellW/img.width,imgH/img.height),iw=img.width*scale,ih=img.height*scale;x.drawImage(img,px+(cellW-iw)/2,py+(imgH-ih)/2,iw,ih);x.fillStyle='#52605f';x.font='600 10px Arial';const cap=clean(label);x.fillText(cap.length>46?cap.slice(0,43)+'…':cap,px,py+imgH+16)}}
+ if(imageObjs.length){
+  const drawCover=(img,px,py,bw,bh)=>{x.fillStyle='#f4f6f5';x.fillRect(px,py,bw,bh);x.strokeStyle='#d9dedc';x.strokeRect(px+.5,py+.5,bw-1,bh-1);if(!img)return;const scale=Math.max(bw/img.width,bh/img.height),iw=img.width*scale,ih=img.height*scale;x.save();x.beginPath();x.rect(px,py,bw,bh);x.clip();x.drawImage(img,px+(bw-iw)/2,py+(bh-ih)/2,iw,ih);x.restore()};
+  if(section==='photos'){
+   const top=Math.max(y+8,maxTextBottom+8),gap=14,cols=3,cellW=(W-2*M-gap*2)/3,imgH=cellW*9/16;
+   for(let i=0;i<3;i++){const item=imageObjs[i],px=M+i*(cellW+gap);drawCover(item?.img||null,px,top,cellW,imgH);x.fillStyle='#52605f';x.font='600 10px Arial';x.fillText(`Photo ${i+1}`,px,top+imgH+17)}
+  }else if(section==='practical'){
+   const top=Math.max(y+8,maxTextBottom+8),gap=10,cols=3,cellW=(W-2*M-gap*2)/3,imgH=cellW*9/16,rowStep=imgH+28;
+   for(let i=0;i<9;i++){const item=imageObjs[i],colIdx=i%3,rowIdx=Math.floor(i/3),px=M+colIdx*(cellW+gap),py=top+rowIdx*rowStep;drawCover(item?.img||null,px,py,cellW,imgH);x.fillStyle='#52605f';x.font='600 10px Arial';x.fillText(`Photo ${i+1}`,px,py+imgH+17)}
+  }else{
+   const top=Math.max(y+4,maxTextBottom+4),available=Math.max(180,contentBottom-top),count=imageObjs.length,cols=count<=3?count:count<=4?2:3,rows=Math.ceil(count/cols),gap=12,cellW=(W-2*M-gap*(cols-1))/cols,cellH=(available-gap*(rows-1))/rows;for(let i=0;i<count;i++){const {img,label}=imageObjs[i],colIdx=i%cols,rowIdx=Math.floor(i/cols),px=M+colIdx*(cellW+gap),py=top+rowIdx*(cellH+gap),captionH=24,imgH=Math.max(50,cellH-captionH);x.fillStyle='#f4f6f5';x.fillRect(px,py,cellW,imgH);const scale=Math.min(cellW/img.width,imgH/img.height),iw=img.width*scale,ih=img.height*scale;x.drawImage(img,px+(cellW-iw)/2,py+(imgH-ih)/2,iw,ih);x.fillStyle='#52605f';x.font='600 10px Arial';const cap=clean(label);x.fillText(cap.length>46?cap.slice(0,43)+'…':cap,px,py+imgH+16)}
+  }
+ }
  if(item?.signature){const sig=await load(item.signature);x.fillStyle='#52605f';x.font='700 11px Arial';x.fillText('SIGNATURE',M,SIG_TOP);x.strokeStyle='#cbd2cf';x.strokeRect(M,SIG_TOP+14,350,88);if(sig)try{x.drawImage(sig,M+8,SIG_TOP+22,334,72)}catch{}}
  x.strokeStyle='#d9dedc';x.beginPath();x.moveTo(M,H-70);x.lineTo(W-M,H-70);x.stroke();x.fillStyle='#657273';x.font='12px Arial';x.fillText(`Apprentice+ · ${title}`,M,H-36);x.textAlign='right';x.fillText('1 / 1',W-M,H-36);x.textAlign='left';pages.push(c);
  return pages.map(canvas=>canvas.toDataURL('image/jpeg',.9));
