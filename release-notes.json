@@ -1,6 +1,15 @@
 {
-  "latest": "V2.25",
+  "latest": "V2.26",
   "releases": [
+    {
+      "version": "V2.26",
+      "date": "2026-08-08",
+      "title": "Monthly Upload refinement",
+      "features": [
+        "Rebuilt the Monthly Upload card as a compact premium workflow with balanced spacing and smaller actions.",
+        "Kept the portfolio reminder visually consistent with the refined Apprentice+ card system."
+      ]
+    },
     {
       "version": "V2.25",
       "date": "2026-08-08",
