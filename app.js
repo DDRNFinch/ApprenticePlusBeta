@@ -245,7 +245,7 @@ function learnerPromptTitle(assignmentNumber,code,fallback){
  return LEARNER_PROMPTS[COURSE.id]?.[assignmentNumber]?.[code]||fallback;
 }
 
-const APP_VERSION='V2.48';
+const APP_VERSION='V2.49';
 function paintPdfPageBackground(ctx,W,H){ctx.fillStyle='#ffffff';ctx.fillRect(0,0,W,H);const r=Math.min(W,H)*0.58,g=ctx.createRadialGradient(0,0,0,0,0,r);g.addColorStop(0,'#DDF3D6');g.addColorStop(.42,'#EFF8EC');g.addColorStop(1,'#FFFFFF');ctx.fillStyle=g;ctx.fillRect(0,0,W,H)}
 
 const PORTFOLIO_UPLOAD_LIMIT_BYTES=1_000_000_000;
@@ -5393,13 +5393,54 @@ function submittedEvidenceRows(a){
   const versions=sectionData(a.n,section).versions||[];
   versions.forEach((item,index)=>rows.push({section,index,label:sectionLabels[section],date:item.date||'',detail:`Submitted evidence · Attempt ${index+1}`}));
  }
- walkthroughAllSubmissions(a.n).forEach((item,index)=>rows.push({section:'walkthrough',index,label:'Record a Video',date:item.date||'',detail:`Submitted video · ${(item.confirmedCodes||[]).join(', ')||'KSB evidence'}`}));
+ walkthroughAllSubmissions(a.n).forEach((item,index)=>rows.push({section:'walkthrough',index,evidenceId:item.id||'',label:'Record a Video',date:item.date||'',detail:`Submitted video · ${(item.confirmedCodes||[]).join(', ')||'KSB evidence'}`}));
  return rows.sort((x,y)=>String(y.date||'').localeCompare(String(x.date||''))||x.label.localeCompare(y.label));
 }
 function submittedEvidencePreviewHtml(a){
  const rows=submittedEvidenceRows(a);if(!rows.length)return '';
- return `<section class="submitted-evidence-panel"><div class="submitted-evidence-head"><div><div class="number">SUBMITTED EVIDENCE</div><h3>Evidence PDF previews</h3></div><span>${rows.length} item${rows.length===1?'':'s'}</span></div><div class="submitted-evidence-list">${rows.map(row=>`<button type="button" class="submitted-evidence-row" data-evidence-preview="${esc(row.section)}" data-evidence-index="${row.index}" ${row.otjId?`data-otj-id="${esc(row.otjId)}"`:''}><span class="submitted-evidence-icon">${appIcon(row.section==='otj'?'academy':row.section==='statement'?'statement':row.section==='professionalDiscussion'?'microphone':row.section==='walkthrough'||row.section==='discussion'?'video':row.section==='photos'?'camera':'supporting')}</span><span class="submitted-evidence-copy"><strong>${esc(row.label)}</strong><small>${esc(row.detail)}${row.date?` · ${esc(formatShortDate(row.date))}`:''}</small></span><span class="submitted-evidence-action">Preview PDF</span></button>`).join('')}</div></section>`;
+ return `<section class="submitted-evidence-panel"><div class="submitted-evidence-head"><div><div class="number">SUBMITTED EVIDENCE</div><h3>Evidence PDF previews</h3></div><span>${rows.length} item${rows.length===1?'':'s'}</span></div><div class="submitted-evidence-list">${rows.map(row=>`<div class="submitted-evidence-row" data-saved-evidence-row><span class="submitted-evidence-icon">${appIcon(row.section==='otj'?'academy':row.section==='statement'?'statement':row.section==='professionalDiscussion'?'microphone':row.section==='walkthrough'||row.section==='discussion'?'video':row.section==='photos'?'camera':'supporting')}</span><span class="submitted-evidence-copy"><strong>${esc(row.label)}</strong><small>${esc(row.detail)}${row.date?` · ${esc(formatShortDate(row.date))}`:''}</small></span><span class="submitted-evidence-actions"><button type="button" class="submitted-evidence-preview-btn" data-evidence-preview="${esc(row.section)}" data-evidence-index="${row.index}" ${row.otjId?`data-otj-id="${esc(row.otjId)}"`:''}>Preview PDF</button><button type="button" class="submitted-evidence-delete-btn" data-delete-evidence="${esc(row.section)}" data-delete-evidence-index="${row.index}" ${row.evidenceId?`data-delete-evidence-id="${esc(row.evidenceId)}"`:''} aria-label="Delete ${esc(row.label)}">Delete</button></span></div>`).join('')}</div></section>`;
 }
+async function deleteSavedEvidencePdf(a,section,index,evidenceId=''){
+ const warning=`Delete this saved evidence?\n\nThis permanently removes the submitted evidence from this Evidence Pack and may reduce ${COURSE.nvqUnits?'Learning Outcome':'KSB'} progress.\n\nThis cannot be undone.`;
+ if(!confirm(warning))return false;
+ if(section==='walkthrough'){
+   const id=String(evidenceId||walkthroughAllSubmissions(a.n)[Number(index)]?.id||'');
+   if(!id)return false;
+   const meta=walkthroughMeta(a.n);
+   if(id.startsWith('legacy-')){
+     const code=id.slice(7),item=meta[code];
+     if(item?.blobKey){try{await deleteStore(item.blobKey)}catch(error){console.warn(error)}}
+     delete meta[code];
+   }else{
+     const submissions=Array.isArray(meta._submissions)?meta._submissions:[],item=submissions.find(x=>x.id===id);
+     if(item?.blobKey){try{await deleteStore(item.blobKey)}catch(error){console.warn(error)}}
+     meta._submissions=submissions.filter(x=>x.id!==id);
+   }
+   meta._saved=false;
+   state.data[walkthroughMetaKey(a.n)]=meta;
+ }else{
+   const sd=sectionData(a.n,section),versions=Array.isArray(sd.versions)?sd.versions:[];
+   const target=versions[Number(index)];
+   if(!target)return false;
+   const blobKeys=new Set();
+   const collect=value=>{
+     if(!value||typeof value!=='object')return;
+     if(typeof value.blobKey==='string'&&value.blobKey)blobKeys.add(value.blobKey);
+     if(Array.isArray(value))value.forEach(collect);else Object.values(value).forEach(collect);
+   };
+   collect(target);
+   for(const blobKey of blobKeys){try{await deleteStore(blobKey)}catch(error){console.warn(error)}}
+   versions.splice(Number(index),1);
+   sd.versions=versions;
+   state.data[key(a.n,section)]=sd;
+ }
+ invalidatePackStatus(a.n);
+ await saveData();
+ try{await refreshLatestEvidencePackPdf(a.n)}catch(error){console.warn('Unable to refresh Evidence Pack PDF after evidence deletion',error)}
+ toast('Saved evidence deleted');
+ return true;
+}
+
 function closeEvidencePdfPreview(){const modal=document.getElementById('evidencePdfPreviewModal');if(!modal)return;const url=modal.dataset.objectUrl;if(url)URL.revokeObjectURL(url);modal.remove()}
 function createLearningHoursEntryPreview(entry){
  const W=1240,H=1754,M=86,c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d'),short=learningHoursShortLabel(),mate=learningHoursMateName(),isNvq=!!COURSE.nvqUnits;
@@ -5529,6 +5570,7 @@ function renderAssignment(){
  ${rpl?'<section class="card download-card complete rpl-monthly-note"><h3>Evidence Pack completed through RPL</h3><p class="muted" style="margin-top:5px">This Evidence Pack is recorded as an RPL unit and will be identified separately in the next Monthly Portfolio Upload summary.</p></section>':''}`);
  document.getElementById('back').onclick=()=>{state.view='course';state.section=null;render()};
  document.querySelectorAll('[data-evidence-preview]').forEach(button=>button.onclick=()=>openEvidencePdfPreview(a,button.dataset.evidencePreview,Number(button.dataset.evidenceIndex)||0,button.dataset.otjId||''));
+ document.querySelectorAll('[data-delete-evidence]').forEach(button=>button.onclick=async event=>{event.preventDefault();event.stopPropagation();const deleted=await deleteSavedEvidencePdf(a,button.dataset.deleteEvidence,Number(button.dataset.deleteEvidenceIndex)||0,button.dataset.deleteEvidenceId||'');if(deleted)renderAssignment()});
  document.querySelectorAll('[data-section]').forEach(button=>button.onclick=()=>{
   const section=button.dataset.section;
   if(section==='verified'){showVerifiedEvidenceChooser();return}

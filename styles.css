@@ -5457,3 +5457,110 @@ body,.shell{
     grid-template-columns:repeat(3,minmax(0,1fr))!important;
   }
 }
+
+/* V2.49 — saved evidence delete action */
+.submitted-evidence-row{
+  display:grid!important;
+  grid-template-columns:auto minmax(0,1fr) auto!important;
+  align-items:center!important;
+  gap:12px!important;
+}
+.submitted-evidence-actions{
+  display:flex;
+  align-items:center;
+  gap:7px;
+  justify-self:end;
+}
+.submitted-evidence-preview-btn,
+.submitted-evidence-delete-btn{
+  border:0;
+  border-radius:999px;
+  padding:8px 11px;
+  font:inherit;
+  font-size:.7rem;
+  font-weight:750;
+  cursor:pointer;
+  white-space:nowrap;
+}
+.submitted-evidence-preview-btn{background:#edf6e9;color:#347d1f}
+.submitted-evidence-delete-btn{background:#f3f3f3;color:#8b3131}
+@media(max-width:520px){
+  .submitted-evidence-row{grid-template-columns:auto minmax(0,1fr)!important}
+  .submitted-evidence-actions{grid-column:2;justify-self:start}
+}
+
+/* V2.49 — Samsung-style notifications: individual pills, no surrounding box */
+.notification-bell-backdrop{
+  background:rgba(20,25,22,.16)!important;
+  backdrop-filter:blur(12px)!important;
+  -webkit-backdrop-filter:blur(12px)!important;
+}
+.notification-bell-panel{
+  background:transparent!important;
+  border:0!important;
+  box-shadow:none!important;
+  border-radius:0!important;
+  padding:8px!important;
+  overflow:visible!important;
+}
+.notification-bell-header{
+  background:transparent!important;
+  border:0!important;
+  padding:0 4px 10px!important;
+}
+.notification-bell-header h2{font-size:1.1rem!important}
+.notification-bell-close{
+  background:rgba(238,240,239,.92)!important;
+  box-shadow:none!important;
+}
+.notification-bell-list{
+  padding:0!important;
+  gap:9px!important;
+}
+.notification-bell-item{
+  background:#eef0ef!important;
+  border:0!important;
+  border-radius:28px!important;
+  box-shadow:0 5px 18px rgba(27,36,31,.10)!important;
+  min-height:0!important;
+}
+.notification-bell-item-content{
+  background:#eef0ef!important;
+  border-radius:28px!important;
+  padding:12px 15px!important;
+  grid-template-columns:40px minmax(0,1fr)!important;
+  gap:11px!important;
+  align-items:center!important;
+}
+.notification-bell-item.unread .notification-bell-item-content{
+  background:#eef0ef!important;
+}
+.notification-bell-item-icon{
+  width:40px!important;
+  height:40px!important;
+  border-radius:50%!important;
+}
+.notification-bell-item-content strong{font-size:.9rem!important}
+.notification-bell-item-content p{font-size:.76rem!important;margin:2px 0!important}
+.notification-bell-item-content small{font-size:.66rem!important}
+.notification-update-whats-new{
+  background:transparent!important;
+  border:0!important;
+  padding:4px 0!important;
+}
+.notification-bell-footer{
+  background:transparent!important;
+  border:0!important;
+  padding:9px 4px 0!important;
+}
+.notification-bell-footer button{
+  background:#eef0ef!important;
+  border-radius:999px!important;
+  padding:7px 11px!important;
+}
+body.app-dark-mode .notification-bell-panel{background:transparent!important}
+body.app-dark-mode .notification-bell-item,
+body.app-dark-mode .notification-bell-item-content,
+body.app-dark-mode .notification-bell-item.unread .notification-bell-item-content{
+  background:#353a37!important;
+}
