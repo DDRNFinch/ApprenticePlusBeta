@@ -2,6 +2,16 @@
   "latest": "V2.13",
   "releases": [
     {
+      "version": "V2.14",
+      "title": "Evidence PDF layout update",
+      "features": [
+        "Evidence PDFs now aim to fit each evidence submission onto one A4 page where practical.",
+        "Photo evidence supports up to three photographs on one page.",
+        "Evidence signatures are positioned in a reserved area at the bottom of the page.",
+        "Updated asset and service-worker cache versions so the new PDF generator loads immediately after updating."
+      ]
+    },
+    {
       "version": "V2.13",
       "date": "2026-08-08",
       "title": "EV card root interaction repair",
