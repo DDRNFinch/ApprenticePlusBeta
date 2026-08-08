@@ -5163,3 +5163,64 @@ p,.muted,.subtitle{line-height:1.48}
 .course-qr-video-wrap video{width:100%;height:100%;object-fit:cover}
 .course-qr-frame{position:absolute;inset:16%;border:3px solid rgba(255,255,255,.92);border-radius:28px;box-shadow:0 0 0 999px rgba(0,0,0,.16)}
 .course-qr-image-button{display:flex!important;align-items:center;justify-content:center}
+
+/* V2.40 — compact full-width Monthly Upload */
+.monthly-portfolio-card.monthly-portfolio-v240{
+  width:100%!important;
+  max-width:none!important;
+  min-width:0!important;
+  grid-column:1 / -1!important;
+  justify-self:stretch!important;
+  align-self:stretch!important;
+  margin:14px 0 0!important;
+  padding:16px 18px!important;
+  box-sizing:border-box!important;
+  display:grid!important;
+  gap:13px!important;
+  border-radius:24px!important;
+  background:rgba(255,255,255,.94)!important;
+  border:1px solid #e5ece3!important;
+  box-shadow:0 7px 22px rgba(35,70,43,.055)!important;
+}
+.monthly-v240-top{display:flex;align-items:center;justify-content:space-between;gap:14px;width:100%;min-width:0}
+.monthly-v240-heading{display:flex;align-items:baseline;gap:9px;min-width:0}
+.monthly-v240-heading>span{font-size:.68rem;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:#55ad2b}
+.monthly-v240-heading>strong{font-size:1.02rem;font-weight:750;color:#1b2821;letter-spacing:-.02em}
+.monthly-v240-right{display:flex;align-items:center;gap:9px;flex:0 0 auto}
+.monthly-v240-right small{font-size:.69rem;color:#7b8780}
+.monthly-v240-right>span{padding:6px 9px;border-radius:999px;background:#edf6e9;color:#387e24;font-size:.68rem;font-weight:750}
+.monthly-v240-main{
+  display:grid!important;
+  grid-template-columns:minmax(240px,1.15fr) minmax(190px,.9fr) minmax(150px,.55fr)!important;
+  align-items:center!important;
+  gap:14px!important;
+  width:100%!important;
+  min-width:0!important;
+}
+.monthly-v240-metrics{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:7px!important;min-width:0}
+.monthly-v240-metrics>div{display:flex;align-items:baseline;justify-content:center;gap:5px;padding:9px 7px;border-radius:15px;background:#f3f7f1;min-width:0}
+.monthly-v240-metrics b{font-size:.92rem;color:#21382a;line-height:1;font-weight:780}
+.monthly-v240-metrics span{font-size:.66rem;color:#748077;font-weight:650;white-space:nowrap}
+.monthly-v240-storage{display:grid;gap:6px;min-width:0}
+.monthly-v240-storage>div:first-child{display:flex;justify-content:space-between;align-items:center;gap:9px;font-size:.68rem;color:#7a867e}
+.monthly-v240-storage b{font-size:.7rem;color:#425047}
+.monthly-v240-meter{height:6px!important;margin:0!important;background:#e9f0e7!important;border-radius:999px!important;overflow:hidden}
+.monthly-v240-meter span{background:#55b928!important;border-radius:999px!important}
+.monthly-v240-download{width:100%!important;min-height:40px!important;margin:0!important;padding:10px 12px!important;font-size:.76rem!important}
+.monthly-v240-followup{display:grid!important;grid-template-columns:1fr 1fr!important;gap:9px!important;width:100%!important}
+.monthly-v240-followup .btn{width:100%!important;min-height:38px!important;margin:0!important;padding:9px 12px!important;font-size:.74rem!important}
+@media(max-width:680px){
+ .monthly-portfolio-card.monthly-portfolio-v240{padding:14px!important;gap:11px!important}
+ .monthly-v240-top{align-items:flex-start}
+ .monthly-v240-heading{display:grid;gap:1px}
+ .monthly-v240-right small{display:none}
+ .monthly-v240-main{grid-template-columns:1fr!important;gap:9px!important}
+ .monthly-v240-metrics>div{padding:8px 5px}
+ .monthly-v240-storage{grid-template-columns:auto minmax(100px,1fr);align-items:center;gap:9px}
+ .monthly-v240-storage>div:first-child{display:grid;gap:0;white-space:nowrap}
+ .monthly-v240-download{min-height:40px!important}
+}
+/* V2.40 — course QR sheet */
+.custom-course-qr-card{max-width:760px!important}
+#customCourseQrCanvas{width:100%;overflow:auto;display:flex;justify-content:center}
+#customCourseQrCanvas>canvas{display:block;max-width:100%;height:auto;border-radius:18px;background:#fff}

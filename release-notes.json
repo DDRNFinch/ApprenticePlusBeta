@@ -1,6 +1,17 @@
 {
-  "latest": "V2.39",
+  "latest": "V2.40",
   "releases": [
+    {
+      "version": "V2.40",
+      "date": "2026-08-08",
+      "title": "Compact Monthly Upload and large-course QR support",
+      "features": [
+        "Monthly Upload rebuilt as a shorter full-width Home card with compact metrics, storage and actions.",
+        "Large developer-created courses no longer fail with QR code length overflow.",
+        "Courses that exceed one QR symbol are automatically split into numbered QR parts on one saved QR sheet.",
+        "The learner Course QR scanner automatically collects and combines every numbered part before installing the course."
+      ]
+    },
     {
       "version": "V2.39",
       "date": "2026-08-08",

@@ -245,7 +245,7 @@ function learnerPromptTitle(assignmentNumber,code,fallback){
  return LEARNER_PROMPTS[COURSE.id]?.[assignmentNumber]?.[code]||fallback;
 }
 
-const APP_VERSION='V2.39';
+const APP_VERSION='V2.40';
 function paintPdfPageBackground(ctx,W,H){ctx.fillStyle='#ffffff';ctx.fillRect(0,0,W,H);const r=Math.min(W,H)*0.58,g=ctx.createRadialGradient(0,0,0,0,0,r);g.addColorStop(0,'#DDF3D6');g.addColorStop(.42,'#EFF8EC');g.addColorStop(1,'#FFFFFF');ctx.fillStyle=g;ctx.fillRect(0,0,W,H)}
 
 const PORTFOLIO_UPLOAD_LIMIT_BYTES=1_000_000_000;
@@ -6135,31 +6135,49 @@ async function gunzipText(bytes){
  if(!window.DecompressionStream)return new TextDecoder().decode(bytes);
  const stream=new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'));return await new Response(stream).text();
 }
-async function customCourseQrPayload(course){
- const bytes=await gzipText(JSON.stringify(customCourseCompact(course)));
- const encoded=bytesToBase64Url(bytes);
- return `${location.origin}${location.pathname}#apcourse=${encoded}`;
+function customCourseQrKey(course){return String(course.id||'course').replace(/[^a-z0-9]/gi,'').slice(-12)||Math.random().toString(36).slice(2,10)}
+async function customCourseQrPayloads(course){
+ const bytes=await gzipText(JSON.stringify(customCourseCompact(course))),encoded=bytesToBase64Url(bytes),key=customCourseQrKey(course);
+ // QR8bitByte has a hard physical payload limit. Keep well below the maximum
+ // so every generated symbol remains readable on real phone cameras.
+ const chunkSize=2200,total=Math.max(1,Math.ceil(encoded.length/chunkSize)),payloads=[];
+ for(let i=0;i<total;i++)payloads.push(`APC2|${key}|${i+1}/${total}|${encoded.slice(i*chunkSize,(i+1)*chunkSize)}`);
+ return payloads;
 }
-async function decodeCustomCoursePayload(raw){
- let value=String(raw||'').trim(),encoded='';
- try{const url=new URL(value,location.href);encoded=url.hash.startsWith('#apcourse=')?url.hash.slice(10):''}catch{}
- if(!encoded&&value.startsWith('APCOURSE1:'))encoded=value.slice(10);
- if(!encoded)throw new Error('This is not an Apprentice+ course QR code');
+async function decodeCustomCourseEncoded(encoded){
  const json=await gunzipText(base64UrlToBytes(encoded)),c=JSON.parse(json);
  if(!c?.n||!Array.isArray(c.a))throw new Error('Course data is incomplete');
  return {id:c.i||customCourseId(c.n),name:c.n,standard:'Custom',version:'1.0',level:'',nvqUnits:!!c.v,evidenceRequirement:Math.max(1,Number(c.q)||2),assignments:c.a.map((row,i)=>({n:i+1,title:String(row?.[0]||`Evidence Pack ${i+1}`),ksbs:Array.isArray(row?.[1])?row[1]:[]})),custom:true};
 }
+async function decodeCustomCoursePayload(raw){
+ let value=String(raw||'').trim(),encoded='';
+ // Backward compatibility with V2.38 single-QR links.
+ try{const url=new URL(value,location.href);encoded=url.hash.startsWith('#apcourse=')?url.hash.slice(10):''}catch{}
+ if(!encoded&&value.startsWith('APCOURSE1:'))encoded=value.slice(10);
+ if(encoded)return decodeCustomCourseEncoded(encoded);
+ if(value.startsWith('APC2|'))throw new Error('This is one part of a multi-part Apprentice+ course QR. Scan it from the Apprentice+ course scanner.');
+ throw new Error('This is not an Apprentice+ course QR code');
+}
+function drawCourseQrSheet(canvases,course){
+ const cols=canvases.length===1?1:Math.min(2,canvases.length),cell=460,labelH=64,pad=28,rows=Math.ceil(canvases.length/cols),sheet=document.createElement('canvas');
+ sheet.width=cols*cell+pad*2;sheet.height=rows*(cell+labelH)+pad*2;
+ const x=sheet.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,sheet.width,sheet.height);x.fillStyle='#18231e';x.font='700 24px Arial';x.textAlign='center';
+ canvases.forEach((canvas,i)=>{const col=i%cols,row=Math.floor(i/cols),left=pad+col*cell,top=pad+row*(cell+labelH);x.drawImage(canvas,left+(cell-canvas.width)/2,top,canvas.width,canvas.height);x.fillText(canvases.length===1?'Course QR':`Course QR ${i+1} of ${canvases.length}`,left+cell/2,top+canvas.height+38)});
+ return sheet;
+}
 async function showCustomCourseQr(course){
  document.getElementById('customCourseQrModal')?.remove();
- app.insertAdjacentHTML('beforeend',`<div class="modal" id="customCourseQrModal"><div class="modal-card custom-course-qr-card"><h2>${esc(course.name)}</h2><div id="customCourseQrCanvas"><div class="muted">Creating QR code…</div></div><p class="muted">Learners can scan this from the course selector. The same QR can install the course on multiple learner devices.</p><div class="btn-row"><button class="btn" id="downloadCustomCourseQr" disabled>Save QR image</button><button class="btn secondary" id="closeCustomCourseQr">Close</button></div></div></div>`);
+ app.insertAdjacentHTML('beforeend',`<div class="modal" id="customCourseQrModal"><div class="modal-card custom-course-qr-card"><h2>${esc(course.name)}</h2><div id="customCourseQrCanvas"><div class="muted">Creating course QR…</div></div><p class="muted" id="customCourseQrHelp">Learners scan this from <strong>Course → Scan QR Code</strong>. The same QR can be used by the whole class.</p><div class="btn-row"><button class="btn" id="downloadCustomCourseQr" disabled>Save QR image</button><button class="btn secondary" id="closeCustomCourseQr">Close</button></div></div></div>`);
  document.getElementById('closeCustomCourseQr').onclick=()=>document.getElementById('customCourseQrModal')?.remove();
- const host=document.getElementById('customCourseQrCanvas');
+ const host=document.getElementById('customCourseQrCanvas'),help=document.getElementById('customCourseQrHelp');
  try{
-  const payload=await customCourseQrPayload(course);
+  const payloads=await customCourseQrPayloads(course);
   if(!window.ApprenticeQR)throw new Error('QR generator unavailable');
-  const canvas=window.ApprenticeQR.toCanvas(payload,420);host.innerHTML='';host.appendChild(canvas);
-  const save=document.getElementById('downloadCustomCourseQr');save.disabled=false;save.onclick=()=>{const a=document.createElement('a');a.href=canvas.toDataURL('image/png');a.download=`${course.name.replace(/[^a-z0-9]+/gi,'-')}-Course-QR.png`;a.click()};
- }catch(error){console.error('Course QR generation failed',error);host.innerHTML=`<div class="admin-note">Unable to create the QR code for this course. ${esc(error?.message||'')}</div>`}
+  const canvases=payloads.map(payload=>window.ApprenticeQR.toCanvas(payload,420)),sheet=drawCourseQrSheet(canvases,course);
+  host.innerHTML='';host.appendChild(sheet);
+  if(payloads.length>1)help.innerHTML=`This course contains too much information for one physical QR symbol, so Apprentice+ created a <strong>${payloads.length}-part course QR</strong>. Learners scan each numbered code once; Apprentice+ combines them automatically. The same saved QR sheet can be shared with the whole class.`;
+  const save=document.getElementById('downloadCustomCourseQr');save.disabled=false;save.onclick=()=>{const a=document.createElement('a');a.href=sheet.toDataURL('image/png');a.download=`${course.name.replace(/[^a-z0-9]+/gi,'-')}-Course-QR.png`;a.click()};
+ }catch(error){console.error('Course QR generation failed',error);host.innerHTML=`<div class="admin-note">Unable to create the course QR. ${esc(error?.message||'')}</div>`}
 }
 async function importCustomCourseFromQr(raw,selectElement=null){
  const course=await decodeCustomCoursePayload(raw);await saveCustomCourse(course);
@@ -6167,20 +6185,34 @@ async function importCustomCourseFromQr(raw,selectElement=null){
  toast(`${course.name} installed`);
  return course;
 }
-let courseQrScannerStream=null,courseQrScannerTimer=null;
-function closeCourseQrScanner(){clearTimeout(courseQrScannerTimer);courseQrScannerTimer=null;if(courseQrScannerStream){courseQrScannerStream.getTracks().forEach(t=>t.stop());courseQrScannerStream=null}document.getElementById('courseQrScanner')?.remove()}
+let courseQrScannerStream=null,courseQrScannerTimer=null,courseQrParts={};
+function closeCourseQrScanner(){clearTimeout(courseQrScannerTimer);courseQrScannerTimer=null;if(courseQrScannerStream){courseQrScannerStream.getTracks().forEach(t=>t.stop());courseQrScannerStream=null}courseQrParts={};document.getElementById('courseQrScanner')?.remove()}
+async function acceptCourseQrPart(raw,selectElement,status){
+ const value=String(raw||'').trim();
+ if(!value.startsWith('APC2|')){const course=await importCustomCourseFromQr(value,selectElement);return {done:true,course}}
+ const match=value.match(/^APC2\|([^|]+)\|(\d+)\/(\d+)\|(.+)$/);if(!match)throw new Error('This course QR part is invalid');
+ const [,key,partRaw,totalRaw,chunk]=match,part=Number(partRaw),total=Number(totalRaw);if(!part||!total||part>total)throw new Error('This course QR part is invalid');
+ if(!courseQrParts[key]||courseQrParts[key].total!==total)courseQrParts[key]={total,chunks:{}};
+ courseQrParts[key].chunks[part]=chunk;const have=Object.keys(courseQrParts[key].chunks).length;
+ if(have<total){if(status)status.textContent=`Course QR ${have} of ${total} scanned. Scan the remaining numbered code${total-have===1?'':'s'}.`;return {done:false,have,total}}
+ const encoded=Array.from({length:total},(_,i)=>courseQrParts[key].chunks[i+1]||'').join('');if(!encoded)throw new Error('Course QR data is incomplete');
+ const course=await decodeCustomCourseEncoded(encoded);await saveCustomCourse(course);
+ if(selectElement){let option=[...selectElement.options].find(o=>o.value===course.id);if(!option){option=document.createElement('option');option.value=course.id;option.textContent=`${course.name} 1.0 (Custom)`;selectElement.appendChild(option)}selectElement.value=course.id}
+ delete courseQrParts[key];toast(`${course.name} installed`);return {done:true,course};
+}
 async function showCourseQrScanner(selectElement){
  closeCourseQrScanner();
  const modal=document.createElement('div');modal.className='modal';modal.id='courseQrScanner';modal.innerHTML=`<div class="modal-card course-qr-scanner-card"><h2>Scan course QR code</h2><div class="course-qr-video-wrap"><video id="courseQrVideo" playsinline muted></video><div class="course-qr-frame"></div></div><p class="muted" id="courseQrStatus">Point the camera at the Apprentice+ course QR code.</p><div class="btn-row"><label class="btn secondary course-qr-image-button">Scan saved QR image<input id="courseQrImage" type="file" accept="image/*" hidden></label><button class="btn secondary" id="closeCourseQrScanner">Cancel</button></div></div>`;document.body.appendChild(modal);
  document.getElementById('closeCourseQrScanner').onclick=closeCourseQrScanner;
  const status=document.getElementById('courseQrStatus'),video=document.getElementById('courseQrVideo');
- if(!('BarcodeDetector' in window)){status.textContent='QR scanning is not supported by this browser. Open the QR with your phone camera instead; it will open Apprentice+ and install the course.';return}
+ if(!('BarcodeDetector' in window)){status.textContent='QR scanning is not supported by this browser. Use a supported Chrome/Android device or select a saved QR image.';return}
  const detector=new BarcodeDetector({formats:['qr_code']});
- const accept=async raw=>{try{await importCustomCourseFromQr(raw,selectElement);closeCourseQrScanner()}catch(error){status.textContent=error?.message||'That QR code is not a valid Apprentice+ course.'}};
- document.getElementById('courseQrImage').onchange=async e=>{const file=e.target.files?.[0];if(!file)return;try{const image=await createImageBitmap(file),codes=await detector.detect(image);if(codes[0]?.rawValue)await accept(codes[0].rawValue);else status.textContent='No QR code was found in that image.'}catch(error){status.textContent='Unable to read that QR image.'}};
+ const accept=async raw=>{try{const result=await acceptCourseQrPart(raw,selectElement,status);if(result?.done)closeCourseQrScanner();return result}catch(error){status.textContent=error?.message||'That QR code is not a valid Apprentice+ course.'}};
+ document.getElementById('courseQrImage').onchange=async e=>{const file=e.target.files?.[0];if(!file)return;try{const image=await createImageBitmap(file),codes=await detector.detect(image);if(!codes.length){status.textContent='No QR code was found in that image.';return}for(const code of codes){const result=await accept(code.rawValue);if(result?.done)return}if(codes.length>1&&!document.getElementById('courseQrScanner'))return}catch(error){status.textContent='Unable to read that QR image.'}};
  try{
   courseQrScannerStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}}});video.srcObject=courseQrScannerStream;await video.play();
-  const scan=async()=>{if(!document.getElementById('courseQrScanner'))return;try{const codes=await detector.detect(video);if(codes[0]?.rawValue){await accept(codes[0].rawValue);return}}catch{}courseQrScannerTimer=setTimeout(scan,180)};scan();
+  let lastRaw='',lastAt=0;
+  const scan=async()=>{if(!document.getElementById('courseQrScanner'))return;try{const codes=await detector.detect(video),raw=codes[0]?.rawValue||'';if(raw&&(raw!==lastRaw||Date.now()-lastAt>1800)){lastRaw=raw;lastAt=Date.now();const result=await accept(raw);if(result?.done)return}}catch{}courseQrScannerTimer=setTimeout(scan,220)};scan();
  }catch(error){status.textContent='Camera access was not available. You can scan a saved QR image instead.'}
 }
 async function importCourseFromLocationHash(){
@@ -6380,36 +6412,25 @@ function showMonthlyPortfolioReminder(force=false){if(!monthlyReminderPending()|
 function checkMonthlyPortfolioReminder(){if(monthlyReminderPending())showMonthlyPortfolioReminder(false)}
 function monthlyPortfolioCard(){
  const d=portfolioDelta(),size=portfolioSizeEstimate(),last=d.status.uploadedAt?new Date(d.status.uploadedAt).toLocaleDateString('en-GB'):'Not yet',downloaded=!!d.status.downloadedAt&&!!d.status.pendingSnapshot,newItems=d.newEvidence.reduce((n,x)=>n+x.added,0),meter=Math.min(100,Math.max(0,size.totalBytes/PORTFOLIO_SAFE_TARGET_BYTES*100)),short=learningHoursShortLabel(),criterion=COURSE.nvqUnits?'LOs':'KSBs';
- const statusLabel=downloaded?'Ready to upload':(d.status.uploadedAt?'Portfolio updated':'Ready for first export');
- return `<section class="card panel entire-portfolio-card monthly-portfolio-card monthly-portfolio-refined">
-   <div class="monthly-refined-head">
-     <div class="monthly-refined-title">
-       <span class="monthly-refined-kicker">Monthly upload</span>
-       <strong>Course portfolio</strong>
+ const statusLabel=downloaded?'Ready to upload':(d.status.uploadedAt?'Updated':'Ready');
+ return `<section class="card panel entire-portfolio-card monthly-portfolio-card monthly-portfolio-v240">
+   <div class="monthly-v240-top">
+     <div class="monthly-v240-heading"><span>Monthly upload</span><strong>Course portfolio</strong></div>
+     <div class="monthly-v240-right"><small>Last upload · ${esc(last)}</small><span>${esc(statusLabel)}</span></div>
+   </div>
+   <div class="monthly-v240-main">
+     <div class="monthly-v240-metrics" aria-label="Changes since last upload">
+       <div><b>+${newItems}</b><span>Evidence</span></div>
+       <div><b>+${d.ksbGain}</b><span>${criterion}</span></div>
+       <div><b>${d.otjHours.toFixed(1)}</b><span>${short} hrs</span></div>
      </div>
-     <span class="monthly-refined-status">${esc(statusLabel)}</span>
+     <div class="monthly-v240-storage ${size.tone}">
+       <div><span>Portfolio size</span><b>${formatMediaSize(size.totalBytes)}</b></div>
+       <div class="portfolio-size-meter monthly-v240-meter" role="progressbar" aria-label="Estimated complete portfolio size" aria-valuemin="0" aria-valuemax="900" aria-valuenow="${Math.min(900,Math.round(size.totalBytes/1_000_000))}"><span style="width:${meter}%"></span></div>
+     </div>
+     <button class="btn monthly-v240-download" id="downloadEntirePortfolio">Download portfolio</button>
    </div>
-
-   <div class="monthly-refined-meta">
-     <span>Last upload <b>${esc(last)}</b></span>
-     <span>Portfolio <b>${formatMediaSize(size.totalBytes)}</b></span>
-   </div>
-
-   <div class="monthly-refined-metrics">
-     <div><b>+${newItems}</b><span>Evidence</span></div>
-     <div><b>+${d.ksbGain}</b><span>${criterion}</span></div>
-     <div><b>${d.otjHours.toFixed(1)}</b><span>${short} hrs</span></div>
-   </div>
-
-   <div class="monthly-refined-storage ${size.tone}">
-     <div class="monthly-refined-storage-row"><span>Storage</span><b>${formatMediaSize(size.totalBytes)} / 900 MB</b></div>
-     <div class="portfolio-size-meter monthly-refined-meter" role="progressbar" aria-label="Estimated complete portfolio size" aria-valuemin="0" aria-valuemax="900" aria-valuenow="${Math.min(900,Math.round(size.totalBytes/1_000_000))}"><span style="width:${meter}%"></span></div>
-   </div>
-
-   <div class="monthly-refined-actions">
-     <button class="btn monthly-refined-primary" id="downloadEntirePortfolio">${d.status.uploadedAt?'Download portfolio':'Download portfolio'}</button>
-     ${downloaded?`<div class="monthly-refined-secondary"><button class="btn secondary" id="openMonthlyPortfolio">Open</button><button class="btn" id="confirmMonthlyUpload">Uploaded</button></div>`:''}
-   </div>
+   ${downloaded?`<div class="monthly-v240-followup"><button class="btn secondary" id="openMonthlyPortfolio">Open portfolio</button><button class="btn" id="confirmMonthlyUpload">Uploaded</button></div>`:''}
  </section>`;
 }
 function wrapPdfText(ctx,text,maxWidth,font){ctx.font=font;const words=String(text||'').split(/\s+/),lines=[];let line='';for(const word of words){const test=line?`${line} ${word}`:word;if(ctx.measureText(test).width>maxWidth&&line){lines.push(line);line=word}else line=test}if(line)lines.push(line);return lines}
