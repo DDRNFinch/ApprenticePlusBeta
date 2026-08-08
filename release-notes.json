@@ -1,6 +1,17 @@
 {
-  "latest": "V2.45",
+  "latest": "V2.46",
   "releases": [
+    {
+      "version": "V2.46",
+      "date": "2026-08-08",
+      "title": "StudyMate homework",
+      "features": [
+        "Added StudyMate to MiniApps with To Do and Completed homework lists.",
+        "Developer Mode now includes StudyMate Builder for written, photo, video and voice tasks plus existing MCQ practice and EPA mocks.",
+        "Tutor homework exports as a shareable .aphomework file that learners import into StudyMate.",
+        "StudyMate automatically marks embedded MCQ/EPA questions, can create a learner .apresult file, and can add tutor-set expected learning time to OTJ/GLH when linked to an Evidence Pack."
+      ]
+    },
     {
       "version": "V2.45",
       "date": "2026-08-08",

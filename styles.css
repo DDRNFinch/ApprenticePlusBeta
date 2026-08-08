@@ -5360,3 +5360,25 @@ body,.shell{
     justify-items:stretch!important;
   }
 }
+
+/* V2.46 — StudyMate */
+.studymate-head{margin-bottom:14px}
+.studymate-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:12px 0 18px}
+.studymate-toolbar .tabs{flex:1}
+.studymate-toolbar .tab span{font-size:.68rem;opacity:.7}
+.studymate-import{margin:0!important;white-space:nowrap}
+.studymate-list{display:grid;gap:12px}
+.studymate-card{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:18px;border-radius:24px;background:#fff;border:1px solid #e6ede4;box-shadow:var(--shadow)}
+.studymate-card.complete{background:#f6fbf3}
+.studymate-card-main{min-width:0}.studymate-card-main small{font-size:.7rem;color:#65a447;font-weight:750}.studymate-card-main h3{margin:3px 0 5px;font-size:1rem}.studymate-card-main p{margin:0;color:#718078;font-size:.78rem}
+.studymate-meta{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}.studymate-meta span{padding:5px 8px;border-radius:999px;background:#eef4ec;font-size:.66rem;color:#5d6b62;font-weight:700}
+.studymate-card-actions{display:flex;gap:7px;align-items:center;flex:0 0 auto}.studymate-card-actions .btn{margin:0!important;padding:9px 12px!important;font-size:.72rem!important}.studymate-delete{font-size:.68rem}
+.studymate-empty{text-align:center;margin-bottom:0!important}
+.studymate-homework-title{margin:12px 2px 18px}.studymate-homework-title small{color:#62a843;font-weight:750}.studymate-homework-title h2{margin:3px 0}.studymate-homework-title>span{font-size:.72rem;color:#748179}
+.studymate-task{margin-bottom:14px!important}.studymate-task textarea{margin-top:12px}.studymate-answer-file{display:flex!important;width:100%!important;align-items:center;justify-content:center;gap:7px;margin-top:16px!important}
+.studymate-file-saved{padding:10px 12px;margin-top:12px;border-radius:14px;background:#eef7e9;color:#397d27;font-weight:700;font-size:.76rem}
+.studymate-navigation{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0}.studymate-navigation .btn{width:100%!important;margin:0!important}
+.studymate-builder{max-width:760px!important}.studymate-builder-grid{display:grid;grid-template-columns:1fr 1fr;gap:13px}.studymate-builder-wide{grid-column:1/-1}
+.studymate-builder-list{margin:18px 0;padding:14px;border-radius:20px;background:#f5f8f3}.studymate-builder-row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid #e4ebe2}.studymate-builder-row:last-child{border-bottom:0}.studymate-builder-row span{display:grid;gap:2px}.studymate-builder-row small{font-size:.68rem;color:#758078}
+.studymate-builder-add{display:grid;gap:12px;padding:15px;border:1px solid #e4ebe2;border-radius:20px;margin-bottom:16px}
+@media(max-width:620px){.studymate-toolbar{display:grid}.studymate-import{width:100%!important}.studymate-card{display:grid}.studymate-card-actions{width:100%}.studymate-card-actions .btn{flex:1}.studymate-builder-grid{grid-template-columns:1fr}.studymate-builder-wide{grid-column:auto}}

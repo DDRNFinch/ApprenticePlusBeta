@@ -245,7 +245,7 @@ function learnerPromptTitle(assignmentNumber,code,fallback){
  return LEARNER_PROMPTS[COURSE.id]?.[assignmentNumber]?.[code]||fallback;
 }
 
-const APP_VERSION='V2.45';
+const APP_VERSION='V2.46';
 function paintPdfPageBackground(ctx,W,H){ctx.fillStyle='#ffffff';ctx.fillRect(0,0,W,H);const r=Math.min(W,H)*0.58,g=ctx.createRadialGradient(0,0,0,0,0,r);g.addColorStop(0,'#DDF3D6');g.addColorStop(.42,'#EFF8EC');g.addColorStop(1,'#FFFFFF');ctx.fillStyle=g;ctx.fillRect(0,0,W,H)}
 
 const PORTFOLIO_UPLOAD_LIMIT_BYTES=1_000_000_000;
@@ -997,7 +997,7 @@ function ensureVideoSubmissionBottomSpacer(){
 const REMOVED_APPRENTICE_PASS_KEY='apprenticeplus.permanentPass.v1';
 try{localStorage.removeItem(REMOVED_APPRENTICE_PASS_KEY)}catch{}
 
-function render(){const reopenAdmin=adminModalOpen&&state.dev;const pageSignature=currentPageSignature();recordNavigation();if(state.view==='toolkit')renderToolkit();else if(state.view==='course')renderCourse();else if(state.view==='resources')renderToolkit();else if(state.view==='notepad')renderNotepad();else if(state.view==='tools')renderTools();else if(state.view==='measuremate')renderMeasureMate();else if(state.view==='materialmate')renderMaterialMate();else if(state.view==='drawingmate')renderDrawingMate();else if(state.view==='cadmate')renderCADMate();else if(state.view==='skillscard')renderSkillsCard();else if(state.view==='feedbackmate')renderFeedbackMate();else if(state.view==='projectmate')renderProjectMate();else if(state.view==='otjmate')renderOTJMate();else if(state.view==='remindmate')renderRemindMate();else if(state.view==='reviewmate')renderReviewMate();else if(state.view==='learning-support')renderLearningSupport();else if(state.view==='settings')renderSettings();else if(state.view==='home')renderHome();else if(state.view==='progress')renderProgressPage();else if(state.view==='assignment')renderAssignment();else if(state.view==='academy')renderToolkit();else if(state.view==='library'||state.view==='trade-courses')renderTradeCourses();else if(state.view==='trade-test')renderTradeCourseTest();else if(state.view==='trade-result')renderTradeCourseResult();else if(state.view==='functional-skills')renderFunctionalSkills();else if(state.view==='knowledge-slides')renderKnowledgeSlides();else if(state.view==='academy-knowledge')renderAcademyKnowledge();else if(state.view==='functional-test')renderFunctionalSkillsTest();else if(state.view==='functional-result')renderFunctionalSkillsResult();else if(state.view==='certificates')renderCertificates();else if(state.view==='lesson')renderAcademyLesson();else if(state.view==='epa')COURSE.nvqUnits?renderNvqCompletion():renderEpaMockHome();else if(state.view==='epa-results')renderEpaResults();else if(state.view==='epa-test')renderEpaMockTest();else if(state.view==='epa-result')renderEpaMockResult();else if(state.view==='epa-discussion')renderEpaDiscussion();else if(state.view==='epa-discussion-result')renderEpaDiscussionResult();else if(state.view==='epa-practical')renderEpaPractical();else if(state.view==='knowledge-test')renderAssignmentKnowledgeTest();else if(state.view==='knowledge-result')renderAssignmentKnowledgeResult();else if(state.view==='walkthrough')renderWalkthrough();else renderSection();ensureVideoSubmissionBottomSpacer();enhanceVoiceToText(app);applyAccessibilityToCurrentView();syncReadAloudControl();attachPageHelp();scrollNewPageToTop(pageSignature);queueMicrotask(refreshAppNotifications);if(reopenAdmin)queueMicrotask(()=>showDeveloper())}
+function render(){const reopenAdmin=adminModalOpen&&state.dev;const pageSignature=currentPageSignature();recordNavigation();if(state.view==='toolkit')renderToolkit();else if(state.view==='course')renderCourse();else if(state.view==='resources')renderToolkit();else if(state.view==='notepad')renderNotepad();else if(state.view==='studymate')renderStudyMate();else if(state.view==='studymate-homework')renderStudyMateHomework();else if(state.view==='tools')renderTools();else if(state.view==='measuremate')renderMeasureMate();else if(state.view==='materialmate')renderMaterialMate();else if(state.view==='drawingmate')renderDrawingMate();else if(state.view==='cadmate')renderCADMate();else if(state.view==='skillscard')renderSkillsCard();else if(state.view==='feedbackmate')renderFeedbackMate();else if(state.view==='projectmate')renderProjectMate();else if(state.view==='otjmate')renderOTJMate();else if(state.view==='remindmate')renderRemindMate();else if(state.view==='reviewmate')renderReviewMate();else if(state.view==='learning-support')renderLearningSupport();else if(state.view==='settings')renderSettings();else if(state.view==='home')renderHome();else if(state.view==='progress')renderProgressPage();else if(state.view==='assignment')renderAssignment();else if(state.view==='academy')renderToolkit();else if(state.view==='library'||state.view==='trade-courses')renderTradeCourses();else if(state.view==='trade-test')renderTradeCourseTest();else if(state.view==='trade-result')renderTradeCourseResult();else if(state.view==='functional-skills')renderFunctionalSkills();else if(state.view==='knowledge-slides')renderKnowledgeSlides();else if(state.view==='academy-knowledge')renderAcademyKnowledge();else if(state.view==='functional-test')renderFunctionalSkillsTest();else if(state.view==='functional-result')renderFunctionalSkillsResult();else if(state.view==='certificates')renderCertificates();else if(state.view==='lesson')renderAcademyLesson();else if(state.view==='epa')COURSE.nvqUnits?renderNvqCompletion():renderEpaMockHome();else if(state.view==='epa-results')renderEpaResults();else if(state.view==='epa-test')renderEpaMockTest();else if(state.view==='epa-result')renderEpaMockResult();else if(state.view==='epa-discussion')renderEpaDiscussion();else if(state.view==='epa-discussion-result')renderEpaDiscussionResult();else if(state.view==='epa-practical')renderEpaPractical();else if(state.view==='knowledge-test')renderAssignmentKnowledgeTest();else if(state.view==='knowledge-result')renderAssignmentKnowledgeResult();else if(state.view==='walkthrough')renderWalkthrough();else renderSection();ensureVideoSubmissionBottomSpacer();enhanceVoiceToText(app);applyAccessibilityToCurrentView();syncReadAloudControl();attachPageHelp();scrollNewPageToTop(pageSignature);queueMicrotask(refreshAppNotifications);if(reopenAdmin)queueMicrotask(()=>showDeveloper())}
 
 let activeSpeechRecognition=null;
 let activeSpeechButton=null;
@@ -5122,6 +5122,150 @@ function animateHomeProgressRings(){
  const tick=now=>{const t=Math.min(1,(now-start)/duration),e=ease(t);bands.forEach(b=>{const target=Number(b.dataset.ringValue)||0;b.style.setProperty('--ring-value',`${target*e}deg`)});if(t<1)requestAnimationFrame(tick)};
  requestAnimationFrame(tick);
 }
+
+const STUDYMATE_KEY='studymateHomework:v1';
+const STUDYMATE_FILE_VERSION=1;
+let studyMateDraft=null;
+
+function studyMateItems(){const value=state.data?.[STUDYMATE_KEY];return Array.isArray(value)?value:[]}
+async function saveStudyMateItems(items){state.data[STUDYMATE_KEY]=items;await saveData()}
+function studyMateHomeworkFileName(hw){return `${String(hw.title||'StudyMate-Homework').replace(/[^a-z0-9]+/gi,'-').replace(/^-|-$/g,'')||'StudyMate-Homework'}.aphomework`}
+function normaliseStudyQuestion(q,source='mcq'){
+ const options=Array.isArray(q?.options)?q.options.map(String):[];
+ const correct=Number(q?.correct);
+ return {id:String(q?.id||uid()),source,code:String(q?.ksb||q?.code||''),question:String(q?.question||''),options,correct:Number.isFinite(correct)?correct:0};
+}
+function studyMateCourseAssignments(){return courseAssignments().filter(a=>a&&!a.selectOptional)}
+function studyMatePackLabel(a){return `EP${a.n} · ${a.title}`}
+function studyMateAssignmentQuestions(n){
+ const a=assignment(Number(n));if(!a)return[];
+ try{return approvedAssignmentQuestionBank(a).map(q=>normaliseStudyQuestion(q,'mcq'))}catch{return[]}
+}
+function studyMateEpaQuestions(){
+ try{return epaKnowledgeBankStatus().questions.map(q=>normaliseStudyQuestion(q,'epa'))}catch{return[]}
+}
+function studyMatePortable(hw){
+ return {format:'ApprenticePlusHomework',fileVersion:STUDYMATE_FILE_VERSION,homework:{...hw,answers:undefined,result:undefined,completedAt:undefined,importedAt:undefined}};
+}
+function downloadStudyMateHomework(hw){
+ const blob=new Blob([JSON.stringify(studyMatePortable(hw),null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=studyMateHomeworkFileName(hw);document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1200);
+}
+function validateStudyMateFile(parsed){
+ if(parsed?.format!=='ApprenticePlusHomework'||Number(parsed.fileVersion)!==STUDYMATE_FILE_VERSION||!parsed.homework)throw new Error('This is not a valid StudyMate homework file');
+ const h=parsed.homework;if(!h.title||!Array.isArray(h.activities)||!h.activities.length)throw new Error('The homework file is incomplete');
+ return {...h,id:String(h.id||uid()),title:String(h.title),instructions:String(h.instructions||''),courseId:String(h.courseId||''),courseName:String(h.courseName||''),assignment:Number(h.assignment||0),dueDate:String(h.dueDate||''),expectedMinutes:Math.max(0,Number(h.expectedMinutes)||0),activities:h.activities.map((a,i)=>({...a,id:String(a.id||`activity-${i+1}`)})),answers:{},result:null,completedAt:'',importedAt:new Date().toISOString()};
+}
+async function importStudyMateHomework(file){
+ if(!file)return;if(!/\.aphomework$/i.test(file.name||''))throw new Error('Choose a StudyMate .aphomework file');
+ if(file.size>15*1024*1024)throw new Error('That homework file is too large');
+ let parsed;try{parsed=JSON.parse(await file.text())}catch{throw new Error('The homework file could not be read')}
+ const hw=validateStudyMateFile(parsed),items=studyMateItems(),existing=items.findIndex(x=>x.id===hw.id);
+ if(existing>=0)items[existing]={...items[existing],...hw};else items.unshift(hw);
+ await saveStudyMateItems(items);toast(`${hw.title} imported`);
+}
+function studyMateStatus(hw){return hw.completedAt?'completed':'todo'}
+function studyMateBadgeCount(){return studyMateItems().filter(h=>!h.completedAt).length}
+function studyMateActivityLabel(a){return a.type==='written'?'Written task':a.type==='photo'?'Photo task':a.type==='video'?'Video task':a.type==='voice'?'Voice task':a.type==='mcq'?'MCQ practice':a.type==='epa'?'EPA mock':'Task'}
+function studyMateHomeworkReady(hw){
+ const answers=hw.answers||{};
+ return (hw.activities||[]).every(a=>{
+  const v=answers[a.id];
+  if(a.type==='mcq'||a.type==='epa')return v&&Object.keys(v.answers||{}).length===(a.questions||[]).length;
+  if(a.type==='written')return !!String(v?.text||'').trim();
+  if(a.type==='photo'||a.type==='video'||a.type==='voice')return !!v?.data;
+  return true;
+ });
+}
+function studyMateScore(hw){
+ let correct=0,total=0;
+ (hw.activities||[]).filter(a=>a.type==='mcq'||a.type==='epa').forEach(a=>{const ans=hw.answers?.[a.id]?.answers||{};(a.questions||[]).forEach((q,i)=>{total++;if(Number(ans[i])===Number(q.correct))correct++})});
+ return {correct,total,percent:total?Math.round(correct/total*100):null};
+}
+async function addStudyMateLearningHours(hw){
+ const minutes=Math.max(0,Number(hw.expectedMinutes)||0),assignmentNumber=Number(hw.assignment||0);if(!minutes||!assignmentNumber)return;
+ const arr=otjEntries(),marker=`studymate:${hw.id}`;if(arr.some(e=>e.studyMateId===marker))return;
+ arr.unshift({id:uid(),studyMateId:marker,date:today(),hours:Number((minutes/60).toFixed(2)),assignment:assignmentNumber,place:'Independent study',activityType:'StudyMate homework',subjectTitle:hw.title,did:`Completed tutor-set StudyMate homework: ${hw.title}`,learned:'Tutor-set independent learning activity completed.',portfolioBuilding:false,createdAt:Date.now()});
+ saveOtjEntries(arr);
+ try{await refreshLatestEvidencePackPdf(assignmentNumber)}catch(error){console.warn('StudyMate learning-hours PDF refresh failed',error)}
+}
+function studyMateResultPayload(hw){
+ const score=studyMateScore(hw);return {format:'ApprenticePlusHomeworkResult',fileVersion:1,result:{homeworkId:hw.id,title:hw.title,learner:state.profile?.fullName||'',course:COURSE.name,completedAt:hw.completedAt,score,answers:hw.answers||{}}};
+}
+function downloadStudyMateResult(hw){
+ const payload=studyMateResultPayload(hw),blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=`${String(state.profile?.fullName||'Learner').replace(/[^a-z0-9]+/gi,'-')}-${String(hw.title).replace(/[^a-z0-9]+/gi,'-')}.apresult`;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1200);
+}
+function renderStudyMate(){
+ const items=studyMateItems(),tab=state.studyMateTab||'todo',rows=items.filter(h=>tab==='completed'?!!h.completedAt:!h.completedAt);
+ app.innerHTML=shell(`<button class="back no-print" id="studyMateBack">← Toolkit</button><section class="academy-destination-head studymate-head"><div class="academy-destination-icon">${appIcon('revision')}</div><div><div class="number">Miniapp</div><h2>StudyMate</h2><p class="muted">Tutor-set learning and practice.</p></div></section>
+ <section class="studymate-toolbar"><div class="tabs"><button class="tab ${tab==='todo'?'active':''}" data-study-tab="todo">To Do <span>${items.filter(h=>!h.completedAt).length}</span></button><button class="tab ${tab==='completed'?'active':''}" data-study-tab="completed">Completed <span>${items.filter(h=>h.completedAt).length}</span></button></div><label class="btn secondary studymate-import">${appIcon('download','button-icon')} Import Homework<input id="studyMateImport" type="file" accept=".aphomework,application/json" hidden></label></section>
+ <section class="studymate-list">${rows.length?rows.map(h=>{const done=!!h.completedAt,score=done?studyMateScore(h):null;return `<article class="studymate-card ${done?'complete':''}"><div class="studymate-card-main"><small>${h.assignment?`EP${h.assignment}`:'StudyMate'}${h.dueDate?` · Due ${esc(new Date(h.dueDate+'T00:00:00').toLocaleDateString('en-GB'))}`:''}</small><h3>${esc(h.title)}</h3><p>${esc(h.instructions||`${h.activities.length} learning activit${h.activities.length===1?'y':'ies'}`)}</p><div class="studymate-meta"><span>${h.activities.length} activit${h.activities.length===1?'y':'ies'}</span>${h.expectedMinutes?`<span>~${h.expectedMinutes} min</span>`:''}${score?.percent!==null?`<span>${score.percent}%</span>`:''}</div></div><div class="studymate-card-actions"><button class="btn" data-open-homework="${esc(h.id)}">${done?'Review':'Start'}</button>${done?`<button class="btn secondary" data-result-homework="${esc(h.id)}">Result</button>`:''}<button class="link-button studymate-delete" data-delete-homework="${esc(h.id)}">Delete</button></div></article>`}).join(''):`<section class="card panel studymate-empty"><h3>${tab==='completed'?'No completed homework yet':'No homework to do'}</h3><p class="muted">${tab==='completed'?'Completed StudyMate activities will appear here.':'Import a .aphomework file supplied by your tutor.'}</p></section>`}</section>`);
+ document.getElementById('studyMateBack').onclick=()=>{state.view='toolkit';render()};
+ document.querySelectorAll('[data-study-tab]').forEach(b=>b.onclick=()=>{state.studyMateTab=b.dataset.studyTab;renderStudyMate()});
+ document.getElementById('studyMateImport').onchange=async e=>{const file=e.target.files?.[0];try{await importStudyMateHomework(file);renderStudyMate()}catch(error){toast(error?.message||'Unable to import homework')}};
+ document.querySelectorAll('[data-open-homework]').forEach(b=>b.onclick=()=>{state.studyMateHomeworkId=b.dataset.openHomework;state.studyMateActivity=0;state.view='studymate-homework';render();window.scrollTo(0,0)});
+ document.querySelectorAll('[data-result-homework]').forEach(b=>b.onclick=()=>{const h=studyMateItems().find(x=>x.id===b.dataset.resultHomework);if(h)downloadStudyMateResult(h)});
+ document.querySelectorAll('[data-delete-homework]').forEach(b=>b.onclick=async()=>{const h=studyMateItems().find(x=>x.id===b.dataset.deleteHomework);if(!h||!confirm(`Delete "${h.title}" from StudyMate?`))return;await saveStudyMateItems(studyMateItems().filter(x=>x.id!==h.id));renderStudyMate()});
+}
+function studyMateQuestionActivity(hw,a,index){
+ const answerState=(hw.answers[a.id]=hw.answers[a.id]||{answers:{}}),qi=Math.min(Number(answerState.index||0),(a.questions||[]).length-1),q=a.questions?.[qi];
+ if(!q)return `<section class="card panel"><p class="muted">No questions are attached to this activity.</p></section>`;
+ const picked=answerState.answers?.[qi],options=(q.options||[]).map((o,n)=>`<label class="epa-option ${Number(picked)===n?'selected':''}"><input type="radio" name="studyAnswer" value="${n}" ${Number(picked)===n?'checked':''}><span><b>${String.fromCharCode(65+n)}</b>${esc(o)}</span></label>`).join('');
+ return `<section class="epa-test-head"><div><div class="number">${studyMateActivityLabel(a)} · Question ${qi+1} of ${a.questions.length}</div><h2>${esc(a.title||hw.title)}</h2></div><span class="status-pill">${Object.keys(answerState.answers||{}).length}/${a.questions.length}</span></section><div class="epa-progress"><span style="width:${((qi+1)/a.questions.length)*100}%"></span></div><section class="card panel epa-question"><small>${esc(q.code||'StudyMate')}</small><h3>${esc(q.question)}</h3><div class="epa-options">${options}</div></section><div class="mcq-question-actions"><button class="btn secondary" id="studyQuestionPrev" ${qi===0?'disabled':''}>Previous</button><button class="btn" id="studyQuestionNext" ${picked===undefined?'disabled':''}>${qi===a.questions.length-1?'Finish activity':'Next'}</button></div>`;
+}
+function studyMateFileActivity(hw,a){
+ const v=hw.answers[a.id]||{},accept=a.type==='photo'?'image/*':a.type==='video'?'video/*':'audio/*',capture=a.type==='photo'?' capture="environment"':a.type==='video'?' capture="environment"':'';
+ return `<section class="card panel studymate-task"><div class="number">${studyMateActivityLabel(a)}</div><h2>${esc(a.title||'Task')}</h2><p>${esc(a.prompt||'Complete this activity.')}</p>${v.data?`<div class="studymate-file-saved">✓ ${esc(v.name||'Evidence added')}</div>`:''}<label class="btn ${v.data?'secondary':''} studymate-answer-file">${appIcon(a.type==='photo'?'camera':a.type==='video'?'video':'microphone','button-icon')} ${v.data?'Replace':'Add'} ${a.type}<input id="studyTaskFile" type="file" accept="${accept}"${capture} hidden></label></section>`;
+}
+function renderStudyMateHomework(){
+ const items=studyMateItems(),hw=items.find(x=>x.id===state.studyMateHomeworkId);if(!hw){state.view='studymate';render();return}
+ hw.answers=hw.answers||{};const index=Math.max(0,Math.min(Number(state.studyMateActivity||0),hw.activities.length-1)),a=hw.activities[index],done=!!hw.completedAt;
+ let body='';
+ if(a.type==='mcq'||a.type==='epa')body=studyMateQuestionActivity(hw,a,index);
+ else if(a.type==='written'){const v=hw.answers[a.id]||{};body=`<section class="card panel studymate-task"><div class="number">Written task</div><h2>${esc(a.title||'Written answer')}</h2><p>${esc(a.prompt||'')}</p><textarea class="input" id="studyWrittenAnswer" rows="8" placeholder="Write your answer...">${esc(v.text||'')}</textarea></section>`}
+ else body=studyMateFileActivity(hw,a);
+ app.innerHTML=shell(`<button class="back no-print" id="studyHomeworkBack">← StudyMate</button><section class="studymate-homework-title"><small>${hw.assignment?`EP${hw.assignment} · `:''}Activity ${index+1} of ${hw.activities.length}</small><h2>${esc(hw.title)}</h2>${hw.dueDate?`<span>Due ${esc(new Date(hw.dueDate+'T00:00:00').toLocaleDateString('en-GB'))}</span>`:''}</section>${body}<section class="studymate-navigation"><button class="btn secondary" id="studyActivityPrev" ${index===0?'disabled':''}>Previous activity</button>${index<hw.activities.length-1?`<button class="btn" id="studyActivityNext">Next activity</button>`:`<button class="btn" id="studyCompleteHomework" ${!studyMateHomeworkReady(hw)||done?'disabled':''}>${done?'Completed':'Complete Homework'}</button>`}</section>`);
+ document.getElementById('studyHomeworkBack').onclick=async()=>{await saveStudyMateItems(items);state.view='studymate';render()};
+ const persist=async()=>saveStudyMateItems(items);
+ if(a.type==='written'){document.getElementById('studyWrittenAnswer').oninput=async e=>{hw.answers[a.id]={text:e.target.value};await persist();const complete=document.getElementById('studyCompleteHomework');if(complete)complete.disabled=!studyMateHomeworkReady(hw)}}
+ if(a.type==='photo'||a.type==='video'||a.type==='voice'){document.getElementById('studyTaskFile').onchange=async e=>{const file=e.target.files?.[0];if(!file)return;hw.answers[a.id]={name:file.name,type:file.type,data:await fileToData(file)};await persist();renderStudyMateHomework()}}
+ if(a.type==='mcq'||a.type==='epa'){
+  document.querySelectorAll('input[name="studyAnswer"]').forEach(r=>r.onchange=async()=>{const v=hw.answers[a.id]||{answers:{}},qi=Number(v.index||0);v.answers[qi]=Number(r.value);hw.answers[a.id]=v;await persist();renderStudyMateHomework()});
+  const prev=document.getElementById('studyQuestionPrev');if(prev)prev.onclick=()=>{const v=hw.answers[a.id];v.index=Math.max(0,Number(v.index||0)-1);renderStudyMateHomework()};
+  const next=document.getElementById('studyQuestionNext');if(next)next.onclick=()=>{const v=hw.answers[a.id],qi=Number(v.index||0);if(qi<a.questions.length-1){v.index=qi+1;renderStudyMateHomework()}else{state.studyMateActivity=Math.min(hw.activities.length-1,index+1);renderStudyMateHomework()}};
+ }
+ document.getElementById('studyActivityPrev').onclick=()=>{state.studyMateActivity=Math.max(0,index-1);renderStudyMateHomework()};
+ const nextActivity=document.getElementById('studyActivityNext');if(nextActivity)nextActivity.onclick=()=>{state.studyMateActivity=Math.min(hw.activities.length-1,index+1);renderStudyMateHomework()};
+ const complete=document.getElementById('studyCompleteHomework');if(complete&&!done)complete.onclick=async()=>{if(!studyMateHomeworkReady(hw))return toast('Complete every StudyMate activity first');hw.completedAt=new Date().toISOString();hw.result=studyMateScore(hw);await saveStudyMateItems(items);await addStudyMateLearningHours(hw);toast('Homework completed');state.studyMateTab='completed';state.view='studymate';render()};
+}
+function studyMateBuilderActivityMarkup(d){
+ const assignments=studyMateCourseAssignments(),type=d.pendingType||'written';
+ return `<section class="studymate-builder-add"><div class="field"><label>Add activity</label><select class="input" id="studyBuilderType"><option value="written" ${type==='written'?'selected':''}>Written question</option><option value="photo" ${type==='photo'?'selected':''}>Photo task</option><option value="video" ${type==='video'?'selected':''}>Video task</option><option value="voice" ${type==='voice'?'selected':''}>Voice task</option><option value="mcq" ${type==='mcq'?'selected':''}>Existing MCQ practice</option>${!COURSE.nvqUnits?`<option value="epa" ${type==='epa'?'selected':''}>Existing EPA mock</option>`:''}</select></div>
+ ${type==='mcq'?`<div class="field"><label>Evidence Pack question bank</label><select class="input" id="studyBuilderMcqPack">${assignments.map(a=>`<option value="${a.n}">${esc(studyMatePackLabel(a))}</option>`).join('')}</select></div><div class="field"><label>Number of questions</label><input class="input" id="studyBuilderMcqCount" type="number" min="1" max="30" value="10"></div>`:type==='epa'?`<div class="admin-note">Adds a 10-question EPA knowledge mock from the existing Apprentice+ EPA question bank.</div>`:`<div class="field"><label>Activity title</label><input class="input" id="studyBuilderActivityTitle" placeholder="${type==='written'?'Written question':type==='photo'?'Photo task':type==='video'?'Video task':'Voice task'}"></div><div class="field"><label>Instructions / question</label><textarea class="input" id="studyBuilderPrompt" rows="4" placeholder="What should the learner do?"></textarea></div>`}
+ <button class="btn secondary" id="studyBuilderAddActivity">Add activity</button></section>`;
+}
+function showStudyMateBuilder(){
+ document.getElementById('studyMateBuilderModal')?.remove();
+ if(!studyMateDraft)studyMateDraft={id:`hw-${Date.now().toString(36)}`,title:'',instructions:'',assignment:studyMateCourseAssignments()[0]?.n||0,dueDate:'',expectedMinutes:30,activities:[],pendingType:'written'};
+ const d=studyMateDraft,assignments=studyMateCourseAssignments(),modal=document.createElement('div');modal.className='modal admin-modal';modal.id='studyMateBuilderModal';
+ modal.innerHTML=`<div class="modal-card admin-modal-card studymate-builder"><div class="admin-modal-head"><div><span class="admin-kicker">Developer Mode</span><h2>StudyMate Builder</h2></div><button class="admin-close" id="closeStudyMateBuilder">×</button></div><div class="studymate-builder-grid"><div class="field"><label>Homework title</label><input class="input" id="studyBuilderTitle" value="${esc(d.title)}" placeholder="e.g. Cavity Walling Homework 1"></div><div class="field"><label>Evidence Pack</label><select class="input" id="studyBuilderAssignment"><option value="0">General course homework</option>${assignments.map(a=>`<option value="${a.n}" ${Number(d.assignment)===Number(a.n)?'selected':''}>${esc(studyMatePackLabel(a))}</option>`).join('')}</select></div><div class="field"><label>Due date <span class="muted">(optional)</span></label><input class="input" id="studyBuilderDue" type="date" value="${esc(d.dueDate)}"></div><div class="field"><label>Expected learning time</label><input class="input" id="studyBuilderMinutes" type="number" min="0" step="5" value="${Number(d.expectedMinutes||0)}"><small>Minutes added to OTJ/GLH when completed if an Evidence Pack is selected.</small></div><div class="field studymate-builder-wide"><label>Instructions <span class="muted">(optional)</span></label><textarea class="input" id="studyBuilderInstructions" rows="3">${esc(d.instructions)}</textarea></div></div>
+ <section class="studymate-builder-list"><div class="admin-section-head"><div><h3>Activities</h3><p>${d.activities.length} added</p></div></div>${d.activities.length?d.activities.map((a,i)=>`<div class="studymate-builder-row"><span><strong>${i+1}. ${esc(a.title||studyMateActivityLabel(a))}</strong><small>${studyMateActivityLabel(a)}${a.questions?` · ${a.questions.length} questions`:''}</small></span><button class="link-button" data-remove-study-activity="${i}">Remove</button></div>`).join(''):'<p class="muted">Add at least one activity.</p>'}</section>
+ ${studyMateBuilderActivityMarkup(d)}
+ <div class="btn-row"><button class="btn" id="completeStudyMateHomework" ${d.activities.length?'':'disabled'}>Complete Homework</button><button class="btn secondary" id="cancelStudyMateHomework">Cancel</button></div></div>`;
+ document.body.appendChild(modal);
+ const syncHeader=()=>{d.title=document.getElementById('studyBuilderTitle').value.trim();d.assignment=Number(document.getElementById('studyBuilderAssignment').value||0);d.dueDate=document.getElementById('studyBuilderDue').value;d.expectedMinutes=Math.max(0,Number(document.getElementById('studyBuilderMinutes').value)||0);d.instructions=document.getElementById('studyBuilderInstructions').value.trim()};
+ ['studyBuilderTitle','studyBuilderAssignment','studyBuilderDue','studyBuilderMinutes','studyBuilderInstructions'].forEach(id=>document.getElementById(id).onchange=syncHeader);
+ document.getElementById('closeStudyMateBuilder').onclick=()=>modal.remove();document.getElementById('cancelStudyMateHomework').onclick=()=>{studyMateDraft=null;modal.remove()};
+ document.getElementById('studyBuilderType').onchange=e=>{syncHeader();d.pendingType=e.target.value;showStudyMateBuilder()};
+ document.querySelectorAll('[data-remove-study-activity]').forEach(b=>b.onclick=()=>{syncHeader();d.activities.splice(Number(b.dataset.removeStudyActivity),1);showStudyMateBuilder()});
+ document.getElementById('studyBuilderAddActivity').onclick=()=>{
+  syncHeader();const type=d.pendingType||'written';
+  if(type==='mcq'){const n=Number(document.getElementById('studyBuilderMcqPack').value),count=Math.max(1,Math.min(30,Number(document.getElementById('studyBuilderMcqCount').value)||10)),bank=studyMateAssignmentQuestions(n);if(!bank.length)return toast('That Evidence Pack does not have an MCQ bank');d.activities.push({id:uid(),type:'mcq',title:`EP${n} MCQ Practice`,questions:shuffle(bank).slice(0,Math.min(count,bank.length))})}
+  else if(type==='epa'){const bank=studyMateEpaQuestions();if(bank.length<10)return toast('The EPA question bank is not ready');d.activities.push({id:uid(),type:'epa',title:'EPA Knowledge Mock',questions:shuffle(bank).slice(0,10)})}
+  else {const title=document.getElementById('studyBuilderActivityTitle').value.trim(),prompt=document.getElementById('studyBuilderPrompt').value.trim();if(!title||!prompt)return toast('Add the activity title and instructions');d.activities.push({id:uid(),type,title,prompt})}
+  showStudyMateBuilder();
+ };
+ document.getElementById('completeStudyMateHomework').onclick=()=>{syncHeader();if(!d.title)return toast('Add a homework title');if(!d.activities.length)return toast('Add at least one activity');const hw={id:d.id,title:d.title,instructions:d.instructions,courseId:COURSE.id,courseName:COURSE.name,assignment:d.assignment,dueDate:d.dueDate,expectedMinutes:d.expectedMinutes,activities:d.activities,createdAt:new Date().toISOString()};downloadStudyMateHomework(hw);studyMateDraft=null;modal.remove();toast('StudyMate homework file created')};
+}
 function toolkitAppCard([id,icon,title,copy,badge,tone]){return `<button class="phone-app phone-app-${tone}" id="${id}" data-phone-app="${title.toLowerCase()}" aria-label="Open ${title}: ${copy}"><span class="phone-app-icon">${appIcon(icon)}${badge?`<b class="phone-app-badge" aria-label="${badge} pending">${badge>99?'99+':badge}</b>`:''}</span><strong class="phone-app-label">${title}</strong></button>`}
 function renderToolkit(){
  const dueReminders=reminders().filter(reminder=>!reminder.completed&&reminder.due<=isoToday()).length;
@@ -5133,6 +5277,7 @@ function renderToolkit(){
   ['openCADMate','drawing','CADMate','Create construction drawings.',0,'teal'],
   ['openSkillsCard','course','Skills Card','Show completed practical tasks and grades.',skillsCardEntries().length,'emerald'],
   ['openNotepad','note','NoteMate','Save notes, photos, videos and voice recordings.',learnerNotes().length,'purple'],
+  ['openStudyMate','revision','StudyMate','Tutor-set learning and practice.',studyMateBadgeCount(),'emerald'],
   ['openProjectMate','project','ProjectMate','Generate, quote and complete customer-style jobs.',0,'amber'],
   ['openReviewMate','revision','ReviewMate','Targets and signed progress reviews.',reviewMatePendingCount(),'emerald'],
   ['openRemindMate','revision','RemindMate','Save reminders and due dates.',dueReminders,'rose'],
@@ -5144,7 +5289,7 @@ function renderToolkit(){
  document.getElementById('openLibrary').onclick=()=>{state.view='trade-courses';render();window.scrollTo(0,0)};
  document.getElementById('openFunctionalSkills').onclick=()=>{state.view='functional-skills';render();window.scrollTo(0,0)};
  document.getElementById('openCertificates').onclick=()=>{state.view='certificates';render();window.scrollTo(0,0)};
- const routes={openFeedbackMate:'feedbackmate',openMeasureMate:'measuremate',openMaterialMate:'materialmate',openCADMate:'cadmate',openSkillsCard:'skillscard',openProjectMate:'projectmate',openReviewMate:'reviewmate',openRemindMate:'remindmate',openNotepad:'notepad',openSettings:'settings'};
+ const routes={openFeedbackMate:'feedbackmate',openMeasureMate:'measuremate',openMaterialMate:'materialmate',openCADMate:'cadmate',openSkillsCard:'skillscard',openProjectMate:'projectmate',openReviewMate:'reviewmate',openRemindMate:'remindmate',openNotepad:'notepad',openStudyMate:'studymate',openSettings:'settings'};
  Object.entries(routes).forEach(([id,view])=>{const el=document.getElementById(id);if(el)el.onclick=()=>{state.view=view;if(view==='projectmate')state.projectMateTab='home';if(view==='reviewmate'){state.reviewMateTab='targets';state.reviewMateDraft=null;state.reviewMatePlusDraft=null}if(view==='remindmate'){state.remindMateTab='home';state.editingReminderId=null}if(view==='notepad')state.editingNoteId=null;render();window.scrollTo(0,0)}});
  const drawing=document.getElementById('openDrawingMate');if(drawing)drawing.onclick=()=>{state.view='drawingmate';state.drawingTab='symbols';render();window.scrollTo(0,0)};
 }
@@ -6312,7 +6457,7 @@ function customCourseDeveloperList(){
  const rows=Object.values(COURSES).filter(c=>c.custom);return rows.length?`<div class="custom-course-library">${rows.map(c=>`<div class="custom-course-row"><span><strong>${esc(c.name)}</strong><small>${c.assignments.length} Evidence Packs</small></span><div class="custom-course-actions"><button class="btn admin-soft" data-custom-course-file="${esc(c.id)}">Share course</button><button class="btn danger custom-course-delete" data-custom-course-delete="${esc(c.id)}">Delete</button></div></div>`).join('')}</div>`:'<p class="muted">No developer-created courses yet.</p>';
 }
 function hiddenDeveloperPanel(){
- return `<div class="admin-dashboard developer-tools-dashboard"><div class="admin-course-summary developer-summary"><div><span>Secret developer area</span><strong>Apprentice+ Developer Mode</strong><small>Build technical-drawing prompts for college workshop task sheets.</small></div><span class="admin-status">${APP_VERSION}</span></div><section class="admin-section custom-course-launch"><div class="admin-section-head"><div class="admin-section-icon">${appIcon('course')}</div><div><h3>Create Apprentice+ course</h3><p>Build a reusable course, Evidence Packs and KSB/LO mapping, then download one course file to share with learners.</p></div></div><div class="admin-section-body"><button class="btn admin-primary" id="openCustomCourseBuilder">Create course</button>${customCourseDeveloperList()}</div></section><section class="admin-section drawing-builder-launch"><div class="admin-section-head"><div class="admin-section-icon">${appIcon('course')}</div><div><h3>Create college task sheet</h3><p>Build one clear Bricklaying workshop-sheet prompt using the simple college layout.</p></div></div><div class="admin-section-body"><button class="btn admin-primary" id="openDrawingBuilder">Create college task sheet</button></div></section><section class="admin-section"><div class="admin-section-head"><div class="admin-section-icon">${appIcon('settings')}</div><div><h3>Developer access</h3><p>This hidden screen closes when you leave it and remains separate from Admin Mode.</p></div></div><div class="admin-section-body"><button class="btn admin-primary" id="closeDeveloperToolsBottom">Close Developer Mode</button></div></section></div>`;
+ return `<div class="admin-dashboard developer-tools-dashboard"><div class="admin-course-summary developer-summary"><div><span>Secret developer area</span><strong>Apprentice+ Developer Mode</strong><small>Build technical-drawing prompts for college workshop task sheets.</small></div><span class="admin-status">${APP_VERSION}</span></div><section class="admin-section custom-course-launch"><div class="admin-section-head"><div class="admin-section-icon">${appIcon('course')}</div><div><h3>Create Apprentice+ course</h3><p>Build a reusable course, Evidence Packs and KSB/LO mapping, then download one course file to share with learners.</p></div></div><div class="admin-section-body"><button class="btn admin-primary" id="openCustomCourseBuilder">Create course</button>${customCourseDeveloperList()}</div></section><section class="admin-section studymate-builder-launch"><div class="admin-section-head"><div class="admin-section-icon">${appIcon('revision')}</div><div><h3>StudyMate Builder</h3><p>Create tutor-set homework using written/media tasks, existing MCQs and EPA mocks.</p></div></div><div class="admin-section-body"><button class="btn admin-primary" id="openStudyMateBuilder">Create homework</button></div></section><section class="admin-section drawing-builder-launch"><div class="admin-section-head"><div class="admin-section-icon">${appIcon('course')}</div><div><h3>Create college task sheet</h3><p>Build one clear Bricklaying workshop-sheet prompt using the simple college layout.</p></div></div><div class="admin-section-body"><button class="btn admin-primary" id="openDrawingBuilder">Create college task sheet</button></div></section><section class="admin-section"><div class="admin-section-head"><div class="admin-section-icon">${appIcon('settings')}</div><div><h3>Developer access</h3><p>This hidden screen closes when you leave it and remains separate from Admin Mode.</p></div></div><div class="admin-section-body"><button class="btn admin-primary" id="closeDeveloperToolsBottom">Close Developer Mode</button></div></section></div>`;
 }
 function showHiddenDeveloperTools(){
  document.getElementById('developerToolsModal')?.remove();
@@ -6325,7 +6470,7 @@ function showHiddenDeveloperTools(){
  document.addEventListener('keydown',function developerEscape(e){if(e.key!=='Escape'||!document.getElementById('developerToolsModal'))return;document.removeEventListener('keydown',developerEscape);close()});
  bindHiddenDeveloperTools();
 }
-function bindHiddenDeveloperTools(){ const customBuilderButton=document.getElementById('openCustomCourseBuilder');if(customBuilderButton)customBuilderButton.onclick=()=>{document.getElementById('developerToolsModal')?.remove();showCustomCourseBuilder('setup')};document.querySelectorAll('[data-custom-course-file]').forEach(btn=>btn.onclick=()=>showCustomCourseShare(COURSES[btn.dataset.customCourseFile]));document.querySelectorAll('[data-custom-course-delete]').forEach(btn=>btn.onclick=async()=>{const id=btn.dataset.customCourseDelete,course=COURSES[id];if(!course)return;if(!confirm(`Delete "${course.name}" from Developer Mode?\n\nThis removes the saved course definition from this device. It does not affect course files already shared with learners.`))return;await deleteCustomCourse(id);toast(`${course.name} deleted`);const modal=document.getElementById('developerToolsModal');if(modal){modal.querySelector('.admin-modal-card').innerHTML=`<div class="admin-modal-head"><div><span class="admin-kicker">Hidden diagnostics</span><h2>Developer Mode</h2></div><button class="admin-close" id="closeDeveloperTools" aria-label="Close Developer Mode">×</button></div>${hiddenDeveloperPanel()}`;document.getElementById('closeDeveloperTools').onclick=()=>modal.remove();document.getElementById('closeDeveloperToolsBottom').onclick=()=>modal.remove();bindHiddenDeveloperTools()}});
+function bindHiddenDeveloperTools(){ const studyBuilderButton=document.getElementById('openStudyMateBuilder');if(studyBuilderButton)studyBuilderButton.onclick=()=>{document.getElementById('developerToolsModal')?.remove();studyMateDraft=null;showStudyMateBuilder()}; const customBuilderButton=document.getElementById('openCustomCourseBuilder');if(customBuilderButton)customBuilderButton.onclick=()=>{document.getElementById('developerToolsModal')?.remove();showCustomCourseBuilder('setup')};document.querySelectorAll('[data-custom-course-file]').forEach(btn=>btn.onclick=()=>showCustomCourseShare(COURSES[btn.dataset.customCourseFile]));document.querySelectorAll('[data-custom-course-delete]').forEach(btn=>btn.onclick=async()=>{const id=btn.dataset.customCourseDelete,course=COURSES[id];if(!course)return;if(!confirm(`Delete "${course.name}" from Developer Mode?\n\nThis removes the saved course definition from this device. It does not affect course files already shared with learners.`))return;await deleteCustomCourse(id);toast(`${course.name} deleted`);const modal=document.getElementById('developerToolsModal');if(modal){modal.querySelector('.admin-modal-card').innerHTML=`<div class="admin-modal-head"><div><span class="admin-kicker">Hidden diagnostics</span><h2>Developer Mode</h2></div><button class="admin-close" id="closeDeveloperTools" aria-label="Close Developer Mode">×</button></div>${hiddenDeveloperPanel()}`;document.getElementById('closeDeveloperTools').onclick=()=>modal.remove();document.getElementById('closeDeveloperToolsBottom').onclick=()=>modal.remove();bindHiddenDeveloperTools()}});
  const drawingButton=document.getElementById('openDrawingBuilder');
  if(drawingButton){
   drawingButton.onclick=event=>{
