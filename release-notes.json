@@ -1,6 +1,17 @@
 {
-  "latest": "V2.32",
+  "latest": "V2.33",
   "releases": [
+    {
+      "version": "V2.33",
+      "date": "2026-08-08",
+      "title": "Cumulative OTJ and GLH Evidence Packs",
+      "features": [
+        "Evidence Pack OTJ/GLH progress now shows completed hours, required hours and percentage.",
+        "New OTJ/GLH entries add to all previous entries for that Evidence Pack.",
+        "Saving OTJ/GLH refreshes one latest cumulative Evidence Pack PDF and invalidates the older downloaded/uploaded pack state.",
+        "The regenerated Evidence Pack PDF contains all previous OTJ/GLH entries plus the newest entry."
+      ]
+    },
     {
       "version": "V2.32",
       "date": "2026-08-08",

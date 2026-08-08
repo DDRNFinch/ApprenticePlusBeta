@@ -5133,3 +5133,13 @@ p,.muted,.subtitle{line-height:1.48}
   .monthly-refined-metrics b{font-size:.96rem}
   .monthly-refined-metrics span{font-size:.66rem}
 }
+
+/* V2.33 — Evidence Pack OTJ/GLH cumulative progress */
+.evidence-tile-otj .evidence-tile-heading{align-items:center;justify-content:space-between}
+.evidence-hours-percent{margin-left:auto;min-width:46px;padding:7px 10px;border-radius:999px;background:#eaf3fb;color:#2d84c7;font-size:.78rem;font-weight:800;text-align:center}
+.evidence-hours-progress{width:100%;margin:7px 0 4px}
+.evidence-hours-progress>span{display:block;width:100%;height:7px;border-radius:999px;background:#e9f0f5;overflow:hidden}
+.evidence-hours-progress i{display:block;height:100%;border-radius:999px;background:#348fd1}
+.nvq-glh-title>span{display:grid;gap:2px;text-align:left}
+.nvq-glh-title small{font-size:.68rem;font-weight:650;color:#78857e}
+.nvq-glh-summary.complete .nvq-glh-track i{background:#55b928}
