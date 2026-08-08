@@ -245,7 +245,7 @@ function learnerPromptTitle(assignmentNumber,code,fallback){
  return LEARNER_PROMPTS[COURSE.id]?.[assignmentNumber]?.[code]||fallback;
 }
 
-const APP_VERSION='V2.22';
+const APP_VERSION='V2.23';
 const PORTFOLIO_UPLOAD_LIMIT_BYTES=1_000_000_000;
 const PORTFOLIO_SAFE_TARGET_BYTES=900_000_000;
 const APP_VIDEO_BITS_PER_SECOND=1_400_000;
@@ -5065,11 +5065,21 @@ function renderHome(){
  const timePct=courseTimePercent();
  const combinedValues=[criteria,otjPct,...(timePct===null?[]:[timePct])];
  const overall=combinedValues.length?Math.round(combinedValues.reduce((sum,value)=>sum+value,0)/combinedValues.length):0;
- app.innerHTML=shell(`${topLevelTitleTile('Home')}<section class="home-course-identity home-course-summary"><div><div class="number">${COURSE.nvqUnits?'Your NVQ':'Your apprenticeship'}</div><h1>${esc(COURSE.name)}</h1><p>${courseAssignments().length} Evidence Packs · ${p.ksbTotal} ${COURSE.nvqUnits?'Learning Outcomes':'KSBs'}</p></div><span class="target-status ${p.tone}">${p.label}</span></section><section class="home-combined-progress"><div class="home-progress-label"><span>Overall progress</span><small>Course · ${learningHoursShortLabel()} · time</small></div><div class="combined-progress-ring" role="img" aria-label="Overall progress ${overall} percent. ${COURSE.nvqUnits?'Learning Outcomes':'KSBs'} ${criteria} percent. ${learningHoursShortLabel()} ${otjPct} percent. Time on course ${timePct===null?'not available':timePct+' percent'}."><span class="combined-ring-band combined-ring-green" style="--ring-value:${criteria*3.6}deg"></span><span class="combined-ring-band combined-ring-blue" style="--ring-value:${otjPct*3.6}deg"></span><span class="combined-ring-band combined-ring-orange" style="--ring-value:${(timePct??0)*3.6}deg"></span><span class="combined-ring-centre"><small>Overall</small></span></div><div class="combined-progress-key"><div><i class="key-dot key-green"></i><span><strong>${COURSE.nvqUnits?'Learning Outcomes':'KSBs'}</strong><small>${criteria}% · ${p.ksbCompleted} of ${p.ksbTotal}</small></span></div><div><i class="key-dot key-blue"></i><span><strong>${learningHoursShortLabel()}</strong><small>${otjPct}% · ${otj.total.toFixed(1)} / ${otj.expected.toFixed(1)} hrs required by now</small></span></div><div><i class="key-dot key-orange"></i><span><strong>Time on course</strong><small>${timePct===null?'Add course dates':timePct+'% elapsed'}</small></span></div></div></section>${monthlyPortfolioCard()}${monthlyReminderBanner()}${epa?epaReadinessHtml():''}`);
+ app.innerHTML=shell(`${topLevelTitleTile('Home')}<section class="home-course-identity home-course-summary"><div><div class="number">${COURSE.nvqUnits?'Your NVQ':'Your apprenticeship'}</div><h1>${esc(COURSE.name)}</h1></div><span class="target-status ${p.tone}">${p.label}</span></section><section class="home-combined-progress"><div class="combined-progress-ring" role="img" aria-label="Overall progress ${overall} percent. ${COURSE.nvqUnits?'Learning Outcomes':'KSBs'} ${criteria} percent. ${learningHoursShortLabel()} ${otjPct} percent. Time on course ${timePct===null?'not available':timePct+' percent'}."><span class="combined-ring-band combined-ring-green" data-ring-value="${criteria*3.6}" style="--ring-value:0deg"></span><span class="combined-ring-band combined-ring-blue" data-ring-value="${otjPct*3.6}" style="--ring-value:0deg"></span><span class="combined-ring-band combined-ring-orange" data-ring-value="${(timePct??0)*3.6}" style="--ring-value:0deg"></span><span class="combined-ring-centre"></span></div><div class="combined-progress-key"><div><i class="key-dot key-green"></i><span><strong>${COURSE.nvqUnits?'Learning Outcomes':'KSBs'}</strong><small>${criteria}%</small></span></div><div><i class="key-dot key-blue"></i><span><strong>${learningHoursShortLabel()}</strong><small>${otjPct}%</small></span></div><div><i class="key-dot key-orange"></i><span><strong>Time</strong><small>${timePct===null?'—':timePct+'%'}</small></span></div></div></section>${monthlyPortfolioCard()}${monthlyReminderBanner()}${epa?epaReadinessHtml():''}`);
  const download=document.getElementById('downloadEntirePortfolio');if(download)download.onclick=downloadEntirePortfolio;
  const openMonthlyPortfolio=document.getElementById('openMonthlyPortfolio');if(openMonthlyPortfolio)openMonthlyPortfolio.onclick=openMonthlyPortfolioReminder;
  const confirmMonthlyUploadButton=document.getElementById('confirmMonthlyUpload');if(confirmMonthlyUploadButton)confirmMonthlyUploadButton.onclick=confirmMonthlyPortfolioUpload;
  bindMonthlyReminderActions(app);setTimeout(()=>showMonthlyPortfolioReminder(false),150);
+ requestAnimationFrame(()=>animateHomeProgressRings());
+}
+function animateHomeProgressRings(){
+ const ring=document.querySelector('.combined-progress-ring');if(!ring)return;
+ ring.classList.remove('ring-enter');void ring.offsetWidth;ring.classList.add('ring-enter');
+ const bands=[...ring.querySelectorAll('.combined-ring-band[data-ring-value]')];
+ const start=performance.now(),duration=850;
+ const ease=t=>1-Math.pow(1-t,3);
+ const tick=now=>{const t=Math.min(1,(now-start)/duration),e=ease(t);bands.forEach(b=>{const target=Number(b.dataset.ringValue)||0;b.style.setProperty('--ring-value',`${target*e}deg`)});if(t<1)requestAnimationFrame(tick)};
+ requestAnimationFrame(tick);
 }
 function toolkitAppCard([id,icon,title,copy,badge,tone]){return `<button class="phone-app phone-app-${tone}" id="${id}" data-phone-app="${title.toLowerCase()}" aria-label="Open ${title}: ${copy}"><span class="phone-app-icon">${appIcon(icon)}${badge?`<b class="phone-app-badge" aria-label="${badge} pending">${badge>99?'99+':badge}</b>`:''}</span><strong class="phone-app-label">${title}</strong></button>`}
 function renderToolkit(){

@@ -4489,3 +4489,52 @@ p,.muted,.subtitle{line-height:1.48}
   .epa-dashboard-tile .epa-tile-stat strong{font-size:15px!important}
   .epa-dashboard-tile>.btn,.epa-dashboard-tile>button.btn{min-height:36px!important;font-size:9.5px!important;padding:8px 6px!important}
 }
+
+
+/* V2.23 — reduced copy + tighter animated progress rings */
+/* Remove repeated explanatory copy from high-level browsing screens; keep form/evidence instructions intact. */
+.home-course-summary p,
+.home-progress-label,
+.epa-section-intro p,
+.epa-dashboard-tile > p,
+.toolbox-group-heading p,
+.course-card > p,
+.assignment-card > p,
+.evidence-tile > p,
+.academy-destination-card > p,
+.section-heading > p{display:none!important}
+
+.home-combined-progress{grid-template-columns:minmax(0,1fr) minmax(180px,.8fr)!important;align-items:center!important;gap:14px!important;padding:14px 16px!important}
+.combined-progress-ring{width:222px!important;height:222px!important;margin:0 auto!important;filter:drop-shadow(0 7px 9px rgba(17,49,28,.09))!important;transform-origin:center}
+.combined-ring-band{box-shadow:none!important}
+.combined-ring-band:before{display:none!important}
+.combined-ring-green{--ring-colour:#58b51f;--ring-track:#eaf7e3;inset:0!important}
+.combined-ring-blue{--ring-colour:#2e86df;--ring-track:#e7f2fc;inset:23px!important}
+.combined-ring-orange{--ring-colour:#ee8b2d;--ring-track:#fdf0e3;inset:46px!important}
+.combined-ring-band{background:conic-gradient(var(--ring-colour) 0deg var(--ring-value),var(--ring-track) var(--ring-value) 360deg)!important}
+.combined-ring-green:after,.combined-ring-blue:after,.combined-ring-orange:after{inset:12px!important;box-shadow:none!important}
+.combined-ring-centre{inset:69px!important;background:var(--card,#fff)!important;border:0!important;box-shadow:none!important}
+.combined-ring-centre small,.combined-ring-centre strong{display:none!important}
+.combined-progress-key{gap:8px!important}
+.combined-progress-key>div{padding:7px 9px!important;border-radius:14px!important}
+.combined-progress-key strong{font-size:.76rem!important;font-weight:720!important}
+.combined-progress-key small{font-size:.68rem!important}
+.combined-progress-ring.ring-enter{animation:ringScaleIn .52s cubic-bezier(.2,.8,.2,1)}
+@keyframes ringScaleIn{0%{transform:scale(.82);opacity:.35}65%{transform:scale(1.025);opacity:1}100%{transform:scale(1);opacity:1}}
+
+/* Slightly less copy density in browsable tiles. */
+.epa-dashboard-tile{min-height:190px!important;grid-template-rows:auto auto auto!important}
+.epa-dashboard-tile .epa-tile-stat{grid-row:auto!important}
+.assignment-card,.evidence-tile{min-height:unset!important}
+
+@media(max-width:520px){
+ .home-combined-progress{grid-template-columns:1fr!important;gap:8px!important;padding:12px 10px!important}
+ .combined-progress-ring{width:198px!important;height:198px!important}
+ .combined-ring-blue{inset:21px!important}.combined-ring-orange{inset:42px!important}.combined-ring-centre{inset:63px!important}
+ .combined-progress-key{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:5px!important;width:100%!important}
+ .combined-progress-key>div{padding:6px 5px!important;gap:5px!important;justify-content:center!important;text-align:center!important}
+ .combined-progress-key>div span{display:grid!important;gap:1px!important}
+ .combined-progress-key strong{font-size:.66rem!important}.combined-progress-key small{font-size:.62rem!important}
+ .key-dot{display:none!important}
+ .epa-dashboard-tile{min-height:174px!important}
+}

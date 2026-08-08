@@ -1,6 +1,16 @@
 {
-  "latest": "V2.22",
+  "latest": "V2.23",
   "releases": [
+    {
+      "version": "V2.23",
+      "date": "2026-08-08",
+      "title": "Cleaner interface and animated progress",
+      "features": [
+        "Reduced duplicate and explanatory text on browsing screens.",
+        "Tightened the three progress rings and gave each a lighter matching track.",
+        "Home progress now animates from zero to the learner's current values whenever Home is opened."
+      ]
+    },
     {
       "version": "V2.22",
       "date": "2026-08-08",
