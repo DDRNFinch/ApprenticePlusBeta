@@ -245,7 +245,7 @@ function learnerPromptTitle(assignmentNumber,code,fallback){
  return LEARNER_PROMPTS[COURSE.id]?.[assignmentNumber]?.[code]||fallback;
 }
 
-const APP_VERSION='V2.52';
+const APP_VERSION='V2.53';
 function paintPdfPageBackground(ctx,W,H){ctx.fillStyle='#ffffff';ctx.fillRect(0,0,W,H);const r=Math.min(W,H)*0.58,g=ctx.createRadialGradient(0,0,0,0,0,r);g.addColorStop(0,'#DDF3D6');g.addColorStop(.42,'#EFF8EC');g.addColorStop(1,'#FFFFFF');ctx.fillStyle=g;ctx.fillRect(0,0,W,H)}
 
 const PORTFOLIO_UPLOAD_LIMIT_BYTES=1_000_000_000;
@@ -6760,6 +6760,8 @@ async function downloadEntirePortfolio(){
    const a=assignments[index],sections={};PORTFOLIO_SECTIONS.forEach(section=>sections[section]=sectionData(a.n,section).versions.map(version=>structuredClone(version)));sections.walkthrough=walkthroughCount(a.n).done?await collectWalkthroughEvidence(a.n,a):[];
    const result=await generateEvidencePackPDF({course:COURSE,assignment:a,profile:state.profile,sections,branding:state.branding,returnPackage:true,newEvidence:newEvidenceMapForAssignment(delta,a.n),assignmentRpl:assignmentRPL(a.n),rplKsbCodes:assignmentIndividualRplCodes(a.n),learningHours:assignmentLearningHoursPdfPayload(a.n)});
    const items=[];for(const entry of result.entries||[]){const file=monthlyEvidenceFile(entry,a.n,counters);packageEntries.push({name:file.path,data:file.data});items.push(file)}
+   // Add observation recordings after PDF generation so they cannot break the Evidence Pack generator.
+   for(let vi=0;vi<(sections.practical||[]).length;vi++){const version=sections.practical[vi];for(const [code,media] of Object.entries(version.observationRecordings||{})){for(const [kind,rec] of [['video',media?.video],['audio',media?.audio]]){if(!rec?.data)continue;try{const ext=monthlyFileExtension(rec.name,'.webm'),label=kind==='video'?'Assessor Observation Video':'Assessor Discussion',filename=`AO${vi+1} - ${safeZipName(code)} - ${label}${ext}`,path=`${monthlyAssignmentFolder(a.n)}/Assessor Observation Recordings/${filename}`,bytes=dataUrlBytes(rec.data);packageEntries.push({name:path,data:bytes});items.push({folder:monthlyAssignmentFolder(a.n),filename,path,label,code,assignment:a.n,data:bytes})}catch(mediaError){console.warn('Skipped unreadable observation recording during portfolio export',mediaError)}}}}
    assignmentGroups.push({folder:monthlyAssignmentFolder(a.n),title:a.title,items});
    toast(`Prepared assignment ${index+1} of ${assignments.length}`);
   }

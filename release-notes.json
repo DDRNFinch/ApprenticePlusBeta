@@ -1,6 +1,17 @@
 {
-  "latest": "V2.52",
+  "latest": "V2.53",
   "releases": [
+    {
+      "version": "V2.53",
+      "date": "2026-08-08",
+      "title": "Portfolio download fix",
+      "features": [
+        "Fixed the complete portfolio download regression introduced in V2.52.",
+        "Observation voice/video files are now appended safely at the complete-portfolio stage instead of changing the Evidence Pack package generator.",
+        "V2.52 observation PDF references, assessor prompts, KSB/LO tick behaviour and yellow OTJ/GLH state are retained.",
+        "Portfolio export now displays the actual export error if a future file cannot be packaged."
+      ]
+    },
     {
       "version": "V2.52",
       "date": "2026-08-08",
