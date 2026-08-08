@@ -4378,3 +4378,23 @@ html:not(.tour-phone-scale) body #app > .shell > .bottom-nav{
 .assignment-list>.assignment-card[data-open]{display:block;appearance:none;-webkit-appearance:none;font:inherit;border-style:solid;pointer-events:auto!important}
 .assignment-list>.assignment-card[data-open]:disabled{opacity:1;pointer-events:auto!important}
 .assignment-list>.assignment-card[data-open] *{pointer-events:none!important}
+
+
+/* Assessor Observation: compact optional media controls */
+.observation-photo-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+.observation-ksb-row{display:grid;grid-template-columns:minmax(0,1fr) 62px;align-items:stretch;padding:0;overflow:hidden}
+.observation-ksb-toggle{padding:12px 10px 12px 12px}
+.observation-record-button{border:0;border-left:1px solid var(--line);background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;min-width:62px;color:var(--muted);font:inherit;font-weight:850;cursor:pointer}
+.observation-record-button:hover,.observation-record-button:focus-visible{background:var(--soft);outline:none}
+.observation-record-button.has-media{background:#f2fde7;color:var(--ink)}
+.observation-record-dot{width:18px;height:18px;border-radius:50%;background:#d62f2f;box-shadow:0 0 0 4px rgba(214,47,47,.12)}
+.observation-record-button small{font-size:9px;text-transform:uppercase;letter-spacing:.04em}
+.observation-media-badges{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px}
+.observation-media-badge{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--line);background:#fff;border-radius:999px;padding:3px 7px;font-size:10px;font-weight:800;color:var(--muted)}
+.observation-media-badge svg{width:12px;height:12px}
+.observation-record-options{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:16px 0}
+.observation-record-option{border:1px solid var(--line);background:var(--soft);border-radius:14px;padding:14px;display:flex;align-items:center;gap:10px;text-align:left;color:var(--ink);font:inherit;cursor:pointer}
+.observation-record-option svg{width:28px;height:28px;flex:0 0 auto}
+.observation-record-option strong,.observation-record-option small{display:block}.observation-record-option small{margin-top:2px;color:var(--muted)}
+.observation-existing-actions{display:grid;gap:8px;margin:4px 0 14px}.observation-existing-actions audio{width:100%}
+@media(max-width:460px){.observation-ksb-row{grid-template-columns:minmax(0,1fr) 54px}.observation-record-button{min-width:54px}.observation-record-options{grid-template-columns:1fr}}
