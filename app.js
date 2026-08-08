@@ -907,7 +907,7 @@ function learningHoursMateName(){return COURSE.nvqUnits?'GLHMate':'OTJMate'}
 function learningHoursShortLabel(){return COURSE.nvqUnits?'GLH':'OTJ'}
 function learningHoursLongLabel(){return COURSE.nvqUnits?'Guided learning hours':'Off-the-job'}
 function learningHoursEntryLabel(){return COURSE.nvqUnits?'GLH entry':'OTJ entry'}
-function topLevelTitleTile(title){return `<section class="main-logo-title-tile"><div class="main-logo-title-mark"><img src="logo-apprentice-plus.png" alt=""></div><h2>${esc(title)}</h2></section>`}
+function topLevelTitleTile(title){return `<section class="main-logo-title-tile"><h2>${esc(title)}</h2></section>`}
 function nvqAssignmentGlhEntries(n){return otjEntries().filter(e=>Number(e.assignment)===Number(n)&&!e.portfolioBuilding)}
 function nvqAssignmentGlhStats(n){const a=assignment(n),target=Number(a?.glh||0),total=nvqAssignmentGlhEntries(n).reduce((sum,e)=>sum+(Number(e.hours)||0),0),percent=target?Math.min(100,Math.round(total/target*100)):0;return {target,total,percent}}
 function nvqGlhActivityOptions(){return {

@@ -148,17 +148,22 @@ async function generateEvidencePackPDF({course, assignment, profile, sections, b
   function recordingDetails(d,mediaLabel){return Object.entries(d?.recordings||{}).filter(([,rec])=>rec?.data).map(([code,rec])=>`${code}: ${mediaLabel} included${rec.duration?` - ${rec.duration}`:''}${Number(rec.size)>0?` - ${Math.max(1,Math.round(Number(rec.size)/1024))} KB`:''}${rec.date?` - recorded ${rec.date}`:''}${rec.type?` - ${rec.type}`:''}${d.notes?.[code]?`\nNotes: ${d.notes[code]}`:''}`).join('\n\n')}
   function fileDetails(d){return (d?.files||[]).map((file,i)=>`${i+1}. ${file.evidenceName||file.name||'Evidence file'}${file.name&&file.evidenceName?` - original file: ${file.name}`:''}${file.type?` - ${file.type}`:''}${Number(file.size)>0?` - ${Math.round(Number(file.size)/1024)} KB`:''}`).join('\n')}
   function captionDetails(d){const rows=[];for(const [code,value] of Object.entries(d?.captions||{})){if(String(value||'').trim())rows.push(`${code}: ${value}`)}for(const [code,photo] of Object.entries(d?.outcomePhotos||{})){if(photo?.data)rows.push(`${code}: ${linkedPhotoFileName(code,0)}`)}for(const [code,photos] of Object.entries(d?.skillPhotos||{}))(photos||[]).forEach((photo,i)=>{if(photo?.data)rows.push(`${code} photo ${i+1}: ${linkedPhotoFileName(code,i)}`)});(d?.photos||[]).forEach((photo,i)=>{if(photo?.data)rows.push(`Photo ${i+1}: ${linkedRecordPhotoFileName(d,i)}`)});return rows.join('\n')}
+  function drawFixedTextBox(x,labelText,content,px,py,bw,bh){
+    x.fillStyle='#ffffff';x.strokeStyle='#D9DEDC';x.lineWidth=1;x.fillRect(px,py,bw,bh);x.strokeRect(px+.5,py+.5,bw-1,bh-1);
+    x.fillStyle='#F5F8F7';x.fillRect(px+1,py+1,bw-2,34);
+    x.fillStyle='#52605f';x.font='700 12px Arial';fitText(x,clean(labelText).toUpperCase(),px+12,py+23,bw-24,12);
+    const text=clean(content||'-').trim()||'-',innerW=bw-24,innerH=bh-51;
+    let font=15,lines=[];while(font>=10){lines=wrap(x,text,innerW,`400 ${font}px Arial`);const lh=Math.ceil(font*1.32);if(lines.length*lh<=innerH)break;font--}
+    const lh=Math.ceil(font*1.32),maxLines=Math.max(1,Math.floor(innerH/lh));if(lines.length>maxLines){lines=lines.slice(0,maxLines);let last=lines[maxLines-1]||'';while(last.length>3&&x.measureText(last+'…').width>innerW)last=last.slice(0,-1);lines[maxLines-1]=last.replace(/[ ,.;:-]+$/,'')+'…'}
+    x.fillStyle=INK;x.font=`400 ${font}px Arial`;lines.forEach((line,i)=>x.fillText(line,px+12,py+51+i*lh));
+  }
   async function addCompleteEvidenceRecord({title,version,date,type,newEvidenceType=type,fields,signatureTitle='Signature',signatureData=''}){
     const blocks=(fields||[]).map(([labelText,content])=>[labelText,clean(content||'').trim()]).filter(([,content])=>content);
-    let p=meta(newPage(title,version),version,date,type,newEvidenceType),x=p.x,y=sectionHeading(x,'Evidence Details',p.y),pagePart=1;
-    const continuation=()=>{pagePart++;p=meta(newPage(`${title} - Continued`,version),version,date,type,newEvidenceType);x=p.x;y=sectionHeading(x,`Evidence Details (continued ${pagePart})`,p.y)};
-    for(const [headingText,content] of blocks){
-      let lines=wrap(x,content,W-2*M,'400 16px Arial');
-      if(y+48>H-112)continuation();x.fillStyle='#52605f';x.font='700 13px Arial';x.fillText(clean(headingText).toUpperCase(),M,y);y+=23;
-      x.fillStyle=INK;x.font='400 16px Arial';
-      while(lines.length){if(y+22>H-112){continuation();x.fillStyle=x._sectionColour||TEAL;x.font='700 17px Arial';x.fillText(`${clean(headingText).toUpperCase()} (CONTINUED)`,M,y);y+=29;x.fillStyle=INK;x.font='400 18px Arial'}x.fillText(lines.shift(),M,y);y+=22}y+=11;
-    }
-    if(signatureData){const sig=await loadImage(signatureData);const signatureTop=H-282;if(y>signatureTop-28)continuation();signature(x,sig,signatureTop,signatureTitle)}
+    const p=meta(newPage(title,version),version,date,type,newEvidenceType),x=p.x,signatureTop=H-258;
+    let y=sectionHeading(x,'Evidence Details',p.y),bottom=signatureData?signatureTop-22:H-112;
+    const gap=12,available=Math.max(180,bottom-y),count=Math.max(1,blocks.length),boxH=Math.max(76,(available-gap*(count-1))/count);
+    (blocks.length?blocks:[['Evidence','-']]).forEach(([headingText,content],i)=>drawFixedTextBox(x,headingText,content,M,y+i*(boxH+gap),W-2*M,boxH));
+    if(signatureData){const sig=await loadImage(signatureData);signature(x,sig,signatureTop,signatureTitle)}
   }
 
   function submittedPhotoItems(d){
@@ -168,17 +173,32 @@ async function generateEvidencePackPDF({course, assignment, profile, sections, b
     (d?.photos||[]).forEach((photo,index)=>{if(photo?.data)items.push({code:selectedCodes(d).join(' · ')||`Photo ${index+1}`,summary:linkedRecordPhotoFileName(d,index),photo})});
     return items;
   }
-  async function addSubmittedPhotoPages(d,title,version,date,type){
-    const items=submittedPhotoItems(d);
-    for(let start=0;start<items.length;start+=4){
-      const batch=items.slice(start,start+4),pageNo=Math.floor(start/4)+1,totalPages=Math.ceil(items.length/4),p=meta(newPage(`${title} - Photographs${totalPages>1?` ${pageNo}/${totalPages}`:''}`,version),version,date,type),x=p.x;let y=sectionHeading(x,'Submitted Photographs',p.y),gapX=22,gapY=72,cellW=(W-2*M-gapX)/2,cellH=cellW*9/16;
-      for(let j=0;j<batch.length;j++){
-        const item=batch[j],col=j%2,row=Math.floor(j/2),px=M+col*(cellW+gapX),py=y+row*(cellH+gapY),img=await loadImage(item.photo.data);
-        x.fillStyle=PALE;x.fillRect(px,py,cellW,cellH);
-        if(img){const scale=Math.max(cellW/img.width,cellH/img.height),iw=img.width*scale,ih=img.height*scale;x.save();x.beginPath();x.rect(px,py,cellW,cellH);x.clip();x.drawImage(img,px+(cellW-iw)/2,py+(cellH-ih)/2,iw,ih);x.restore()}
-        x.fillStyle=x._sectionColour||TEAL;x.font='700 15px Arial';fitText(x,clean(item.code),px,py+cellH+23,cellW,15);x.fillStyle=INK;x.font='400 13px Arial';wrap(x,item.summary,cellW,'400 13px Arial').slice(0,2).forEach((lineText,lineIndex)=>x.fillText(lineText,px,py+cellH+44+lineIndex*16));
-      }
+  function drawCoverImage(x,img,px,py,bw,bh){
+    x.fillStyle=PALE;x.fillRect(px,py,bw,bh);x.strokeStyle='#D9DEDC';x.lineWidth=1;x.strokeRect(px+.5,py+.5,bw-1,bh-1);
+    if(!img)return;const scale=Math.max(bw/img.width,bh/img.height),iw=img.width*scale,ih=img.height*scale;x.save();x.beginPath();x.rect(px,py,bw,bh);x.clip();x.drawImage(img,px+(bw-iw)/2,py+(bh-ih)/2,iw,ih);x.restore();
+  }
+  async function drawFixedPhotoGrid(x,items,{px=M,py,cols=3,rows=1,gap=14,captionH=38}={}){
+    const max=cols*rows,totalW=W-2*M,cellW=(totalW-gap*(cols-1))/cols,cellH=cellW*9/16;
+    for(let i=0;i<max;i++){
+      const col=i%cols,row=Math.floor(i/cols),cx=px+col*(cellW+gap),cy=py+row*(cellH+captionH+gap),item=items[i];
+      const img=item?.photo?.data?await loadImage(item.photo.data):null;drawCoverImage(x,img,cx,cy,cellW,cellH);
+      x.fillStyle='#52605f';x.font='700 11px Arial';const labelText=item?clean(item.code||`Photo ${i+1}`):`PHOTO ${i+1}`;fitText(x,labelText,cx,cy+cellH+17,cellW,11);
+      if(item?.caption){x.fillStyle=INK;x.font='400 10px Arial';fitText(x,clean(item.caption),cx,cy+cellH+32,cellW,10)}
     }
+    return py+rows*(cellH+captionH+gap)-gap;
+  }
+  async function addFixedPhotoEvidenceRecord(d,{title,version,date,type,signatureTitle='Learner signature',assessor=false,summaryFields=[]}){
+    const items=submittedPhotoItems(d).map(item=>({...item,caption:String(d?.captions?.[item.code]||item.photo?.caption||'')}));
+    const p=meta(newPage(title,version),version,date,type),x=p.x,signatureTop=H-258;
+    let y=sectionHeading(x,assessor?'Assessor Observation':'Photographic Evidence',p.y);
+    const summary=summaryFields.filter(([,v])=>clean(v||'').trim());
+    if(summary.length){const cols=Math.min(2,summary.length),rows=Math.ceil(summary.length/cols),gap=10,bh=rows>1?72:84,bw=(W-2*M-gap*(cols-1))/cols;summary.forEach(([a,b],i)=>drawFixedTextBox(x,a,b,M+(i%cols)*(bw+gap),y+Math.floor(i/cols)*(bh+gap),bw,bh));y+=rows*(bh+gap)+10}
+    if(assessor){await drawFixedPhotoGrid(x,items.slice(0,9),{py:y,cols:3,rows:3,gap:12,captionH:24})}
+    else {await drawFixedPhotoGrid(x,items.slice(0,3),{py:y,cols:3,rows:1,gap:14,captionH:38})}
+    if(d.signature){const sig=await loadImage(d.signature);signature(x,sig,signatureTop,signatureTitle)}
+  }
+  async function addSubmittedPhotoPages(d,title,version,date,type){
+    return addFixedPhotoEvidenceRecord(d,{title,version,date,type,signatureTitle:type==='Assessor Observation'?'Tutor / assessor signature':'Learner signature',assessor:type==='Assessor Observation'});
   }
 
   async function addOutcomePhotoPages(d,title,version,date,type,selectedOnly=false){
@@ -248,18 +268,16 @@ async function generateEvidencePackPDF({course, assignment, profile, sections, b
 
   const scoreRows=(p,d,startY)=>{const x=p.x;let y=startY;assignment.ksbs.forEach(([code,summary])=>{if(y>H-230){p=meta(newPage(`${p.title||'Assessment'} - Scores Continued`,d._version),d._version,d.date,'Assessment');y=sectionHeading(p.x,'KSB Scores (continued)',p.y)}x=p.x;x.fillStyle=PALE;x.fillRect(M,y-29,W-2*M,45);x.fillStyle=TEAL;x.font='700 19px Arial';x.fillText(code,M+16,y);x.fillStyle=INK;x.font='400 16px Arial';x.fillText(clean(summary),M+105,y);x.textAlign='right';x.font='700 20px Arial';x.fillText(`${d.scores?.[code]||'-'} / 5`,W-M-18,y);x.textAlign='left';y+=52});return {p,y}};
 
-  // Assessor observation: direct tutor/assessor observation of Skills and Behaviours.
+  // Assessor observation: one fixed page with a 3x3 photograph grid.
   for(let i=0;i<(sections.practical||[]).length;i++){
     const d=sections.practical[i],v=i+1;d._version=v;
-    await addCompleteEvidenceRecord({title:`Verified by Someone Else · AO${v}`,version:`Attempt ${v}`,date:d.date,type:'Assessor Observation',fields:[['Observer role',d.observerRole||'Tutor / assessor'],['Observer',d.tutor],['Activity observed',d.activity],['Skills / Behaviours observed',selectedKsbDetails(d)],['Observation record',d.feedback],['Supporting photographs',captionDetails(d)]],signatureTitle:'Tutor / assessor signature',signatureData:d.signature});
-    await addSubmittedPhotoPages(d,`Verified by Someone Else · AO${v}`,`Attempt ${v}`,d.date,'Assessor Observation');
+    await addFixedPhotoEvidenceRecord(d,{title:`Verified by Someone Else · AO${v}`,version:`Attempt ${v}`,date:d.date,type:'Assessor Observation',signatureTitle:'Tutor / assessor signature',assessor:true,summaryFields:[['Observer',d.tutor],['Activity observed',d.activity],['Skills / Behaviours observed',selectedKsbDetails(d)],['Observation record',d.feedback]]});
   }
 
-  // Photographic evidence: details appear once; photo pages contain the images themselves.
+  // Photographic evidence: one fixed page with three landscape photographs side by side.
   for(let i=0;i<(sections.photos||[]).length;i++){
     const d=sections.photos[i],v=i+1;
-    await addCompleteEvidenceRecord({title:`Take Photos · PE${v}`,version:v,date:d.date,type:'Photographic Evidence',fields:[['Activity / photo notes',d.activity],['KSBs evidenced',selectedKsbDetails(d)],['Photographs and captions',captionDetails(d)]],signatureTitle:'Learner signature',signatureData:d.signature});
-    await addSubmittedPhotoPages(d,`Take Photos · PE${v}`,v,d.date,'Photographic Evidence');
+    await addFixedPhotoEvidenceRecord(d,{title:`Take Photos · PE${v}`,version:v,date:d.date,type:'Photographic Evidence',signatureTitle:'Learner signature',assessor:false,summaryFields:[['Activity / photo notes',d.activity],['KSBs evidenced',selectedKsbDetails(d)]]});
   }
 
   // Statements
@@ -390,6 +408,12 @@ async function generateNVQEvidencePackPDF({course, assignment, profile, sections
   function meta(p,date,type,attempt,newEvidenceType=type){const {x}=p;let y=p.y;x.fillStyle='#F7F9F8';x.fillRect(M,y,W-2*M,82);x.strokeStyle='#E3E6E5';x.lineWidth=1;x.strokeRect(M+.5,y+.5,W-2*M-1,81);label(x,'Learner',M+18,y+23);value(x,profile.fullName,M+18,y+48,17,true);label(x,'Date',M+520,y+23);value(x,date||'-',M+520,y+48,17,true);label(x,'Evidence',M+750,y+23);value(x,p.x._sectionName||type,M+750,y+48,16,true);if(isPortfolioBuildingEvidence(type)){x.fillStyle='#5F6F70';x.font='700 11px Arial';x.fillText('PORTFOLIO BUILDING · 0.2 GLH',M+18,y+70)}if(isNewEvidence(newEvidenceType,attempt))drawNewEvidenceStamp(x);p.y=y+104;return p}
   async function loadImage(src){if(!src)return null;return new Promise(r=>{const i=new Image();i.onload=()=>r(i);i.onerror=()=>r(null);i.src=src})}
   function signature(x,img,y,title){label(x,title,M,y);x.strokeStyle='#b8c4c1';x.lineWidth=2;x.strokeRect(M,y+18,420,122);if(img)try{x.drawImage(img,M+12,y+28,396,98)}catch{}return y+162}
+  function drawFixedTextBox(x,labelText,content,px,py,bw,bh){
+    x.fillStyle='#ffffff';x.strokeStyle='#D9DEDC';x.lineWidth=1;x.fillRect(px,py,bw,bh);x.strokeRect(px+.5,py+.5,bw-1,bh-1);x.fillStyle=PALE;x.fillRect(px+1,py+1,bw-2,34);x.fillStyle=MUTED;x.font='700 12px Arial';fitText(x,clean(labelText).toUpperCase(),px+12,py+23,bw-24,12);
+    const text=clean(content||'-').trim()||'-',innerW=bw-24,innerH=bh-51;let font=15,lines=[];while(font>=10){lines=wrap(x,text,innerW,`400 ${font}px Arial`);const lh=Math.ceil(font*1.32);if(lines.length*lh<=innerH)break;font--}const lh=Math.ceil(font*1.32),maxLines=Math.max(1,Math.floor(innerH/lh));if(lines.length>maxLines){lines=lines.slice(0,maxLines);let last=lines[maxLines-1]||'';while(last.length>3&&x.measureText(last+'…').width>innerW)last=last.slice(0,-1);lines[maxLines-1]=last.replace(/[ ,.;:-]+$/,'')+'…'}x.fillStyle=INK;x.font=`400 ${font}px Arial`;lines.forEach((line,i)=>x.fillText(line,px+12,py+51+i*lh));
+  }
+  function drawCoverImage(x,img,px,py,bw,bh){x.fillStyle=PALE;x.fillRect(px,py,bw,bh);x.strokeStyle='#D9DEDC';x.lineWidth=1;x.strokeRect(px+.5,py+.5,bw-1,bh-1);if(!img)return;const scale=Math.max(bw/img.width,bh/img.height),iw=img.width*scale,ih=img.height*scale;x.save();x.beginPath();x.rect(px,py,bw,bh);x.clip();x.drawImage(img,px+(bw-iw)/2,py+(bh-ih)/2,iw,ih);x.restore()}
+  async function drawFixedPhotoGrid(x,items,{px=M,py,cols=3,rows=1,gap=14,captionH=38}={}){const max=cols*rows,totalW=W-2*M,cellW=(totalW-gap*(cols-1))/cols,cellH=cellW*9/16;for(let i=0;i<max;i++){const col=i%cols,row=Math.floor(i/cols),cx=px+col*(cellW+gap),cy=py+row*(cellH+captionH+gap),item=items[i],img=item?.photo?.data?await loadImage(item.photo.data):null;drawCoverImage(x,img,cx,cy,cellW,cellH);x.fillStyle=MUTED;x.font='700 11px Arial';fitText(x,item?clean(item.code||`Photo ${i+1}`):`PHOTO ${i+1}`,cx,cy+cellH+17,cellW,11);if(item?.caption){x.fillStyle=INK;x.font='400 10px Arial';fitText(x,clean(item.caption),cx,cy+cellH+32,cellW,10)}}return py+rows*(cellH+captionH+gap)-gap}
   function paragraph(x,text,y,maxHeight=360){const sizes=[21,20,19,18,17,16,15];for(const size of sizes){const lh=Math.round(size*1.43),lines=wrap(x,text,W-2*M,`400 ${size}px Arial`);if(lines.length*lh<=maxHeight){x.font=`400 ${size}px Arial`;x.fillStyle=INK;lines.forEach((l,i)=>x.fillText(l,M,y+i*lh));return y+lines.length*lh}}const lines=wrap(x,text,W-2*M,'400 15px Arial'),max=Math.floor(maxHeight/22);x.font='400 15px Arial';x.fillStyle=INK;lines.slice(0,max).forEach((l,i)=>x.fillText(l,M,y+i*22));return y+Math.min(lines.length,max)*22}
   const selectedOutcomeDetails=d=>selectedScores(d).map(([code,text])=>`${code} - ${text}${assignment.criteria?.[code]?`\nCriteria: ${assignment.criteria[code]}`:''}`).join('\n');
   const scoredOutcomeDetails=d=>Object.entries(d?.scores||{}).filter(([,score])=>Number(score)>0).map(([code,score])=>`${String(code).replace(/::/g,' practical mark ')}: ${score} / 5`).join('\n');
@@ -399,32 +423,27 @@ async function generateNVQEvidencePackPDF({course, assignment, profile, sections
   const linkedOutcomePhotoFileName=(code,index=0)=>{const item=(assignment.ksbs||[]).find(([itemCode])=>String(itemCode)===String(code)),summary=item?.[1]||'Evidence photograph',suffix=` - Photo ${Number(index)+1}.jpg`,base=`${code} - ${summary}`.replace(/[\\/:*?"<>|]/g,'-').replace(/\s+/g,' ').trim(),limit=Math.max(24,120-suffix.length);return `${base.slice(0,limit).replace(/[ .-]+$/,'')}${suffix}`};
   const linkedNvqRecordPhotoFileName=(d,index=0)=>{const codes=selectedCodes(d);if(codes.length===1)return linkedOutcomePhotoFileName(codes[0],index);const details=codes.map(code=>{const item=(assignment.ksbs||[]).find(([itemCode])=>String(itemCode)===String(code));return `${code} - ${item?.[1]||'Evidence'}`}),suffix=` - Photo ${Number(index)+1}.jpg`,base=(details.length?details.join(' + '):`Unit ${assignment.unit||assignment.n} - ${assignment.title}`).replace(/[\\/:*?"<>|]/g,'-').replace(/\s+/g,' ').trim(),limit=Math.max(24,120-suffix.length);return `${base.slice(0,limit).replace(/[ .-]+$/,'')}${suffix}`};
   const photoOutcomeDetails=d=>{const rows=[];for(const [code,photo] of Object.entries(d?.outcomePhotos||{}))if(photo?.data)rows.push(`${code}: ${linkedOutcomePhotoFileName(code,0)}`);(d?.photos||[]).forEach((photo,i)=>{if(photo?.data)rows.push(`Photo ${i+1}: ${linkedNvqRecordPhotoFileName(d,i)}`)});for(const [code,value] of Object.entries(d?.captions||{}))if(String(value||'').trim())rows.push(`${code}: ${value}`);return rows.join('\n')};
-  async function addCompleteNvqRecord({title,attempt,date,type,newEvidenceType=type,fields,signatureTitle='Signature',signatureData=''}){const blocks=(fields||[]).map(([a,b])=>[a,clean(b||'').trim()]).filter(([,b])=>b);let p=meta(newPage(title,`Attempt ${attempt}`),date,type,attempt,newEvidenceType),x=p.x,y=sectionHeading(x,'Evidence Details',p.y),part=1;const signatureTop=H-258,contentBottom=signatureData?signatureTop-24:H-112;const next=()=>{part++;p=meta(newPage(`${title} - Continued`,`Attempt ${attempt}`),date,type,attempt,newEvidenceType);x=p.x;y=sectionHeading(x,`Evidence Details (continued ${part})`,p.y)};for(const [headingText,content] of blocks){let lines=wrap(x,content,W-2*M,'400 16px Arial');if(y+46>contentBottom)next();x.fillStyle='#52605f';x.font='700 13px Arial';x.fillText(clean(headingText).toUpperCase(),M,y);y+=22;x.fillStyle=INK;x.font='400 16px Arial';while(lines.length){if(y+22>contentBottom){next();x.fillStyle='#52605f';x.font='700 13px Arial';x.fillText(`${clean(headingText).toUpperCase()} (CONTINUED)`,M,y);y+=22;x.fillStyle=INK;x.font='400 16px Arial'}x.fillText(lines.shift(),M,y);y+=22}y+=10}if(signatureData){const sig=await loadImage(signatureData);const sy=signatureTop;label(x,signatureTitle,M,sy);x.strokeStyle='#c8d0cd';x.lineWidth=1;x.strokeRect(M,sy+14,360,104);if(sig)try{x.drawImage(sig,M+10,sy+22,340,86)}catch{}}}
+  async function addCompleteNvqRecord({title,attempt,date,type,newEvidenceType=type,fields,signatureTitle='Signature',signatureData=''}){
+    const blocks=(fields||[]).map(([a,b])=>[a,clean(b||'').trim()]).filter(([,b])=>b),p=meta(newPage(title,`Attempt ${attempt}`),date,type,attempt,newEvidenceType),x=p.x,signatureTop=H-258;
+    let y=sectionHeading(x,'Evidence Details',p.y),bottom=signatureData?signatureTop-22:H-112,gap=10,count=Math.max(1,blocks.length),boxH=Math.max(68,(bottom-y-gap*(count-1))/count);
+    (blocks.length?blocks:[['Evidence','-']]).forEach(([a,b],i)=>drawFixedTextBox(x,a,b,M,y+i*(boxH+gap),W-2*M,boxH));
+    if(signatureData){const sig=await loadImage(signatureData);signature(x,sig,signatureTop,signatureTitle)}
+  }
 
   async function addCompactNvqPhotoRecord(d,attempt){
-    const items=[];
-    for(const [code,photo] of Object.entries(d?.outcomePhotos||{}))if(photo?.data)items.push({code,photo,caption:String(d?.captions?.[code]||'')});
-    (d?.photos||[]).forEach((photo,index)=>{if(photo?.data)items.push({code:`Photo ${index+1}`,photo,caption:String(photo.caption||'')})});
-    const p=meta(newPage('Take Photos',`Attempt ${attempt}`),d.date,'Photographic Evidence',attempt),x=p.x;
-    let y=sectionHeading(x,'Photographic Evidence',p.y);
-    const signatureTop=H-258;
-    const note=clean(d?.activity||'').trim();
-    const codes=selectedCodes(d);
-    if(codes.length){x.fillStyle='#52605f';x.font='700 13px Arial';x.fillText('LEARNING OUTCOMES EVIDENCED',M,y);y+=22;x.fillStyle=INK;x.font='400 15px Arial';const summary=codes.map(code=>{const row=(assignment.ksbs||[]).find(([c])=>c===code);return `${code} - ${row?.[1]||''}`}).join('   |   ');const lines=wrap(x,summary,W-2*M,'400 15px Arial').slice(0,3);lines.forEach(line=>{x.fillText(line,M,y);y+=20});y+=8}
-    if(note){x.fillStyle='#52605f';x.font='700 13px Arial';x.fillText('PHOTO NOTES',M,y);y+=22;x.fillStyle=INK;x.font='400 15px Arial';const lines=wrap(x,note,W-2*M,'400 15px Arial').slice(0,4);lines.forEach(line=>{x.fillText(line,M,y);y+=20});y+=10}
-    const shown=items.slice(0,3),gap=18,availableH=Math.max(350,signatureTop-y-46);
-    if(shown.length){
-      const cols=shown.length===1?1:shown.length===2?2:3,cellW=(W-2*M-gap*(cols-1))/cols,captionH=48,cellH=Math.min(520,availableH-captionH);
-      for(let i=0;i<shown.length;i++){
-        const item=shown[i],px=M+i*(cellW+gap),py=y,img=await loadImage(item.photo.data);
-        x.fillStyle=PALE;x.fillRect(px,py,cellW,cellH);
-        if(img){const scale=Math.min(cellW/img.width,cellH/img.height),iw=img.width*scale,ih=img.height*scale;x.drawImage(img,px+(cellW-iw)/2,py+(cellH-ih)/2,iw,ih)}
-        x.fillStyle=x._sectionColour||TEAL;x.font='700 14px Arial';fitText(x,clean(item.code),px,py+cellH+20,cellW,14);
-        const cap=clean(item.caption).trim();if(cap){x.fillStyle=INK;x.font='400 11px Arial';wrap(x,cap,cellW,'400 11px Arial').slice(0,2).forEach((line,k)=>x.fillText(line,px,py+cellH+37+k*13))}
-      }
-    }
-    if(items.length>3){x.fillStyle=MUTED;x.font='600 12px Arial';x.fillText(`+ ${items.length-3} additional photograph${items.length-3===1?'':'s'} retained in the evidence record.`,M,signatureTop-18)}
-    if(d.signature){const sig=await loadImage(d.signature);label(x,'Learner signature',M,signatureTop);x.strokeStyle='#c8d0cd';x.lineWidth=1;x.strokeRect(M,signatureTop+14,360,104);if(sig)try{x.drawImage(sig,M+10,signatureTop+22,340,86)}catch{}}
+    const items=[];for(const [code,photo] of Object.entries(d?.outcomePhotos||{}))if(photo?.data)items.push({code,photo,caption:String(d?.captions?.[code]||'')});(d?.photos||[]).forEach((photo,index)=>{if(photo?.data)items.push({code:`Photo ${index+1}`,photo,caption:String(photo.caption||'')})});
+    const p=meta(newPage('Take Photos',`Attempt ${attempt}`),d.date,'Photographic Evidence',attempt),x=p.x,signatureTop=H-258;let y=sectionHeading(x,'Photographic Evidence',p.y),codes=selectedCodes(d),summary=codes.map(code=>{const row=(assignment.ksbs||[]).find(([c])=>c===code);return `${code} - ${row?.[1]||''}`}).join(' | ');
+    drawFixedTextBox(x,'Learning outcomes evidenced',summary||'-',M,y,W-2*M,82);y+=94;if(clean(d?.activity||'').trim()){drawFixedTextBox(x,'Photo notes',d.activity,M,y,W-2*M,82);y+=94}
+    await drawFixedPhotoGrid(x,items.slice(0,3),{py:y,cols:3,rows:1,gap:14,captionH:38});
+    if(d.signature){const sig=await loadImage(d.signature);signature(x,sig,signatureTop,'Learner signature')}
+  }
+  async function addCompactNvqAssessorRecord(d,attempt){
+    const items=[];for(const [code,photo] of Object.entries(d?.outcomePhotos||{}))if(photo?.data)items.push({code,photo,caption:String(d?.captions?.[code]||'')});(d?.photos||[]).forEach((photo,index)=>{if(photo?.data)items.push({code:`Photo ${index+1}`,photo,caption:String(photo.caption||'')})});
+    const p=meta(newPage('Verified by Someone Else',`Attempt ${attempt}`),d.date,'Assessor Observation',attempt),x=p.x,signatureTop=H-258;let y=sectionHeading(x,'Assessor Observation',p.y),gap=10,bw=(W-2*M-gap)/2;
+    drawFixedTextBox(x,'Assessor',d.tutor||'-',M,y,bw,68);drawFixedTextBox(x,'Activity observed',d.activity||'-',M+bw+gap,y,bw,68);y+=78;
+    drawFixedTextBox(x,'Learning outcomes observed',selectedOutcomeDetails(d)||'-',M,y,bw,78);drawFixedTextBox(x,'Observation / comments',d.feedback||'-',M+bw+gap,y,bw,78);y+=90;
+    await drawFixedPhotoGrid(x,items.slice(0,9),{py:y,cols:3,rows:3,gap:10,captionH:18});
+    if(d.signature){const sig=await loadImage(d.signature);signature(x,sig,signatureTop,'Assessor signature')}
   }
   function drawOutcomeRows(x,outcomes,y,showCriteria=true){for(const [code,text] of outcomes){if(y>H-160)break;x.fillStyle=PALE;x.fillRect(M,y-28,W-2*M,64);x.fillStyle=TEAL;x.font='700 19px Arial';x.fillText(code,M+16,y);drawCriterionRpl(x,code,M+58,y,17);x.fillStyle=INK;x.font='600 17px Arial';fitText(x,clean(text),M+100,y,W-2*M-125,17);if(showCriteria&&assignment.criteria?.[code]){x.fillStyle=MUTED;x.font='400 13px Arial';fitText(x,`Criteria: ${clean(assignment.criteria[code])}`,M+100,y+23,W-2*M-125,13)}y+=76}return y}
   async function photoPages(d,title,attempt,outcomes){const photos=d?.outcomePhotos||{},available=outcomes.filter(([code])=>photos[code]?.data);for(let i=0;i<available.length;i+=4){const batch=available.slice(i,i+4),p=meta(newPage(`${title} - ${course.nvqUnits?'Learning Outcome':'KSB'} Photos`,`${title} | Attempt ${attempt}`),d.date,title,attempt),x=p.x;let y=sectionHeading(x,course.nvqUnits?'Learning Outcome Photographs':'KSB Photographs',p.y),gapX=22,gapY=32,cellW=(W-2*M-gapX)/2,cellH=cellW*9/16;for(let j=0;j<batch.length;j++){const [code]=batch[j],col=j%2,row=Math.floor(j/2),px=M+col*(cellW+gapX),py=y+row*(cellH+gapY+54),img=await loadImage(photos[code].data);x.fillStyle=PALE;x.fillRect(px,py,cellW,cellH);if(img){const scale=Math.max(cellW/img.width,cellH/img.height),iw=img.width*scale,ih=img.height*scale;x.save();x.beginPath();x.rect(px,py,cellW,cellH);x.clip();x.drawImage(img,px+(cellW-iw)/2,py+(cellH-ih)/2,iw,ih);x.restore()}x.fillStyle=TEAL;x.font='700 17px Arial';x.fillText(code,px,py+cellH+24);x.fillStyle=INK;x.font='400 13px Arial';wrap(x,linkedOutcomePhotoFileName(code,0),cellW,'400 13px Arial').slice(0,2).forEach((line,k)=>x.fillText(line,px,py+cellH+43+k*16))}}}
@@ -437,13 +456,13 @@ async function generateNVQEvidencePackPDF({course, assignment, profile, sections
    for(const [code,text] of assignment.ksbs){const refs=evidenceMap[code]||[],refText=refs.length?refs.map(e=>e.ref).join('  '):'No evidence mapped';x.font='600 15px Arial';const desc=wrap(x,clean(text),W-2*M-390,'600 15px Arial');x.font='700 16px Arial';const refLines=wrap(x,refText,280,'700 16px Arial');const rowH=Math.max(58,Math.max(desc.length*20,refLines.length*21)+26);if(y+rowH>H-115){p=meta(newPage('Learning Outcome Evidence Matrix - Continued','Automatic mapping'),'-','Learning Outcome Matrix',1);x=p.x;y=sectionHeading(x,'Learning Outcome Mapping (continued)',p.y);header()}x.fillStyle=refs.length?PALE:'#fafafa';x.fillRect(M,y-25,W-2*M,rowH-6);x.fillStyle=TEAL;x.font='700 18px Arial';x.fillText(code,M+14,y);drawCriterionRpl(x,code,M+52,y,16);x.fillStyle=INK;x.font='600 15px Arial';desc.forEach((line,i)=>x.fillText(line,M+82,y+i*20));x.textAlign='right';x.fillStyle=refs.length?TEAL:MUTED;x.font='700 16px Arial';refLines.forEach((line,i)=>x.fillText(line,W-M-16,y+i*21));x.textAlign='left';y+=rowH}
    if(y+130>H-110){p=meta(newPage('Learning Outcome Evidence Key','Automatic mapping'),'-','Learning Outcome Matrix',1);x=p.x;y=sectionHeading(x,'Evidence Reference Key',p.y)}else y=sectionHeading(x,'Evidence Reference Key',y+12);const keys=['AO  Verified by Someone Else (Assessor)','LS  Write About It','WT  Verified by Someone Else (Witness)','VW  Record a Video','PD  Talk About It','PE  Take Photos'];keys.forEach((t,i)=>{x.fillStyle=INK;x.font='600 16px Arial';x.fillText(t,M+(i%2)*520,y+Math.floor(i/2)*32)})}
 
-  // One lossless record per submission; only the actual submitted photographs use extra pages.
-  for(let i=0;i<(sections.practical||[]).length;i++){const d=sections.practical[i],attempt=i+1,outcomes=selectedScores(d);await addCompleteNvqRecord({title:'Verified by Someone Else',attempt,date:d.date,type:'Assessor Observation',fields:[['Assessor',d.tutor],['Activity observed',d.activity],['Task type',d.activityTaskType],['Specification ID',d.activitySpecId],['Learning Outcomes observed',selectedOutcomeDetails(d)],['All marks awarded',scoredOutcomeDetails(d)],['Assessor Observation / Additional Comments',d.feedback],['Assessment Summary',d.feedbackSummary],['Areas for Improvement',d.feedbackDevelopment],['Photographs and captions',photoOutcomeDetails(d)]],signatureTitle:'Assessor signature',signatureData:d.signature});await photoPages(d,'Assessor Observation',attempt,outcomes)}
+  // One fixed page per submission. Assessor observations use a 3x3 photograph grid.
+  for(let i=0;i<(sections.practical||[]).length;i++){const d=sections.practical[i],attempt=i+1;await addCompactNvqAssessorRecord(d,attempt)}
   for(let i=0;i<(sections.photos||[]).length;i++){const d=sections.photos[i],attempt=i+1;await addCompactNvqPhotoRecord(d,attempt)}
   for(let i=0;i<(sections.statement||[]).length;i++){const d=sections.statement[i],attempt=i+1;await addCompleteNvqRecord({title:'Write About It',attempt,date:d.date,type:'Learner Statement',fields:[['Learning Outcomes evidenced',selectedOutcomeDetails(d)],['Learner response',d.text||d.statement||d.learnerStatement]],signatureTitle:'Learner signature',signatureData:d.signature})}
   for(let i=0;i<(sections.discussion||[]).length;i++){const d=sections.discussion[i],attempt=i+1,codes=selectedVideoCodes(d);await addCompleteNvqRecord({title:'Record a Video',attempt,date:d.date,type:'Video Walkthrough',newEvidenceType:'discussion',fields:[['Learning Outcomes evidenced',codes.map(code=>{const row=(assignment.ksbs||[]).find(([itemCode])=>itemCode===code);return `${code} - ${row?.[1]||'Learning Outcome video'}`}).join('\n')],['Video recordings',videoRecordingOutcomeDetails(d)] ]})}
   for(let i=0;i<(sections.professionalDiscussion||[]).length;i++){const d=sections.professionalDiscussion[i],attempt=i+1;await addCompleteNvqRecord({title:'Talk About It',attempt,date:d.date,type:'Professional Discussion',fields:[['Discussion lead',d.assessor],['Activity discussed',d.activity],['Learning Outcome recordings and notes',recordingOutcomeDetails(d,'Audio recording')]],signatureTitle:'Assessor / discussion lead signature',signatureData:d.signature})}
-  for(let i=0;i<(sections.witness||[]).length;i++){const d=sections.witness[i],attempt=i+1,outcomes=selectedScores(d);await addCompleteNvqRecord({title:'Verified by Someone Else',attempt,date:d.date,type:'Witness Testimony',fields:[['Evidence source',d.type],['Name',d.personName],['Role',d.role],['Preferred contact details',d.contactDetails||d.organisation],['Activity witnessed',d.activity],['Learning Outcomes witnessed',selectedOutcomeDetails(d)],['All marks awarded',scoredOutcomeDetails(d)],['Witness Testimony / Additional Comments',d.feedback],['Additional Comments',d.additionalComments],['Attached files',fileOutcomeDetails(d)],['Photographs and captions',photoOutcomeDetails(d)]],signatureTitle:'Witness signature',signatureData:d.signature});await photoPages(d,'Witness Testimony',attempt,outcomes)}
+  for(let i=0;i<(sections.witness||[]).length;i++){const d=sections.witness[i],attempt=i+1,outcomes=selectedScores(d);await addCompleteNvqRecord({title:'Verified by Someone Else',attempt,date:d.date,type:'Witness Testimony',fields:[['Evidence source',d.type],['Name',d.personName],['Role',d.role],['Preferred contact details',d.contactDetails||d.organisation],['Activity witnessed',d.activity],['Learning Outcomes witnessed',selectedOutcomeDetails(d)],['All marks awarded',scoredOutcomeDetails(d)],['Witness Testimony / Additional Comments',d.feedback],['Additional Comments',d.additionalComments],['Attached files',fileOutcomeDetails(d)],['Photographs and captions',photoOutcomeDetails(d)]],signatureTitle:'Witness signature',signatureData:d.signature})}
   for(let i=0;i<(sections.supporting||[]).length;i++){const d=sections.supporting[i],attempt=i+1;await addCompleteNvqRecord({title:'Documents',attempt,date:d.date,type:'Supporting Evidence',fields:[['Evidence tab',d.tab],['Evidence type',d.type],['Name',d.personName],['Role',d.role],['Organisation',d.organisation],['Activity / description',d.activity],['Learning Outcomes evidenced',selectedOutcomeDetails(d)],['All marks awarded',scoredOutcomeDetails(d)],['Assessment Summary',d.feedbackSummary],['Areas for Improvement',d.feedbackDevelopment],['Additional Comments',d.feedback],['Attached files',fileOutcomeDetails(d)],['Photographs and captions',photoOutcomeDetails(d)]],signatureTitle:`${d.type||'Supporting evidence'} signature`,signatureData:d.signature})}
 
   for(let i=0;i<(sections.walkthrough||[]).length;i++){const rec=sections.walkthrough[i],attempt=i+1;await addCompleteNvqRecord({title:'Record a Video',attempt,date:rec.date,type:'Video Walkthrough',newEvidenceType:'walkthrough',fields:[['Learning Outcome evidenced',[rec.code,rec.summary].filter(Boolean).join(' - ')],['Video filename',ksbMediaFileName(rec)],['Original filename',rec.name],['Recorded date',rec.date],['Duration',rec.duration],['Media format',rec.type],['File size',Number(rec.size)>0?`${Math.round(Number(rec.size)/1024)} KB`:'']]})}
