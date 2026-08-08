@@ -3966,7 +3966,7 @@ function safeLocalArray(key){try{const v=JSON.parse(localStorage.getItem(key)||'
 function safeLocalObject(key){try{const v=JSON.parse(localStorage.getItem(key)||'{}');return v&&typeof v==='object'&&!Array.isArray(v)?v:{}}catch{return {}}}
 function saveLocalArray(key,v){localStorage.setItem(key,JSON.stringify(v))}
 function isoToday(){const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
-function formatShortDate(v){if(!v)return '—';return new Intl.DateTimeFormat('en-GB',{day:'2-digit',month:'short',year:'numeric'}).format(new Date(`${v}T12:00:00`))}
+function formatShortDate(v){if(!v)return '—';const raw=String(v).trim();let date;if(/^\d{2}\/\d{2}\/\d{4}$/.test(raw)){const [day,month,year]=raw.split('/').map(Number);date=new Date(year,month-1,day,12,0,0)}else if(/^\d{4}-\d{2}-\d{2}$/.test(raw)){const [year,month,day]=raw.split('-').map(Number);date=new Date(year,month-1,day,12,0,0)}else date=new Date(raw);if(Number.isNaN(date.getTime()))return raw;return new Intl.DateTimeFormat('en-GB',{day:'2-digit',month:'short',year:'numeric'}).format(date)}
 function otjEntries(){return safeLocalArray(OTJ_KEY).sort((a,b)=>String(b.date).localeCompare(String(a.date))||String(b.created).localeCompare(String(a.created)))}
 function saveOtjEntries(v){saveLocalArray(OTJ_KEY,v)}
 function evidenceOtjDate(value){const raw=String(value||'').trim();if(/^\d{4}-\d{2}-\d{2}$/.test(raw))return raw;const uk=raw.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);if(uk)return `${uk[3]}-${uk[2]}-${uk[1]}`;const date=/^\d{10,13}$/.test(raw)?new Date(Number(raw)):new Date(raw);return Number.isFinite(date.getTime())?date.toISOString().slice(0,10):isoToday()}
