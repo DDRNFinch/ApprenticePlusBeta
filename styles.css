@@ -4810,3 +4810,113 @@ p,.muted,.subtitle{line-height:1.48}
 .progress-slider-card small{display:block;margin-top:20px;color:#78867d;font-size:.68rem;line-height:1.35}
 .signature-unlock::before{content:''!important;width:29px;height:29px;margin:0 auto 7px!important;display:block!important;background-color:var(--green)!important;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 20h4l11-11a2.8 2.8 0 0 0-4-4L4 16v4Z'/%3E%3Cpath d='m13.5 6.5 4 4'/%3E%3C/svg%3E")!important;background-size:18px 18px!important;background-position:center!important;background-repeat:no-repeat!important;border-radius:9px!important}
 @media(max-width:520px){.progress-slider-card{padding:15px 14px;border-radius:21px}.progress-slider-head{align-items:flex-start}.progress-slider-head span{font-size:.64rem}.progress-slider-target:after{font-size:.48rem}}
+
+
+/* V2.28 — Monthly Upload full-width balance */
+.monthly-upload-card,
+.monthly-upload-panel,
+.monthly-upload-section{
+  width:100% !important;
+  max-width:none !important;
+  box-sizing:border-box !important;
+}
+.monthly-upload-card > *,
+.monthly-upload-panel > *,
+.monthly-upload-section > *{
+  width:100%;
+  max-width:none;
+  box-sizing:border-box;
+}
+.monthly-upload-header{
+  width:100%;
+  display:grid !important;
+  grid-template-columns:minmax(0,1fr) auto;
+  align-items:start;
+  gap:18px;
+}
+.monthly-upload-stats{
+  width:100%;
+  display:grid !important;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:12px !important;
+}
+.monthly-upload-stats > *{
+  width:100% !important;
+  min-width:0 !important;
+  justify-content:center;
+  text-align:center;
+}
+.monthly-upload-storage{
+  width:100%;
+  display:grid !important;
+  grid-template-columns:auto minmax(0,1fr);
+  align-items:center;
+  gap:14px;
+}
+.monthly-upload-actions{
+  width:100%;
+  display:grid !important;
+  grid-template-columns:1fr 1fr;
+  gap:12px !important;
+}
+.monthly-upload-actions > *{width:100% !important;max-width:none !important;margin:0 !important}
+.monthly-upload-actions > :first-child{
+  grid-column:1 / -1;
+}
+@media(max-width:460px){
+  .monthly-upload-header{grid-template-columns:1fr;gap:4px}
+  .monthly-upload-header > :last-child{text-align:left}
+  .monthly-upload-stats{gap:8px !important}
+  .monthly-upload-storage{grid-template-columns:1fr;gap:7px}
+}
+
+/* V2.28 actual Monthly Upload component selectors */
+.monthly-portfolio-card.monthly-portfolio-mini{
+  width:100% !important;
+  max-width:none !important;
+  margin-left:0 !important;
+  margin-right:0 !important;
+  box-sizing:border-box;
+}
+.monthly-portfolio-mini .monthly-mini-top{
+  width:100% !important;
+  max-width:none !important;
+  display:grid !important;
+  grid-template-columns:minmax(0,1fr) auto;
+  align-items:start;
+  gap:18px;
+}
+.monthly-portfolio-mini .monthly-mini-delta{
+  width:100% !important;
+  max-width:none !important;
+  display:grid !important;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:10px !important;
+}
+.monthly-portfolio-mini .monthly-mini-delta > *{
+  width:100% !important;
+  min-width:0;
+  margin:0 !important;
+  justify-content:center;
+  text-align:center;
+}
+.monthly-portfolio-mini .monthly-mini-size{
+  width:100% !important;
+  max-width:none !important;
+}
+.monthly-portfolio-mini .monthly-upload-actions{
+  width:100% !important;
+  max-width:none !important;
+  display:grid !important;
+  grid-template-columns:1fr 1fr;
+  gap:12px !important;
+}
+.monthly-portfolio-mini .monthly-upload-actions > *{
+  width:100% !important;
+  max-width:none !important;
+  margin:0 !important;
+}
+.monthly-portfolio-mini .monthly-upload-actions > :first-child{grid-column:1/-1}
+@media(max-width:460px){
+ .monthly-portfolio-mini .monthly-mini-top{grid-template-columns:1fr;gap:4px}
+}

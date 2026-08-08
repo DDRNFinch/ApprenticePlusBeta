@@ -1,6 +1,14 @@
 {
-  "latest": "V2.27",
+  "latest": "V2.28",
   "releases": [
+    {
+      "version": "V2.28",
+      "date": "2026-08-08",
+      "title": "Monthly Upload alignment",
+      "features": [
+        "Monthly Upload content now uses the full card width with balanced stats, storage and actions."
+      ]
+    },
     {
       "version": "V2.27",
       "date": "2026-08-08",
