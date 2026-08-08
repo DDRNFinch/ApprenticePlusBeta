@@ -5600,3 +5600,21 @@ body.app-dark-mode .notification-bell-item.unread .notification-bell-item-conten
 .toolkit-settings-row strong{font-size:.9rem}
 .toolkit-settings-row small{font-size:.7rem;color:#78847d}
 .toolkit-settings-arrow{font-size:1.6rem;color:#879189;line-height:1}
+
+/* V2.51 — four MiniApps in one row */
+.toolkit-group .phone-app-grid{
+  grid-template-columns:repeat(4,minmax(0,1fr))!important;
+  max-width:none!important;
+  width:100%!important;
+  margin-left:auto!important;
+  margin-right:auto!important;
+}
+@media(max-width:620px){
+  .toolkit-group .phone-app-grid{
+    grid-template-columns:repeat(4,minmax(0,1fr))!important;
+    gap:8px!important;
+  }
+  .toolkit-group .phone-app{
+    min-width:0!important;
+  }
+}

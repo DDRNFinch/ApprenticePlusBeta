@@ -1,6 +1,15 @@
 {
-  "latest": "V2.50",
+  "latest": "V2.51",
   "releases": [
+    {
+      "version": "V2.51",
+      "date": "2026-08-08",
+      "title": "Four-across MiniApps",
+      "features": [
+        "StudyMate, ReviewMate, MeasureMate and NoteMate are displayed together in one row of four.",
+        "Academy remains in Toolkit and Settings remains underneath the MiniApps."
+      ]
+    },
     {
       "version": "V2.50",
       "date": "2026-08-08",
