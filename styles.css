@@ -5382,3 +5382,8 @@ body,.shell{
 .studymate-builder-list{margin:18px 0;padding:14px;border-radius:20px;background:#f5f8f3}.studymate-builder-row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid #e4ebe2}.studymate-builder-row:last-child{border-bottom:0}.studymate-builder-row span{display:grid;gap:2px}.studymate-builder-row small{font-size:.68rem;color:#758078}
 .studymate-builder-add{display:grid;gap:12px;padding:15px;border:1px solid #e4ebe2;border-radius:20px;margin-bottom:16px}
 @media(max-width:620px){.studymate-toolbar{display:grid}.studymate-import{width:100%!important}.studymate-card{display:grid}.studymate-card-actions{width:100%}.studymate-card-actions .btn{flex:1}.studymate-builder-grid{grid-template-columns:1fr}.studymate-builder-wide{grid-column:auto}}
+
+/* V2.47 — focused MiniApps */
+.toolkit-group .phone-app-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;max-width:620px;margin-left:auto!important;margin-right:auto!important}
+.cadmate-developer-launch .status-pill{display:inline-flex;vertical-align:middle;margin-left:6px;padding:3px 7px;font-size:.6rem}
+@media(max-width:420px){.toolkit-group .phone-app-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
