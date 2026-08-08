@@ -5387,3 +5387,73 @@ body,.shell{
 .toolkit-group .phone-app-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;max-width:620px;margin-left:auto!important;margin-right:auto!important}
 .cadmate-developer-launch .status-pill{display:inline-flex;vertical-align:middle;margin-left:6px;padding:3px 7px;font-size:.6rem}
 @media(max-width:420px){.toolkit-group .phone-app-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
+
+/* V2.48 — Monthly Upload is now part of the Home progress tile */
+.home-combined-progress{
+  overflow:hidden;
+}
+.home-progress-monthly{
+  width:100%!important;
+  max-width:none!important;
+  box-sizing:border-box!important;
+  margin:18px 0 0!important;
+  padding:16px 0 0!important;
+  border:0!important;
+  border-top:1px solid rgba(78,104,84,.13)!important;
+  border-radius:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+}
+.home-progress-monthly.monthly-portfolio-v240{
+  display:grid!important;
+  grid-template-columns:1fr!important;
+  justify-items:stretch!important;
+}
+.home-progress-monthly.monthly-portfolio-v240 > *{
+  width:100%!important;
+  max-width:none!important;
+  margin-left:0!important;
+  margin-right:0!important;
+  box-sizing:border-box!important;
+}
+.home-progress-monthly .monthly-v240-top{
+  width:100%!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:space-between!important;
+  gap:12px!important;
+  text-align:left!important;
+}
+.home-progress-monthly .monthly-v240-heading{
+  justify-content:flex-start!important;
+  text-align:left!important;
+}
+.home-progress-monthly .monthly-v240-right{
+  justify-content:flex-end!important;
+  text-align:right!important;
+}
+.home-progress-monthly .monthly-v240-main,
+.home-progress-monthly .monthly-v240-metrics,
+.home-progress-monthly .monthly-v240-storage,
+.home-progress-monthly .monthly-v240-followup{
+  width:100%!important;
+  max-width:none!important;
+}
+.home-progress-monthly .monthly-v240-main{
+  display:grid!important;
+  grid-template-columns:1fr!important;
+  gap:10px!important;
+}
+.home-progress-monthly .monthly-v240-download{
+  width:100%!important;
+}
+@media(max-width:560px){
+  .home-progress-monthly{margin-top:14px!important;padding-top:14px!important}
+  .home-progress-monthly .monthly-v240-top{
+    display:grid!important;
+    grid-template-columns:1fr auto!important;
+  }
+  .home-progress-monthly .monthly-v240-metrics{
+    grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  }
+}

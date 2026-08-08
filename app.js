@@ -245,7 +245,7 @@ function learnerPromptTitle(assignmentNumber,code,fallback){
  return LEARNER_PROMPTS[COURSE.id]?.[assignmentNumber]?.[code]||fallback;
 }
 
-const APP_VERSION='V2.47';
+const APP_VERSION='V2.48';
 function paintPdfPageBackground(ctx,W,H){ctx.fillStyle='#ffffff';ctx.fillRect(0,0,W,H);const r=Math.min(W,H)*0.58,g=ctx.createRadialGradient(0,0,0,0,0,r);g.addColorStop(0,'#DDF3D6');g.addColorStop(.42,'#EFF8EC');g.addColorStop(1,'#FFFFFF');ctx.fillStyle=g;ctx.fillRect(0,0,W,H)}
 
 const PORTFOLIO_UPLOAD_LIMIT_BYTES=1_000_000_000;
@@ -5085,7 +5085,7 @@ function renderHome(){
  const combinedValues=[criteria,otjPct,...(timePct===null?[]:[timePct])];
  const overall=combinedValues.length?Math.round(combinedValues.reduce((sum,value)=>sum+value,0)/combinedValues.length):0;
  const epaPct=epa?.overall??0;
- app.innerHTML=shell(`<section class="home-combined-progress"><button type="button" class="combined-progress-ring progress-ring-button" id="openProgressPage" aria-label="Open learner progress details. ${COURSE.nvqUnits?'Course progress':'EPA readiness '+epaPct+' percent. '} ${COURSE.nvqUnits?'Learning Outcomes':'KSBs'} ${criteria} percent. ${learningHoursShortLabel()} ${otjPct} percent. Time on course ${timePct===null?'not available':timePct+' percent'}.">${epa?`<span class="combined-ring-band combined-ring-epa" data-ring-value="${epaPct*3.6}" style="--ring-value:0deg"></span>`:''}<span class="combined-ring-band combined-ring-green" data-ring-value="${criteria*3.6}" style="--ring-value:0deg"></span><span class="combined-ring-band combined-ring-blue" data-ring-value="${otjPct*3.6}" style="--ring-value:0deg"></span><span class="combined-ring-band combined-ring-orange" data-ring-value="${(timePct??0)*3.6}" style="--ring-value:0deg"></span><span class="combined-ring-centre"></span></button><div class="combined-progress-key"><div><i class="key-dot key-green"></i><span><strong>${COURSE.nvqUnits?'Learning Outcomes':'KSBs'}</strong><small>${criteria}%</small></span></div><div><i class="key-dot key-blue"></i><span><strong>${learningHoursShortLabel()}</strong><small>${otjPct}%</small></span></div><div><i class="key-dot key-orange"></i><span><strong>Time</strong><small>${timePct===null?'—':timePct+'%'}</small></span></div>${epa?`<div><i class="key-dot key-purple"></i><span><strong>EPA</strong><small>${epaPct}%</small></span></div>`:''}</div></section>${monthlyPortfolioCard()}${monthlyReminderBanner()}${epa?epaReadinessHtml():''}`);
+ app.innerHTML=shell(`<section class="home-combined-progress"><button type="button" class="combined-progress-ring progress-ring-button" id="openProgressPage" aria-label="Open learner progress details. ${COURSE.nvqUnits?'Course progress':'EPA readiness '+epaPct+' percent. '} ${COURSE.nvqUnits?'Learning Outcomes':'KSBs'} ${criteria} percent. ${learningHoursShortLabel()} ${otjPct} percent. Time on course ${timePct===null?'not available':timePct+' percent'}.">${epa?`<span class="combined-ring-band combined-ring-epa" data-ring-value="${epaPct*3.6}" style="--ring-value:0deg"></span>`:''}<span class="combined-ring-band combined-ring-green" data-ring-value="${criteria*3.6}" style="--ring-value:0deg"></span><span class="combined-ring-band combined-ring-blue" data-ring-value="${otjPct*3.6}" style="--ring-value:0deg"></span><span class="combined-ring-band combined-ring-orange" data-ring-value="${(timePct??0)*3.6}" style="--ring-value:0deg"></span><span class="combined-ring-centre"></span></button><div class="combined-progress-key"><div><i class="key-dot key-green"></i><span><strong>${COURSE.nvqUnits?'Learning Outcomes':'KSBs'}</strong><small>${criteria}%</small></span></div><div><i class="key-dot key-blue"></i><span><strong>${learningHoursShortLabel()}</strong><small>${otjPct}%</small></span></div><div><i class="key-dot key-orange"></i><span><strong>Time</strong><small>${timePct===null?'—':timePct+'%'}</small></span></div>${epa?`<div><i class="key-dot key-purple"></i><span><strong>EPA</strong><small>${epaPct}%</small></span></div>`:''}</div>${monthlyPortfolioCard()}</section>${monthlyReminderBanner()}${epa?epaReadinessHtml():''}`);
  const progressButton=document.getElementById('openProgressPage');if(progressButton)progressButton.onclick=()=>{state.view='progress';render();window.scrollTo(0,0)};
  const download=document.getElementById('downloadEntirePortfolio');if(download)download.onclick=downloadEntirePortfolio;
  const openMonthlyPortfolio=document.getElementById('openMonthlyPortfolio');if(openMonthlyPortfolio)openMonthlyPortfolio.onclick=openMonthlyPortfolioReminder;
@@ -6595,7 +6595,7 @@ function checkMonthlyPortfolioReminder(){if(monthlyReminderPending())showMonthly
 function monthlyPortfolioCard(){
  const d=portfolioDelta(),size=portfolioSizeEstimate(),last=d.status.uploadedAt?new Date(d.status.uploadedAt).toLocaleDateString('en-GB'):'Not yet',downloaded=!!d.status.downloadedAt&&!!d.status.pendingSnapshot,newItems=d.newEvidence.reduce((n,x)=>n+x.added,0),meter=Math.min(100,Math.max(0,size.totalBytes/PORTFOLIO_SAFE_TARGET_BYTES*100)),short=learningHoursShortLabel(),criterion=COURSE.nvqUnits?'LOs':'KSBs';
  const statusLabel=downloaded?'Ready to upload':(d.status.uploadedAt?'Updated':'Ready');
- return `<section class="card panel entire-portfolio-card monthly-portfolio-card monthly-portfolio-v240">
+ return `<div class="home-progress-monthly monthly-portfolio-card monthly-portfolio-v240">
    <div class="monthly-v240-top">
      <div class="monthly-v240-heading"><span>Monthly upload</span><strong>Course portfolio</strong></div>
      <div class="monthly-v240-right"><small>Last upload · ${esc(last)}</small><span>${esc(statusLabel)}</span></div>
@@ -6613,7 +6613,7 @@ function monthlyPortfolioCard(){
      <button class="btn monthly-v240-download" id="downloadEntirePortfolio">Download portfolio</button>
    </div>
    ${downloaded?`<div class="monthly-v240-followup"><button class="btn secondary" id="openMonthlyPortfolio">Open portfolio</button><button class="btn" id="confirmMonthlyUpload">Uploaded</button></div>`:''}
- </section>`;
+ </div>`;
 }
 function wrapPdfText(ctx,text,maxWidth,font){ctx.font=font;const words=String(text||'').split(/\s+/),lines=[];let line='';for(const word of words){const test=line?`${line} ${word}`:word;if(ctx.measureText(test).width>maxWidth&&line){lines.push(line);line=word}else line=test}if(line)lines.push(line);return lines}
 function monthlyEvidenceCode(name){const m=String(name||'').match(/(?:^|[^A-Z0-9])((?:K|S|B|LO)\s*\d+(?:\.\d+)?)(?:[^A-Z0-9]|$)/i);return m?m[1].replace(/\s+/g,'').toUpperCase():''}
