@@ -4794,3 +4794,19 @@ p,.muted,.subtitle{line-height:1.48}
   .monthly-upload-warning-actions{width:100%!important;display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important}
   .monthly-upload-warning-actions .btn{width:100%!important}
 }
+
+
+/* V2.27 - clickable progress detail, app-style signature icon */
+.progress-ring-button{border:0!important;padding:0!important;background:transparent!important;appearance:none!important;-webkit-appearance:none!important;cursor:pointer!important;display:block!important}
+.progress-ring-button:focus-visible{outline:3px solid rgba(88,181,31,.25)!important;outline-offset:5px!important;border-radius:50%!important}
+.progress-page-intro{margin:8px 2px 16px}.progress-page-intro small{display:block;color:#718078;font-size:.62rem;font-weight:760;letter-spacing:.11em;margin-bottom:4px}.progress-page-intro h2{margin:0;color:#1d3024;font-size:1.18rem;font-weight:690;letter-spacing:-.025em}
+.progress-slider-list{display:grid;gap:12px}.progress-slider-card{padding:17px 18px 16px;border:0;border-radius:24px;background:#fff;box-shadow:0 8px 24px rgba(35,70,43,.055)}
+.progress-slider-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:14px}.progress-slider-head strong{color:var(--progress-colour);font-size:.91rem;font-weight:740}.progress-slider-head span{font-size:.7rem;color:#7a877e;white-space:nowrap}.progress-slider-head b{color:#213228;font-weight:760}.progress-slider-head em{color:var(--progress-colour);font-style:normal;font-weight:760}
+.progress-slider-track{--current-position:0%;--target-position:0%;height:10px;position:relative;border-radius:999px;background:color-mix(in srgb,var(--progress-colour) 16%,white);margin:0 8px 12px}
+.progress-slider-fill{position:absolute;inset:0 auto 0 0;width:var(--current-position);border-radius:inherit;background:var(--progress-colour)}
+.progress-slider-current{position:absolute;left:var(--current-position);top:50%;width:18px;height:18px;border-radius:50%;background:var(--progress-colour);border:4px solid #fff;box-shadow:0 2px 8px rgba(26,49,34,.18);transform:translate(-50%,-50%)}
+.progress-slider-target{position:absolute;left:var(--target-position);top:-6px;width:2px;height:22px;border-radius:2px;background:#24342a;transform:translateX(-50%)}
+.progress-slider-target:after{content:'Expected';position:absolute;top:23px;left:50%;transform:translateX(-50%);font-size:.52rem;font-weight:700;color:#829087;white-space:nowrap}
+.progress-slider-card small{display:block;margin-top:20px;color:#78867d;font-size:.68rem;line-height:1.35}
+.signature-unlock::before{content:''!important;width:29px;height:29px;margin:0 auto 7px!important;display:block!important;background-color:var(--green)!important;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 20h4l11-11a2.8 2.8 0 0 0-4-4L4 16v4Z'/%3E%3Cpath d='m13.5 6.5 4 4'/%3E%3C/svg%3E")!important;background-size:18px 18px!important;background-position:center!important;background-repeat:no-repeat!important;border-radius:9px!important}
+@media(max-width:520px){.progress-slider-card{padding:15px 14px;border-radius:21px}.progress-slider-head{align-items:flex-start}.progress-slider-head span{font-size:.64rem}.progress-slider-target:after{font-size:.48rem}}

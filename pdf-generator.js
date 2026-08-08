@@ -1,5 +1,7 @@
-// V2.25 Apprentice+ premium evidence record export
+// V2.27 Apprentice+ premium evidence record export
 'use strict';
+
+function apprenticePdfBackground(ctx,W,H){ctx.fillStyle='#FFFFFF';ctx.fillRect(0,0,W,H);const r=Math.min(W,H)*0.58,g=ctx.createRadialGradient(0,0,0,0,0,r);g.addColorStop(0,'#DDF3D6');g.addColorStop(.42,'#EFF8EC');g.addColorStop(1,'#FFFFFF');ctx.fillStyle=g;ctx.fillRect(0,0,W,H)}
 
 /* Apprentice+ offline PDF generator. Evidence stays in the browser; no data is uploaded. */
 async function generateEvidencePackPDF({course, assignment, profile, sections, branding, returnPackage=false, newEvidence={}, assignmentRpl=false, rplKsbCodes=[]}) {
@@ -34,7 +36,7 @@ async function generateEvidencePackPDF({course, assignment, profile, sections, b
   const drawLogo=(x,img,px,py,maxW,maxH)=>{if(!img)return;const sc=Math.min(maxW/img.width,maxH/img.height);x.drawImage(img,px,py,img.width*sc,img.height*sc)};
   const newPage=(title,version,status='Submitted - Locked')=>{
     const c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d');const [sectionName,sectionColour]=pdfSectionFor(title);x._sectionColour=sectionColour;x._sectionName=sectionName;
-    x.fillStyle=PALE;x.fillRect(0,0,W,H);
+    apprenticePdfBackground(x,W,H);
     x.fillStyle=WHITE;roundedRect(x,M-22,28,W-2*M+44,224,28);x.fill();
     x.fillStyle=TEAL;roundedRect(x,M,48,7,50,4);x.fill();
     if(collegeLogo)drawLogo(x,collegeLogo,W-M-390,38,142,50);
@@ -225,7 +227,7 @@ async function generateEvidencePackPDF({course, assignment, profile, sections, b
 
   // Front cover (unnumbered)
   {
-    const c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d');x.fillStyle=WHITE;x.fillRect(0,0,W,H);
+    const c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d');apprenticePdfBackground(x,W,H);
     drawLogo(x,apprenticeLogo,M,74,196,88);if(collegeLogo)drawLogo(x,collegeLogo,W-M-240,82,190,70);
     x.fillStyle='#DCE7DA';x.fillRect(M,208,W-2*M,1);
     x.fillStyle=MUTED;x.font='600 16px Arial';x.fillText('APPRENTICE+ · EVIDENCE PORTFOLIO',M,278);
@@ -408,7 +410,7 @@ async function generateNVQEvidencePackPDF({course, assignment, profile, sections
   const pdfStampFor=title=>{const t=String(title||'').toLowerCase();if(/learning outcome|coverage|evidence pack/.test(t))return ['Evidence','Pack',PDF_COLOURS.cover];if(/assessor observation|practical/.test(t))return ['Assessor','Observation',PDF_COLOURS.practical];if(/learner statement|write about it/.test(t))return ['Learner','Statement',PDF_COLOURS.statement];if(/witness|employer/.test(t))return ['Witness','Testimony',PDF_COLOURS.witness];if(/video|walkthrough|record a video/.test(t))return ['Video','Walkthrough',PDF_COLOURS.video];if(/professional discussion|talk about it/.test(t))return ['Professional','Discussion',PDF_COLOURS.discussion];if(/photo|image|take photos/.test(t))return ['Photographic','Evidence',PDF_COLOURS.photo];if(/knowledge|question/.test(t))return ['Knowledge','Evidence',PDF_COLOURS.knowledge];if(/document|certificate|supporting/.test(t))return ['Supporting','Evidence',PDF_COLOURS.documents];return ['Evidence','Portfolio',PDF_COLOURS.cover]};
   const roundedRect=(x,px,py,w,h,r)=>{const rr=Math.min(r,w/2,h/2);x.beginPath();x.moveTo(px+rr,py);x.lineTo(px+w-rr,py);x.quadraticCurveTo(px+w,py,px+w,py+rr);x.lineTo(px+w,py+h-rr);x.quadraticCurveTo(px+w,py+h,px+w-rr,py+h);x.lineTo(px+rr,py+h);x.quadraticCurveTo(px,py+h,px,py+h-rr);x.lineTo(px,py+rr);x.quadraticCurveTo(px,py,px+rr,py);x.closePath()};
   const drawPdfStamp=(x,title)=>{const [line1,line2,colour]=pdfStampFor(title),size=112,px=W-M-size,py=54;x.save();roundedRect(x,px,py,size,size,14);x.fillStyle='#ffffff';x.fill();x.strokeStyle='#DCE7DA';x.lineWidth=2;x.stroke();roundedRect(x,px+8,py+8,size-16,size-16,10);x.fillStyle=colour;x.globalAlpha=.10;x.fill();x.globalAlpha=1;x.fillStyle=colour;x.textAlign='center';x.textBaseline='middle';x.font='800 15px Arial';x.fillText(clean(line1).toUpperCase(),px+size/2,py+44);x.font='800 14px Arial';x.fillText(clean(line2).toUpperCase(),px+size/2,py+66);x.textAlign='left';x.textBaseline='alphabetic';x.restore()};
-  const newPage=(title,subtitle='NVQ Evidence Pack')=>{const c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d'),[sectionName,sectionColour]=pdfSectionFor(title);x._sectionColour=sectionColour;x._sectionName=sectionName;x.fillStyle=WHITE;x.fillRect(0,0,W,H);x.fillStyle='#79d22f';x.fillRect(M,42,8,52);x.fillStyle=MUTED;x.font='700 12px Arial';x.fillText('APPRENTICE+ · NVQ EVIDENCE PACK',M+24,60);x.fillStyle=INK;x.font='700 30px Arial';fitText(x,clean(title),M+24,91,W-2*M-280,30);drawPdfStamp(x,title);x.fillStyle=MUTED;x.font='500 14px Arial';x.fillText(clean(subtitle),M+24,120);x.fillStyle='#DCE7DA';x.fillRect(M,142,W-2*M,1);pages.push({canvas:c,ctx:x,colour:sectionColour,sectionName});return {c,x,y:166}};
+  const newPage=(title,subtitle='NVQ Evidence Pack')=>{const c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d'),[sectionName,sectionColour]=pdfSectionFor(title);x._sectionColour=sectionColour;x._sectionName=sectionName;apprenticePdfBackground(x,W,H);x.fillStyle='#79d22f';x.fillRect(M,42,8,52);x.fillStyle=MUTED;x.font='700 12px Arial';x.fillText('APPRENTICE+ · NVQ EVIDENCE PACK',M+24,60);x.fillStyle=INK;x.font='700 30px Arial';fitText(x,clean(title),M+24,91,W-2*M-280,30);drawPdfStamp(x,title);x.fillStyle=MUTED;x.font='500 14px Arial';x.fillText(clean(subtitle),M+24,120);x.fillStyle='#DCE7DA';x.fillRect(M,142,W-2*M,1);pages.push({canvas:c,ctx:x,colour:sectionColour,sectionName});return {c,x,y:166}};
   function fitText(x,text,px,py,max,fontSize){let s=fontSize;x.font=`700 ${s}px Arial`;while(x.measureText(text).width>max&&s>14){s--;x.font=`700 ${s}px Arial`}x.fillText(text,px,py)}
   function label(x,t,px,py){x.fillStyle=MUTED;x.font='700 17px Arial';x.fillText(clean(t).toUpperCase(),px,py)}
   function value(x,t,px,py,size=21,bold=false){x.fillStyle=INK;x.font=`${bold?700:400} ${size}px Arial`;x.fillText(clean(t||'-'),px,py)}
