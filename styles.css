@@ -4413,3 +4413,79 @@ body{background:radial-gradient(circle at 12% 0%,rgba(88,181,31,.10),transparent
 .bottom-nav{bottom:max(16px,env(safe-area-inset-bottom));width:min(500px,calc(100% - 28px));padding:7px;gap:3px;border:1px solid rgba(255,255,255,.8);border-radius:30px;background:rgba(255,255,255,.90);box-shadow:0 16px 40px rgba(35,70,43,.14);backdrop-filter:blur(22px)}.bottom-nav-item{min-height:58px;padding:8px 7px;border-radius:23px;flex-direction:column;gap:3px}.bottom-nav-item strong{font-size:10px}.bottom-nav-item.active{background:#e9f6e3;color:#347d1f}
 .home-progress-ring-card{border:0;border-radius:26px;box-shadow:var(--shadow);padding:20px 14px}.home-progress-ring{background:conic-gradient(var(--green) var(--home-progress),#e9efe7 0)}.modal{background:rgba(20,34,25,.42);backdrop-filter:blur(4px)}.modal-card{padding:24px}
 @media(max-width:460px){.shell{padding:18px 14px 118px}.brand h1{font-size:24px}.course-card{padding:19px}.assignment-card{padding:18px}.evidence-grid{gap:10px}.evidence-tile{padding:15px;border-radius:22px}.bottom-nav{width:calc(100% - 20px);border-radius:27px}.bottom-nav-item{min-height:55px;border-radius:21px}}
+
+
+/* V2.22 — premium visual refinement only */
+body{font-weight:400;letter-spacing:-.006em}
+h1,h2,h3{font-weight:760;letter-spacing:-.025em}
+p,.muted,.subtitle{line-height:1.48}
+.brand h1{font-size:24px;font-weight:760;letter-spacing:-.04em}
+.brand .subtitle{font-size:11px;font-weight:500;letter-spacing:.005em}
+.number{font-size:10px;font-weight:760;letter-spacing:.075em}
+.section-heading h2{font-size:20px;font-weight:760}
+.assignment-card h3,.evidence-tile h3{font-weight:720}
+.btn{font-weight:760;letter-spacing:-.01em}
+.pill,.ksb-chip,.status-pill{font-weight:720}
+
+/* Let the logo sit naturally on the app surface rather than as a pasted white tile. */
+.logo{background:transparent!important;overflow:visible!important;border-radius:0!important}
+.logo img{object-fit:contain!important;border-radius:0!important;mix-blend-mode:multiply;filter:saturate(1.04) contrast(1.015)}
+
+/* Balanced dashboard rings: three compact cards in one continuous row. */
+.home-progress-rings{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:7px!important;max-width:560px;margin:0 auto 18px!important}
+.home-progress-ring-card{padding:15px 8px!important;border-radius:23px!important;min-width:0}
+.home-progress-ring{width:94px!important;height:94px!important;margin:0 auto 9px!important}
+.home-progress-ring:after{inset:10px!important}
+.home-progress-ring strong{font-size:1.12rem!important;font-weight:760}
+.home-progress-ring-card h3{font-size:.86rem!important;font-weight:720;margin-bottom:3px!important}
+.home-progress-ring-card p{font-size:.72rem!important;line-height:1.3}
+
+/* EPA dashboard: one uniform card system with aligned content and actions. */
+.epa-dashboard-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:12px!important;align-items:stretch!important}
+.epa-dashboard-tile,.epa-dashboard-tile.epa-results-tile{
+  display:grid!important;
+  grid-template-columns:42px minmax(0,1fr)!important;
+  grid-template-rows:auto minmax(42px,auto) auto auto!important;
+  column-gap:11px!important;
+  row-gap:10px!important;
+  align-content:start!important;
+  min-height:238px!important;
+  height:100%!important;
+  padding:16px!important;
+  border:0!important;
+  border-radius:24px!important;
+  background:#fff!important;
+  box-shadow:0 8px 24px rgba(35,70,43,.055)!important;
+}
+.epa-dashboard-tile .academy-icon{grid-column:1;grid-row:1;width:42px!important;height:42px!important;border:0!important;border-radius:14px!important;background:#edf8e8!important;color:#347d1f!important}
+.epa-dashboard-tile>div:nth-child(2){grid-column:2;grid-row:1;align-self:center;min-width:0}
+.epa-dashboard-tile .number{font-size:8px!important;margin:0 0 3px!important;color:#6d7a72!important}
+.epa-dashboard-tile h3{font-size:14px!important;line-height:1.18!important;font-weight:740!important;margin:0!important;min-height:33px}
+.epa-dashboard-tile p{display:block!important;grid-column:1/-1;font-size:11px!important;line-height:1.4!important;color:#718078!important;margin:0!important}
+.epa-dashboard-tile>div:nth-child(2) p{display:none!important}
+.epa-dashboard-tile .epa-tile-stat{grid-column:1/-1;grid-row:3;margin:0!important;padding:9px 11px!important;border-radius:14px!important;background:#f2f6f1!important;min-height:44px;display:flex!important;align-items:center!important;justify-content:space-between!important}
+.epa-dashboard-tile .epa-tile-stat strong{font-size:17px!important;font-weight:760!important;color:#23442b!important}
+.epa-dashboard-tile .epa-tile-stat span{font-size:9px!important;font-weight:620!important;color:#718078!important;text-align:right}
+.epa-dashboard-tile>.btn,.epa-dashboard-tile>button.btn{grid-column:1/-1;grid-row:auto;align-self:end;width:100%;min-height:38px!important;margin:0!important;padding:9px 10px!important;border-radius:999px!important;font-size:10.5px!important;font-weight:740!important}
+.epa-dashboard-tile>.btn+.btn{margin-top:-5px!important}
+.epa-section-intro{margin-bottom:14px!important}
+.epa-section-intro strong{font-weight:740!important}
+
+@media(max-width:520px){
+  .shell{padding-left:14px;padding-right:14px}
+  .brand h1{font-size:23px}
+  .home-progress-rings{gap:6px!important}
+  .home-progress-ring-card{padding:13px 5px!important;border-radius:20px!important}
+  .home-progress-ring{width:82px!important;height:82px!important;margin-bottom:7px!important}
+  .home-progress-ring:after{inset:9px!important}
+  .home-progress-ring strong{font-size:1rem!important}
+  .home-progress-ring-card h3{font-size:.76rem!important}
+  .home-progress-ring-card p{font-size:.64rem!important}
+  .epa-dashboard-grid{gap:9px!important}
+  .epa-dashboard-tile,.epa-dashboard-tile.epa-results-tile{min-height:222px!important;padding:13px!important;border-radius:21px!important;grid-template-columns:38px minmax(0,1fr)!important;column-gap:9px!important;row-gap:8px!important}
+  .epa-dashboard-tile .academy-icon{width:38px!important;height:38px!important;border-radius:12px!important}
+  .epa-dashboard-tile h3{font-size:12.5px!important;min-height:30px}
+  .epa-dashboard-tile .epa-tile-stat{padding:8px 9px!important;min-height:40px}
+  .epa-dashboard-tile .epa-tile-stat strong{font-size:15px!important}
+  .epa-dashboard-tile>.btn,.epa-dashboard-tile>button.btn{min-height:36px!important;font-size:9.5px!important;padding:8px 6px!important}
+}
