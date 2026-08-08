@@ -67,7 +67,7 @@ async function generateEvidencePackPDF({course, assignment, profile, sections, b
     const recorded=Object.keys(d?.recordings||{}).filter(code=>!!d.recordings?.[code]?.data);
     return [...new Set([...explicit,...photoLinked,...scored,...recorded].filter(valid))];
   };
-  const practicalCodes=d=>{const observedSet=new Set((assignment.ksbs||[]).filter(([code])=>/^[SB]/i.test(String(code))).map(([code])=>code));return selectedCodes(d).filter(code=>observedSet.has(code))};
+  const practicalCodes=d=>{const observedSet=new Set((assignment.ksbs||[]).map(([code])=>code));return selectedCodes(d).filter(code=>observedSet.has(code))};
   const addEvidence=(ref,title,type,date)=>evidenceCatalogue.push({ref,title,type,date:date||'-'});
   (sections.practical||[]).forEach((d,i)=>{const ref=`AO${i+1}`;addEvidence(ref,`Verified by Someone Else ${i+1}`,'Assessor Observation',d.date);practicalCodes(d).forEach(code=>addMatrix(code,ref))});
   (sections.statement||[]).forEach((d,i)=>{const ref=`LS${i+1}`;addEvidence(ref,`Write About It ${i+1}`,'Learner Statement',d.date);selectedCodes(d).forEach(code=>addMatrix(code,ref))});
@@ -161,8 +161,13 @@ async function generateEvidencePackPDF({course, assignment, profile, sections, b
     const blocks=(fields||[]).map(([labelText,content])=>[labelText,clean(content||'').trim()]).filter(([,content])=>content);
     const p=meta(newPage(title,version),version,date,type,newEvidenceType),x=p.x,signatureTop=H-258;
     let y=sectionHeading(x,'Evidence Details',p.y),bottom=signatureData?signatureTop-22:H-112;
-    const gap=12,available=Math.max(180,bottom-y),count=Math.max(1,blocks.length),boxH=Math.max(76,(available-gap*(count-1))/count);
-    (blocks.length?blocks:[['Evidence','-']]).forEach(([headingText,content],i)=>drawFixedTextBox(x,headingText,content,M,y+i*(boxH+gap),W-2*M,boxH));
+    const longRx=/response|statement|comments?|observation|discussion|notes?|summary|improvement|activity \/ description|video evidence|voice evidence/i;
+    let primaryIndex=blocks.findIndex(([heading])=>longRx.test(heading));if(primaryIndex<0&&blocks.length)primaryIndex=blocks.length-1;
+    const primary=primaryIndex>=0?blocks[primaryIndex]:['Evidence','-'],metaBlocks=blocks.filter((_,i)=>i!==primaryIndex);
+    const gap=10,cols=2,bw=(W-2*M-gap)/cols,metaH=76,rows=Math.ceil(metaBlocks.length/cols);
+    metaBlocks.forEach(([headingText,content],i)=>drawFixedTextBox(x,headingText,content,M+(i%2)*(bw+gap),y+Math.floor(i/2)*(metaH+gap),bw,metaH));
+    y+=rows?rows*(metaH+gap):0;
+    const primaryH=Math.max(118,bottom-y);drawFixedTextBox(x,primary[0],primary[1],M,y,W-2*M,primaryH);
     if(signatureData){const sig=await loadImage(signatureData);signature(x,sig,signatureTop,signatureTitle)}
   }
 
@@ -271,7 +276,7 @@ async function generateEvidencePackPDF({course, assignment, profile, sections, b
   // Assessor observation: one fixed page with a 3x3 photograph grid.
   for(let i=0;i<(sections.practical||[]).length;i++){
     const d=sections.practical[i],v=i+1;d._version=v;
-    await addFixedPhotoEvidenceRecord(d,{title:`Verified by Someone Else · AO${v}`,version:`Attempt ${v}`,date:d.date,type:'Assessor Observation',signatureTitle:'Tutor / assessor signature',assessor:true,summaryFields:[['Observer',d.tutor],['Activity observed',d.activity],['Skills / Behaviours observed',selectedKsbDetails(d)],['Observation record',d.feedback]]});
+    await addFixedPhotoEvidenceRecord(d,{title:`Verified by Someone Else · AO${v}`,version:`Attempt ${v}`,date:d.date,type:'Assessor Observation',signatureTitle:'Tutor / assessor signature',assessor:true,summaryFields:[['Observer',d.tutor],['Activity observed',d.activity],['KSBs observed',selectedKsbDetails(d)],['Observation record',d.feedback]]});
   }
 
   // Photographic evidence: one fixed page with three landscape photographs side by side.
@@ -416,6 +421,7 @@ async function generateNVQEvidencePackPDF({course, assignment, profile, sections
   async function drawFixedPhotoGrid(x,items,{px=M,py,cols=3,rows=1,gap=14,captionH=38}={}){const max=cols*rows,totalW=W-2*M,cellW=(totalW-gap*(cols-1))/cols,cellH=cellW*9/16;for(let i=0;i<max;i++){const col=i%cols,row=Math.floor(i/cols),cx=px+col*(cellW+gap),cy=py+row*(cellH+captionH+gap),item=items[i],img=item?.photo?.data?await loadImage(item.photo.data):null;drawCoverImage(x,img,cx,cy,cellW,cellH);x.fillStyle=MUTED;x.font='700 11px Arial';fitText(x,item?clean(item.code||`Photo ${i+1}`):`PHOTO ${i+1}`,cx,cy+cellH+17,cellW,11);if(item?.caption){x.fillStyle=INK;x.font='400 10px Arial';fitText(x,clean(item.caption),cx,cy+cellH+32,cellW,10)}}return py+rows*(cellH+captionH+gap)-gap}
   function paragraph(x,text,y,maxHeight=360){const sizes=[21,20,19,18,17,16,15];for(const size of sizes){const lh=Math.round(size*1.43),lines=wrap(x,text,W-2*M,`400 ${size}px Arial`);if(lines.length*lh<=maxHeight){x.font=`400 ${size}px Arial`;x.fillStyle=INK;lines.forEach((l,i)=>x.fillText(l,M,y+i*lh));return y+lines.length*lh}}const lines=wrap(x,text,W-2*M,'400 15px Arial'),max=Math.floor(maxHeight/22);x.font='400 15px Arial';x.fillStyle=INK;lines.slice(0,max).forEach((l,i)=>x.fillText(l,M,y+i*22));return y+Math.min(lines.length,max)*22}
   const selectedOutcomeDetails=d=>selectedScores(d).map(([code,text])=>`${code} - ${text}${assignment.criteria?.[code]?`\nCriteria: ${assignment.criteria[code]}`:''}`).join('\n');
+  const selectedKsbDetails=d=>selectedCodes(d).map(code=>{const row=(assignment.ksbs||[]).find(([c])=>c===code);return `${code} - ${row?.[1]||''}`}).join('\n');
   const scoredOutcomeDetails=d=>Object.entries(d?.scores||{}).filter(([,score])=>Number(score)>0).map(([code,score])=>`${String(code).replace(/::/g,' practical mark ')}: ${score} / 5`).join('\n');
   const recordingOutcomeDetails=(d,labelText)=>Object.entries(d?.recordings||{}).filter(([,rec])=>rec?.data).map(([code,rec])=>`${code}: ${labelText} included${rec.duration?` - ${rec.duration}`:''}${Number(rec.size)>0?` - ${Math.max(1,Math.round(Number(rec.size)/1024))} KB`:''}${rec.date?` - recorded ${rec.date}`:''}${rec.type?` - ${rec.type}`:''}${d.notes?.[code]?`\nNotes: ${d.notes[code]}`:''}`).join('\n\n');
   const videoRecordingOutcomeDetails=d=>Object.entries(d?.recordings||{}).filter(([,rec])=>isVideoRecording(rec)).map(([code,rec])=>`${code}: Video recording included${rec.duration?` - ${rec.duration}`:''}${Number(rec.size)>0?` - ${Math.max(1,Math.round(Number(rec.size)/1024))} KB`:''}${rec.date?` - recorded ${rec.date}`:''}${rec.type?` - ${rec.type}`:''}`).join('\n\n');
@@ -425,8 +431,14 @@ async function generateNVQEvidencePackPDF({course, assignment, profile, sections
   const photoOutcomeDetails=d=>{const rows=[];for(const [code,photo] of Object.entries(d?.outcomePhotos||{}))if(photo?.data)rows.push(`${code}: ${linkedOutcomePhotoFileName(code,0)}`);(d?.photos||[]).forEach((photo,i)=>{if(photo?.data)rows.push(`Photo ${i+1}: ${linkedNvqRecordPhotoFileName(d,i)}`)});for(const [code,value] of Object.entries(d?.captions||{}))if(String(value||'').trim())rows.push(`${code}: ${value}`);return rows.join('\n')};
   async function addCompleteNvqRecord({title,attempt,date,type,newEvidenceType=type,fields,signatureTitle='Signature',signatureData=''}){
     const blocks=(fields||[]).map(([a,b])=>[a,clean(b||'').trim()]).filter(([,b])=>b),p=meta(newPage(title,`Attempt ${attempt}`),date,type,attempt,newEvidenceType),x=p.x,signatureTop=H-258;
-    let y=sectionHeading(x,'Evidence Details',p.y),bottom=signatureData?signatureTop-22:H-112,gap=10,count=Math.max(1,blocks.length),boxH=Math.max(68,(bottom-y-gap*(count-1))/count);
-    (blocks.length?blocks:[['Evidence','-']]).forEach(([a,b],i)=>drawFixedTextBox(x,a,b,M,y+i*(boxH+gap),W-2*M,boxH));
+    let y=sectionHeading(x,'Evidence Details',p.y),bottom=signatureData?signatureTop-22:H-112;
+    const longRx=/response|statement|comments?|observation|discussion|notes?|summary|improvement|activity \/ description|recordings?/i;
+    let primaryIndex=blocks.findIndex(([heading])=>longRx.test(heading));if(primaryIndex<0&&blocks.length)primaryIndex=blocks.length-1;
+    const primary=primaryIndex>=0?blocks[primaryIndex]:['Evidence','-'],metaBlocks=blocks.filter((_,i)=>i!==primaryIndex);
+    const gap=10,bw=(W-2*M-gap)/2,metaH=74,rows=Math.ceil(metaBlocks.length/2);
+    metaBlocks.forEach(([a,b],i)=>drawFixedTextBox(x,a,b,M+(i%2)*(bw+gap),y+Math.floor(i/2)*(metaH+gap),bw,metaH));
+    y+=rows?rows*(metaH+gap):0;
+    drawFixedTextBox(x,primary[0],primary[1],M,y,W-2*M,Math.max(116,bottom-y));
     if(signatureData){const sig=await loadImage(signatureData);signature(x,sig,signatureTop,signatureTitle)}
   }
 
@@ -441,7 +453,7 @@ async function generateNVQEvidencePackPDF({course, assignment, profile, sections
     const items=[];for(const [code,photo] of Object.entries(d?.outcomePhotos||{}))if(photo?.data)items.push({code,photo,caption:String(d?.captions?.[code]||'')});(d?.photos||[]).forEach((photo,index)=>{if(photo?.data)items.push({code:`Photo ${index+1}`,photo,caption:String(photo.caption||'')})});
     const p=meta(newPage('Verified by Someone Else',`Attempt ${attempt}`),d.date,'Assessor Observation',attempt),x=p.x,signatureTop=H-258;let y=sectionHeading(x,'Assessor Observation',p.y),gap=10,bw=(W-2*M-gap)/2;
     drawFixedTextBox(x,'Assessor',d.tutor||'-',M,y,bw,68);drawFixedTextBox(x,'Activity observed',d.activity||'-',M+bw+gap,y,bw,68);y+=78;
-    drawFixedTextBox(x,'Learning outcomes observed',selectedOutcomeDetails(d)||'-',M,y,bw,78);drawFixedTextBox(x,'Observation / comments',d.feedback||'-',M+bw+gap,y,bw,78);y+=90;
+    drawFixedTextBox(x,'KSBs observed',selectedKsbDetails(d)||'-',M,y,bw,78);drawFixedTextBox(x,'Observation / comments',d.feedback||'-',M+bw+gap,y,bw,78);y+=90;
     await drawFixedPhotoGrid(x,items.slice(0,9),{py:y,cols:3,rows:3,gap:10,captionH:18});
     if(d.signature){const sig=await loadImage(d.signature);signature(x,sig,signatureTop,'Assessor signature')}
   }
