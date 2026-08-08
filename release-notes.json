@@ -1,6 +1,15 @@
 {
-  "latest": "V2.49",
+  "latest": "V2.50",
   "releases": [
+    {
+      "version": "V2.50",
+      "date": "2026-08-08",
+      "title": "Settings restored",
+      "features": [
+        "Settings is restored to the Toolkit as a normal app control beneath the four MiniApps.",
+        "StudyMate, ReviewMate, MeasureMate and NoteMate remain the only learner-facing MiniApps."
+      ]
+    },
     {
       "version": "V2.49",
       "date": "2026-08-08",

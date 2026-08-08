@@ -245,7 +245,7 @@ function learnerPromptTitle(assignmentNumber,code,fallback){
  return LEARNER_PROMPTS[COURSE.id]?.[assignmentNumber]?.[code]||fallback;
 }
 
-const APP_VERSION='V2.49';
+const APP_VERSION='V2.50';
 function paintPdfPageBackground(ctx,W,H){ctx.fillStyle='#ffffff';ctx.fillRect(0,0,W,H);const r=Math.min(W,H)*0.58,g=ctx.createRadialGradient(0,0,0,0,0,r);g.addColorStop(0,'#DDF3D6');g.addColorStop(.42,'#EFF8EC');g.addColorStop(1,'#FFFFFF');ctx.fillStyle=g;ctx.fillRect(0,0,W,H)}
 
 const PORTFOLIO_UPLOAD_LIMIT_BYTES=1_000_000_000;
@@ -5277,13 +5277,14 @@ function renderToolkit(){
   ['openMeasureMate','tools','MeasureMate','Measurements, calculations and material quantities.',0,'blue'],
   ['openNotepad','note','NoteMate','Save notes, photos, videos and voice recordings.',learnerNotes().length,'purple']
  ];
- app.innerHTML=shell(`${academyTiles}<section class="toolkit-group"><div class="toolbox-group-heading"><h3>Miniapps</h3><p>Extra tools to support your ${COURSE.nvqUnits?'NVQ':'apprenticeship'}.</p></div><div class="phone-app-grid">${tools.map(toolkitAppCard).join('')}</div></section>`);
+ app.innerHTML=shell(`${academyTiles}<section class="toolkit-group"><div class="toolbox-group-heading"><h3>Miniapps</h3><p>Extra tools to support your ${COURSE.nvqUnits?'NVQ':'apprenticeship'}.</p></div><div class="phone-app-grid">${tools.map(toolkitAppCard).join('')}</div></section><section class="toolkit-settings-section"><button type="button" class="toolkit-settings-row" id="openSettings"><span class="toolkit-settings-icon">${appIcon('settings')}</span><span><strong>Settings</strong><small>Profile, app preferences, accessibility and controls</small></span><span class="toolkit-settings-arrow">›</span></button></section>`);
  document.getElementById('openKnowledgeSlides').onclick=()=>{state.view='knowledge-slides';render();window.scrollTo(0,0)};
  document.getElementById('openLibrary').onclick=()=>{state.view='trade-courses';render();window.scrollTo(0,0)};
  document.getElementById('openFunctionalSkills').onclick=()=>{state.view='functional-skills';render();window.scrollTo(0,0)};
  document.getElementById('openCertificates').onclick=()=>{state.view='certificates';render();window.scrollTo(0,0)};
  const routes={openMeasureMate:'measuremate',openReviewMate:'reviewmate',openNotepad:'notepad',openStudyMate:'studymate'};
  Object.entries(routes).forEach(([id,view])=>{const el=document.getElementById(id);if(el)el.onclick=()=>{state.view=view;if(view==='reviewmate'){state.reviewMateTab='targets';state.reviewMateDraft=null;state.reviewMatePlusDraft=null}if(view==='notepad')state.editingNoteId=null;render();window.scrollTo(0,0)}});
+ const settings=document.getElementById('openSettings');if(settings)settings.onclick=()=>{state.view='settings';render();window.scrollTo(0,0)};
 }
 function renderCourse(){
  const done=courseAssignments().filter(a=>assignmentComplete(a.n)).length;
