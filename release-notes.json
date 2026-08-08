@@ -1,6 +1,17 @@
 {
-  "latest": "V2.54",
+  "latest": "V2.55",
   "releases": [
+    {
+      "version": "V2.55",
+      "date": "2026-08-08",
+      "title": "Portfolio rendering recovery",
+      "features": [
+        "The complete portfolio can no longer be blocked by a single canvas/PDF rendering error.",
+        "Each Evidence Pack is generated independently; if its visual renderer fails, Apprentice+ uses the latest saved Evidence Pack PDF or a safe fallback while still packaging the learner's saved evidence and media.",
+        "Monthly Summary and Academy PDFs also have safe rendering fallbacks.",
+        "The V2.52 observation evidence, recording references and complete-portfolio media inclusion remain in place."
+      ]
+    },
     {
       "version": "V2.54",
       "date": "2026-08-08",
