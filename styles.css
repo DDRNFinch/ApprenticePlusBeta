@@ -5618,3 +5618,46 @@ body.app-dark-mode .notification-bell-item.unread .notification-bell-item-conten
     min-width:0!important;
   }
 }
+
+/* V2.52 — learning hours tile stays pale yellow until complete */
+.evidence-tile-otj.learning-incomplete{
+  background:#fff9df!important;
+  border-color:#eadb9a!important;
+}
+.evidence-tile-otj.learning-incomplete .evidence-icon-otj,
+.evidence-tile-otj.learning-incomplete .tile-icon{
+  background:#fff1b8!important;
+  color:#8c6b00!important;
+}
+.evidence-tile-otj.learning-incomplete .evidence-hours-percent{
+  background:#fff1b8!important;
+  color:#7c6200!important;
+}
+.evidence-tile-otj.learning-incomplete .evidence-hours-progress>span{
+  background:#f2e6b5!important;
+}
+.evidence-tile-otj.learning-incomplete .evidence-hours-progress i{
+  background:#d4ad25!important;
+}
+
+/* V2.52 — assessor prompt during observation discussion */
+.observation-assessor-prompt{
+  margin:14px 0;
+  padding:14px 16px;
+  border-radius:18px;
+  background:#f2f5f1;
+  border:1px solid #e0e7de;
+  display:grid;
+  gap:5px;
+}
+.observation-assessor-prompt small{
+  font-size:.66rem;
+  font-weight:850;
+  letter-spacing:.08em;
+  color:#6c786f;
+}
+.observation-assessor-prompt strong{
+  font-size:.84rem;
+  line-height:1.45;
+  color:#1d2b22;
+}
