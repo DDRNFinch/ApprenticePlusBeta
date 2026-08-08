@@ -245,7 +245,7 @@ function learnerPromptTitle(assignmentNumber,code,fallback){
  return LEARNER_PROMPTS[COURSE.id]?.[assignmentNumber]?.[code]||fallback;
 }
 
-const APP_VERSION='V2.42';
+const APP_VERSION='V2.43';
 function paintPdfPageBackground(ctx,W,H){ctx.fillStyle='#ffffff';ctx.fillRect(0,0,W,H);const r=Math.min(W,H)*0.58,g=ctx.createRadialGradient(0,0,0,0,0,r);g.addColorStop(0,'#DDF3D6');g.addColorStop(.42,'#EFF8EC');g.addColorStop(1,'#FFFFFF');ctx.fillStyle=g;ctx.fillRect(0,0,W,H)}
 
 const PORTFOLIO_UPLOAD_LIMIT_BYTES=1_000_000_000;
@@ -6122,6 +6122,19 @@ function generateRandomCustomAssignments(criteria,count){
 async function saveCustomCourse(course){
  const saved=await getStore(CUSTOM_COURSES_KEY)||{};saved[course.id]=course;COURSES[course.id]=course;await putStore(CUSTOM_COURSES_KEY,saved);
 }
+async function deleteCustomCourse(courseId){
+ const course=COURSES[courseId];
+ if(!course?.custom)return false;
+ const saved=await getStore(CUSTOM_COURSES_KEY)||{};
+ delete saved[courseId];
+ delete COURSES[courseId];
+ await putStore(CUSTOM_COURSES_KEY,saved);
+ if(ACTIVE_COURSE_ID===courseId){
+  const fallback=Object.keys(COURSES).find(id=>!COURSES[id]?.custom)||Object.keys(COURSES)[0]||'';
+  if(fallback){ACTIVE_COURSE_ID=fallback;COURSE=COURSES[fallback];await putStore('activeCourse',fallback)}
+ }
+ return true;
+}
 function customCourseCompact(course){
  return {i:course.id,n:course.name,q:Number(course.evidenceRequirement||2),v:course.nvqUnits?1:0,a:(course.assignments||[]).map(a=>[a.title,(a.ksbs||[]).map(([code,text])=>[code,text])])};
 }
@@ -6296,7 +6309,7 @@ async function finishCustomCourse(){
  await saveCustomCourse(course);customCourseDraft=null;document.getElementById('customCourseBuilder')?.remove();toast(`${course.name} saved permanently in Developer Mode`);showCustomCourseShare(course);
 }
 function customCourseDeveloperList(){
- const rows=Object.values(COURSES).filter(c=>c.custom);return rows.length?`<div class="custom-course-library">${rows.map(c=>`<div class="custom-course-row"><span><strong>${esc(c.name)}</strong><small>${c.assignments.length} Evidence Packs</small></span><button class="btn admin-soft" data-custom-course-file="${esc(c.id)}">Share course</button></div>`).join('')}</div>`:'<p class="muted">No developer-created courses yet.</p>';
+ const rows=Object.values(COURSES).filter(c=>c.custom);return rows.length?`<div class="custom-course-library">${rows.map(c=>`<div class="custom-course-row"><span><strong>${esc(c.name)}</strong><small>${c.assignments.length} Evidence Packs</small></span><div class="custom-course-actions"><button class="btn admin-soft" data-custom-course-file="${esc(c.id)}">Share course</button><button class="btn danger custom-course-delete" data-custom-course-delete="${esc(c.id)}">Delete</button></div></div>`).join('')}</div>`:'<p class="muted">No developer-created courses yet.</p>';
 }
 function hiddenDeveloperPanel(){
  return `<div class="admin-dashboard developer-tools-dashboard"><div class="admin-course-summary developer-summary"><div><span>Secret developer area</span><strong>Apprentice+ Developer Mode</strong><small>Build technical-drawing prompts for college workshop task sheets.</small></div><span class="admin-status">${APP_VERSION}</span></div><section class="admin-section custom-course-launch"><div class="admin-section-head"><div class="admin-section-icon">${appIcon('course')}</div><div><h3>Create Apprentice+ course</h3><p>Build a reusable course, Evidence Packs and KSB/LO mapping, then download one course file to share with learners.</p></div></div><div class="admin-section-body"><button class="btn admin-primary" id="openCustomCourseBuilder">Create course</button>${customCourseDeveloperList()}</div></section><section class="admin-section drawing-builder-launch"><div class="admin-section-head"><div class="admin-section-icon">${appIcon('course')}</div><div><h3>Create college task sheet</h3><p>Build one clear Bricklaying workshop-sheet prompt using the simple college layout.</p></div></div><div class="admin-section-body"><button class="btn admin-primary" id="openDrawingBuilder">Create college task sheet</button></div></section><section class="admin-section"><div class="admin-section-head"><div class="admin-section-icon">${appIcon('settings')}</div><div><h3>Developer access</h3><p>This hidden screen closes when you leave it and remains separate from Admin Mode.</p></div></div><div class="admin-section-body"><button class="btn admin-primary" id="closeDeveloperToolsBottom">Close Developer Mode</button></div></section></div>`;
@@ -6312,7 +6325,7 @@ function showHiddenDeveloperTools(){
  document.addEventListener('keydown',function developerEscape(e){if(e.key!=='Escape'||!document.getElementById('developerToolsModal'))return;document.removeEventListener('keydown',developerEscape);close()});
  bindHiddenDeveloperTools();
 }
-function bindHiddenDeveloperTools(){ const customBuilderButton=document.getElementById('openCustomCourseBuilder');if(customBuilderButton)customBuilderButton.onclick=()=>{document.getElementById('developerToolsModal')?.remove();showCustomCourseBuilder('setup')};document.querySelectorAll('[data-custom-course-file]').forEach(btn=>btn.onclick=()=>showCustomCourseShare(COURSES[btn.dataset.customCourseFile]));
+function bindHiddenDeveloperTools(){ const customBuilderButton=document.getElementById('openCustomCourseBuilder');if(customBuilderButton)customBuilderButton.onclick=()=>{document.getElementById('developerToolsModal')?.remove();showCustomCourseBuilder('setup')};document.querySelectorAll('[data-custom-course-file]').forEach(btn=>btn.onclick=()=>showCustomCourseShare(COURSES[btn.dataset.customCourseFile]));document.querySelectorAll('[data-custom-course-delete]').forEach(btn=>btn.onclick=async()=>{const id=btn.dataset.customCourseDelete,course=COURSES[id];if(!course)return;if(!confirm(`Delete "${course.name}" from Developer Mode?\n\nThis removes the saved course definition from this device. It does not affect course files already shared with learners.`))return;await deleteCustomCourse(id);toast(`${course.name} deleted`);const modal=document.getElementById('developerToolsModal');if(modal){modal.querySelector('.admin-modal-card').innerHTML=`<div class="admin-modal-head"><div><span class="admin-kicker">Hidden diagnostics</span><h2>Developer Mode</h2></div><button class="admin-close" id="closeDeveloperTools" aria-label="Close Developer Mode">×</button></div>${hiddenDeveloperPanel()}`;document.getElementById('closeDeveloperTools').onclick=()=>modal.remove();document.getElementById('closeDeveloperToolsBottom').onclick=()=>modal.remove();bindHiddenDeveloperTools()}});
  const drawingButton=document.getElementById('openDrawingBuilder');
  if(drawingButton){
   drawingButton.onclick=event=>{

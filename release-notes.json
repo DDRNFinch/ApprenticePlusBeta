@@ -1,6 +1,16 @@
 {
-  "latest": "V2.42",
+  "latest": "V2.43",
   "releases": [
+    {
+      "version": "V2.43",
+      "date": "2026-08-08",
+      "title": "Delete developer-created courses",
+      "features": [
+        "Developer Mode now includes a Delete action beside every custom course.",
+        "Deleting requires confirmation and removes only that custom course from this device's developer library.",
+        "Previously shared .apcourse files are unaffected."
+      ]
+    },
     {
       "version": "V2.42",
       "date": "2026-08-08",

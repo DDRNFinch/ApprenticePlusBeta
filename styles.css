@@ -5259,3 +5259,13 @@ body,.shell{
     left:calc(50% + var(--desktop-rail-width,0px)/2)!important;
   }
 }
+
+/* V2.43 — developer custom-course management */
+.custom-course-actions{display:flex;align-items:center;gap:8px;flex:0 0 auto}
+.custom-course-delete{min-width:auto!important;padding:9px 12px!important}
+@media(max-width:520px){
+ .custom-course-row{align-items:flex-start!important}
+ .custom-course-actions{display:grid;grid-template-columns:1fr 1fr;width:100%;margin-top:8px}
+ .custom-course-row{display:grid!important}
+ .custom-course-actions .btn{width:100%!important;margin:0!important}
+}
