@@ -1,6 +1,16 @@
 {
-  "latest": "V2.36",
+  "latest": "V2.37",
   "releases": [
+    {
+      "version": "V2.37",
+      "date": "2026-08-08",
+      "title": "Unified NVQ Evidence Pack layout",
+      "features": [
+        "NVQ Evidence Packs now use the exact same six-tile layout and workflow as apprenticeship Evidence Packs.",
+        "NVQ terminology changes KSBs to Learning Outcomes and OTJ to GLH only.",
+        "The separate NVQ-specific Evidence Pack presentation has been removed."
+      ]
+    },
     {
       "version": "V2.36",
       "date": "2026-08-08",
