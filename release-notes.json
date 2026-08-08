@@ -1,6 +1,14 @@
 {
-  "latest": "V2.43",
+  "latest": "V2.44",
   "releases": [
+    {
+      "version": "V2.44",
+      "date": "2026-08-08",
+      "title": "Static Android navigation",
+      "features": [
+        "Bottom navigation is now anchored to the static small viewport so Android browser chrome changes cannot move it up or down while scrolling."
+      ]
+    },
     {
       "version": "V2.43",
       "date": "2026-08-08",

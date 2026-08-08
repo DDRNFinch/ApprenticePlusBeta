@@ -5269,3 +5269,31 @@ body,.shell{
  .custom-course-row{display:grid!important}
  .custom-course-actions .btn{width:100%!important;margin:0!important}
 }
+
+/* V2.44 — truly static mobile navigation.
+   Anchor to the SMALL viewport, not Android's changing visual viewport. */
+.bottom-nav{
+  position:fixed!important;
+  left:50%!important;
+  right:auto!important;
+  top:calc(100svh - env(safe-area-inset-bottom) - 14px)!important;
+  bottom:auto!important;
+  transform:translate(-50%,-100%)!important;
+  width:min(500px,calc(100vw - 20px))!important;
+  max-width:500px!important;
+  margin:0!important;
+  z-index:99999!important;
+  contain:layout paint!important;
+}
+@supports not (height:100svh){
+  .bottom-nav{
+    top:auto!important;
+    bottom:14px!important;
+    transform:translateX(-50%)!important;
+  }
+}
+@media(min-width:900px){
+  .bottom-nav{
+    left:calc(50% + var(--desktop-rail-width,0px)/2)!important;
+  }
+}
