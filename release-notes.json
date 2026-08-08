@@ -1,6 +1,16 @@
 {
-  "latest": "V2.11",
+  "latest": "V2.13",
   "releases": [
+    {
+      "version": "V2.13",
+      "date": "2026-08-08",
+      "title": "Evidence Pack opening repair",
+      "changes": [
+        "Rebuilt Course Evidence Pack cards as valid non-nested interactive cards so accessibility controls cannot corrupt their click behaviour.",
+        "Each EV card now owns its click and keyboard handler independently of completion or saved-evidence state.",
+        "Bumped the service-worker cache and app asset versions so installed PWAs load the repaired code instead of retaining an older cached build."
+      ]
+    },
     {
       "version": "V2.12",
       "date": "2026-08-08",
