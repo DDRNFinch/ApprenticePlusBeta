@@ -1,6 +1,14 @@
 {
-  "latest": "V2.44",
+  "latest": "V2.45",
   "releases": [
+    {
+      "version": "V2.45",
+      "date": "2026-08-08",
+      "title": "Centred Monthly Upload",
+      "features": [
+        "Monthly Upload content is now horizontally centred inside the existing Home tile with equal left and right spacing."
+      ]
+    },
     {
       "version": "V2.44",
       "date": "2026-08-08",
