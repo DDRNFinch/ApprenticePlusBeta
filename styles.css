@@ -4611,3 +4611,20 @@ p,.muted,.subtitle{line-height:1.48}
   .epa-dashboard-tile .epa-tile-stat{padding:6px 8px!important;min-height:32px!important}.epa-dashboard-tile .epa-tile-stat strong{font-size:14px!important}.epa-dashboard-tile .epa-tile-stat span{font-size:7.5px!important}
   .epa-dashboard-tile>.btn,.epa-dashboard-tile>button.btn{min-height:31px!important;font-size:8.2px!important;padding:6px!important}
 }
+
+
+/* V2.25 — tight concentric progress + centred monthly upload */
+.combined-progress-ring{width:214px!important;height:214px!important}
+.combined-ring-epa{--ring-colour:#7B61C9;--ring-track:#EEE9FA;inset:0!important;z-index:1}
+.combined-ring-epa:after{inset:6px!important}
+.combined-ring-green{inset:9px!important;z-index:2}.combined-ring-green:after{inset:11px!important}
+.combined-ring-blue{inset:29px!important;z-index:3}.combined-ring-blue:after{inset:11px!important}
+.combined-ring-orange{inset:49px!important;z-index:4}.combined-ring-orange:after{inset:11px!important}
+.combined-ring-centre{inset:69px!important;z-index:5}
+.key-purple{background:#7B61C9!important}.combined-progress-key>div:nth-child(4) strong{color:#7B61C9!important}
+.combined-progress-key{grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:5px!important}.combined-progress-key>div{justify-content:center!important;text-align:center!important;padding:6px 5px!important}
+.monthly-portfolio-mini{width:min(100%,520px)!important;max-width:520px!important;margin-left:auto!important;margin-right:auto!important;justify-self:center!important;align-self:center!important;box-sizing:border-box!important}
+.monthly-mini-top,.monthly-mini-top>div:first-child,.monthly-mini-size{width:100%!important;justify-items:center!important;text-align:center!important}
+.monthly-mini-delta{width:100%!important;display:flex!important;justify-content:center!important;align-items:center!important;gap:7px!important}
+.monthly-mini-actions{width:100%!important;display:flex!important;justify-content:center!important;align-items:center!important;gap:8px!important;flex-wrap:wrap!important}.monthly-mini-actions .btn{flex:0 1 170px!important}
+@media(max-width:520px){.combined-progress-ring{width:190px!important;height:190px!important}.combined-ring-green{inset:8px!important}.combined-ring-blue{inset:26px!important}.combined-ring-orange{inset:44px!important}.combined-ring-centre{inset:62px!important}.combined-ring-epa:after{inset:5px!important}.combined-ring-green:after,.combined-ring-blue:after,.combined-ring-orange:after{inset:10px!important}.combined-progress-key{grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:3px!important}.combined-progress-key strong{font-size:.62rem!important}.combined-progress-key small{font-size:.58rem!important}.monthly-portfolio-mini{width:100%!important;max-width:none!important}}
