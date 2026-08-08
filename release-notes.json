@@ -1,6 +1,16 @@
 {
-  "latest": "V2.28",
+  "latest": "V2.29",
   "releases": [
+    {
+      "version": "V2.29",
+      "date": "2026-08-08",
+      "title": "Signatures and notifications",
+      "features": [
+        "PDF signatures now show the signer name and signed date for quick reference.",
+        "Notifications use a soft light-grey blurred panel and rounded cards.",
+        "Notifications can be swiped left or right to delete and tapped to open their related page."
+      ]
+    },
     {
       "version": "V2.28",
       "date": "2026-08-08",

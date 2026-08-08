@@ -4920,3 +4920,46 @@ p,.muted,.subtitle{line-height:1.48}
 @media(max-width:460px){
  .monthly-portfolio-mini .monthly-mini-top{grid-template-columns:1fr;gap:4px}
 }
+
+/* V2.29 — Samsung-style notification cards */
+.notification-bell-backdrop{
+  background:rgba(20,28,24,.24)!important;
+  backdrop-filter:blur(18px)!important;
+  -webkit-backdrop-filter:blur(18px)!important;
+}
+.notification-bell-panel{
+  background:rgba(232,235,233,.88)!important;
+  backdrop-filter:blur(24px)!important;
+  -webkit-backdrop-filter:blur(24px)!important;
+  box-shadow:0 18px 54px rgba(25,35,29,.18)!important;
+}
+.notification-bell-item{
+  background:#f1f3f2!important;
+  border-radius:24px!important;
+  box-shadow:none!important;
+  touch-action:pan-y!important;
+  cursor:pointer;
+}
+.notification-bell-item.unread .notification-bell-item-content{background:rgba(255,255,255,.58)!important}
+.notification-bell-item-content{
+  transition:transform .16s ease,opacity .16s ease!important;
+  will-change:transform;
+}
+.notification-bell-item.swiping{background:#e2e6e3!important}
+.notification-bell-item.swipe-left::after,
+.notification-bell-item.swipe-right::after{
+  content:'Delete';
+  position:absolute;
+  inset:0 18px;
+  display:flex;
+  align-items:center;
+  font-size:.82rem;
+  font-weight:750;
+  color:#66716e;
+  pointer-events:none;
+}
+.notification-bell-item.swipe-left::after{justify-content:flex-end}
+.notification-bell-item.swipe-right::after{justify-content:flex-start}
+.notification-bell-item{position:relative}
+.notification-bell-item-content{position:relative;z-index:1}
+.notification-bell-item.deleting{opacity:0;transform:scale(.97);transition:.18s ease!important}

@@ -245,7 +245,7 @@ function learnerPromptTitle(assignmentNumber,code,fallback){
  return LEARNER_PROMPTS[COURSE.id]?.[assignmentNumber]?.[code]||fallback;
 }
 
-const APP_VERSION='V2.28';
+const APP_VERSION='V2.29';
 function paintPdfPageBackground(ctx,W,H){ctx.fillStyle='#ffffff';ctx.fillRect(0,0,W,H);const r=Math.min(W,H)*0.58,g=ctx.createRadialGradient(0,0,0,0,0,r);g.addColorStop(0,'#DDF3D6');g.addColorStop(.42,'#EFF8EC');g.addColorStop(1,'#FFFFFF');ctx.fillStyle=g;ctx.fillRect(0,0,W,H)}
 
 const PORTFOLIO_UPLOAD_LIMIT_BYTES=1_000_000_000;
@@ -5788,8 +5788,8 @@ function bindSection(a,s,sd,d,locked){
 async function commit(n,s,sd){state.data[key(n,s)]=sd;await saveData()}
 function setupSignature(n,s,sd,d){const c=document.getElementById('signaturePad');if(!c)return;const ctx=c.getContext('2d'),entry=document.getElementById('signatureEntry'),unlock=document.getElementById('unlockSignature');let draw=false,enabled=false;function resize(){const ratio=devicePixelRatio||1,cw=c.clientWidth,ch=c.clientHeight;c.width=cw*ratio;c.height=ch*ratio;ctx.scale(ratio,ratio);ctx.lineWidth=2.3;ctx.lineCap='round';ctx.strokeStyle='#0b2b23'}resize();
  const enable=()=>{enabled=true;entry?.classList.remove('locked');unlock?.remove();c.focus();toast('Signature box unlocked')};if(unlock)unlock.onclick=enable;
- const pos=e=>{const r=c.getBoundingClientRect(),p=e.touches?e.touches[0]:e;return{x:p.clientX-r.left,y:p.clientY-r.top}};const start=e=>{if(!enabled)return;draw=true;const p=pos(e);ctx.beginPath();ctx.moveTo(p.x,p.y);e.preventDefault()};const move=e=>{if(!enabled||!draw)return;const p=pos(e);ctx.lineTo(p.x,p.y);ctx.stroke();e.preventDefault()};const end=async()=>{if(!draw)return;draw=false;d.signature=c.toDataURL('image/png');await commit(n,s,sd);const a=assignment(n);updateSectionSubmit(a,s,d)};c.addEventListener('pointerdown',start);c.addEventListener('pointermove',move);window.addEventListener('pointerup',end);
- const clr=document.getElementById('clearSignature');if(clr)clr.onclick=async()=>{enable();ctx.clearRect(0,0,c.width,c.height);d.signature='';await commit(n,s,sd);const a=assignment(n);updateSectionSubmit(a,s,d)};const use=document.getElementById('useProfileSignature');if(use)use.onclick=async()=>{if(!state.profile.signature)return toast('No saved learner signature');d.signature=state.profile.signature;await commit(n,s,sd);renderSection()};}
+ const pos=e=>{const r=c.getBoundingClientRect(),p=e.touches?e.touches[0]:e;return{x:p.clientX-r.left,y:p.clientY-r.top}};const start=e=>{if(!enabled)return;draw=true;const p=pos(e);ctx.beginPath();ctx.moveTo(p.x,p.y);e.preventDefault()};const move=e=>{if(!enabled||!draw)return;const p=pos(e);ctx.lineTo(p.x,p.y);ctx.stroke();e.preventDefault()};const end=async()=>{if(!draw)return;draw=false;d.signature=c.toDataURL('image/png');d.signatureName=String(state.profile?.name||d.tutor||d.assessor||d.personName||'').trim();d.signatureDate=new Date().toISOString();await commit(n,s,sd);const a=assignment(n);updateSectionSubmit(a,s,d)};c.addEventListener('pointerdown',start);c.addEventListener('pointermove',move);window.addEventListener('pointerup',end);
+ const clr=document.getElementById('clearSignature');if(clr)clr.onclick=async()=>{enable();ctx.clearRect(0,0,c.width,c.height);d.signature='';d.signatureName='';d.signatureDate='';await commit(n,s,sd);const a=assignment(n);updateSectionSubmit(a,s,d)};const use=document.getElementById('useProfileSignature');if(use)use.onclick=async()=>{if(!state.profile.signature)return toast('No saved learner signature');d.signature=state.profile.signature;d.signatureName=String(state.profile?.name||'').trim();d.signatureDate=new Date().toISOString();await commit(n,s,sd);renderSection()};}
 function professionalDiscussionPrompts(code,description){
  const type=String(code||'').trim().toUpperCase().charAt(0);
  if(type==='K')return [
