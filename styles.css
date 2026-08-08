@@ -4538,3 +4538,76 @@ p,.muted,.subtitle{line-height:1.48}
  .key-dot{display:none!important}
  .epa-dashboard-tile{min-height:174px!important}
 }
+
+
+/* V2.24 — top-level cleanup, centred upload, balanced rings and square EPA tiles */
+.main-logo-title-tile{display:none!important}
+
+/* Home begins with the progress visual; course identity now lives in Course. */
+.home-course-identity.home-course-summary{display:none!important}
+.home-combined-progress{margin-top:4px!important}
+
+/* Keep the combined rings visually tighter. */
+.combined-progress-ring{width:210px!important;height:210px!important}
+.combined-ring-blue{inset:20px!important}
+.combined-ring-orange{inset:40px!important}
+.combined-ring-centre{inset:60px!important}
+.home-combined-progress{grid-template-columns:minmax(0,.9fr) minmax(175px,.7fr)!important;gap:8px!important;padding:13px 14px!important}
+
+/* Progress labels inherit the exact colour represented by their ring. */
+.combined-progress-key>div:nth-child(1) strong{color:#58b51f!important}
+.combined-progress-key>div:nth-child(2) strong{color:#2e86df!important}
+.combined-progress-key>div:nth-child(3) strong{color:#ee8b2d!important}
+
+/* Monthly upload is a centred, balanced utility card. */
+.monthly-portfolio-mini{max-width:560px!important;margin:0 auto 16px!important;padding:17px 18px!important;text-align:center!important;justify-items:center!important}
+.monthly-mini-top{width:100%!important;display:grid!important;justify-items:center!important;text-align:center!important;gap:10px!important}
+.monthly-mini-top>div:first-child{justify-items:center!important}
+.monthly-mini-delta{justify-content:center!important;width:100%!important;gap:7px!important}
+.monthly-mini-size{width:min(100%,430px)!important;grid-template-columns:1fr!important;justify-items:center!important;gap:7px!important}
+.monthly-mini-size .portfolio-size-meter{width:100%!important}
+.monthly-mini-actions{width:min(100%,430px)!important;justify-content:center!important}
+.monthly-mini-actions .btn{min-width:0!important}
+
+/* Portfolio reminder uses the same soft premium card language as the app. */
+.monthly-upload-warning{max-width:560px!important;margin:0 auto 16px!important;padding:16px 17px!important;border:0!important;border-radius:24px!important;background:#f3f8f1!important;color:#26362c!important;box-shadow:0 8px 24px rgba(35,70,43,.055)!important;display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;align-items:center!important;gap:14px!important}
+.monthly-upload-warning.upload{background:#edf8e9!important}
+.monthly-warning-copy{display:grid!important;gap:3px!important}
+.monthly-upload-warning strong{font-size:.92rem!important;font-weight:740!important;letter-spacing:-.015em!important}
+.monthly-upload-warning span{font-size:.75rem!important;color:#6d7b72!important;line-height:1.35!important}
+.monthly-upload-warning small{font-size:.67rem!important;color:#7a867f!important}
+.monthly-upload-warning-actions{display:flex!important;gap:7px!important;justify-content:flex-end!important;flex-wrap:nowrap!important}
+.monthly-upload-warning-actions .btn{white-space:nowrap!important;padding:9px 12px!important;font-size:.72rem!important;min-height:36px!important}
+
+/* Course identity: darker, compact premium band in the Course tab only. */
+.course-list-summary.course-identity-band{margin:2px 0 16px!important;padding:17px 19px!important;border:0!important;border-radius:24px!important;background:linear-gradient(145deg,#294d35,#355d3f)!important;color:#fff!important;box-shadow:0 10px 26px rgba(30,67,42,.13)!important;display:flex!important;align-items:center!important;justify-content:space-between!important;gap:14px!important}
+.course-identity-band>div{min-width:0!important}
+.course-identity-band small{display:block!important;margin-bottom:4px!important;color:#cfe6d3!important;font-size:.58rem!important;font-weight:760!important;letter-spacing:.11em!important}
+.course-identity-band h2{margin:0!important;color:#fff!important;font-size:1.05rem!important;line-height:1.2!important;font-weight:720!important;letter-spacing:-.02em!important}
+.course-list-summary.course-identity-band>strong{padding:7px 10px!important;border-radius:999px!important;background:rgba(255,255,255,.12)!important;color:#eaf5ec!important;font-size:.67rem!important;font-weight:680!important}
+
+/* EPA: every top-level tile is a true square, with one uniform internal grid. */
+.epa-dashboard-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:11px!important;margin-top:2px!important}
+.epa-dashboard-tile,.epa-dashboard-tile.epa-results-tile{aspect-ratio:1/1!important;min-height:0!important;height:auto!important;padding:15px!important;grid-template-columns:40px minmax(0,1fr)!important;grid-template-rows:auto 1fr auto!important;row-gap:9px!important;column-gap:10px!important;overflow:hidden!important}
+.epa-dashboard-tile .academy-icon{width:40px!important;height:40px!important}
+.epa-dashboard-tile>div:nth-child(2){align-self:start!important}
+.epa-dashboard-tile h3{font-size:13px!important;min-height:0!important;line-height:1.16!important}
+.epa-dashboard-tile .epa-tile-stat{grid-column:1/-1!important;align-self:end!important;padding:8px 10px!important;min-height:38px!important}
+.epa-dashboard-tile>.btn,.epa-dashboard-tile>button.btn{grid-column:1/-1!important;min-height:35px!important;padding:8px!important;font-size:9.5px!important}
+
+@media(max-width:520px){
+  .home-combined-progress{grid-template-columns:1fr!important;gap:4px!important;padding:10px 8px!important}
+  .combined-progress-ring{width:184px!important;height:184px!important}
+  .combined-ring-blue{inset:18px!important}.combined-ring-orange{inset:36px!important}.combined-ring-centre{inset:54px!important}
+  .monthly-portfolio-mini,.monthly-upload-warning{max-width:none!important}
+  .monthly-upload-warning{grid-template-columns:1fr!important;text-align:center!important;justify-items:center!important}
+  .monthly-warning-copy{justify-items:center!important}.monthly-upload-warning-actions{justify-content:center!important;width:100%!important}
+  .course-list-summary.course-identity-band{padding:15px 16px!important;border-radius:21px!important}
+  .course-identity-band h2{font-size:.94rem!important}.course-list-summary.course-identity-band>strong{font-size:.61rem!important}
+  .epa-dashboard-grid{gap:9px!important}
+  .epa-dashboard-tile,.epa-dashboard-tile.epa-results-tile{padding:12px!important;grid-template-columns:35px minmax(0,1fr)!important;column-gap:8px!important;row-gap:7px!important;border-radius:20px!important}
+  .epa-dashboard-tile .academy-icon{width:35px!important;height:35px!important;border-radius:11px!important}
+  .epa-dashboard-tile h3{font-size:11.5px!important}.epa-dashboard-tile .number{font-size:7px!important}
+  .epa-dashboard-tile .epa-tile-stat{padding:6px 8px!important;min-height:32px!important}.epa-dashboard-tile .epa-tile-stat strong{font-size:14px!important}.epa-dashboard-tile .epa-tile-stat span{font-size:7.5px!important}
+  .epa-dashboard-tile>.btn,.epa-dashboard-tile>button.btn{min-height:31px!important;font-size:8.2px!important;padding:6px!important}
+}

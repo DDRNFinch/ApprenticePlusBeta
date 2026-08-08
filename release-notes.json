@@ -1,6 +1,17 @@
 {
-  "latest": "V2.23",
+  "latest": "V2.24",
   "releases": [
+    {
+      "version": "V2.24",
+      "date": "2026-08-08",
+      "title": "Layout refinement",
+      "features": [
+        "Removed large top-level page title tiles.",
+        "Centred Monthly Upload and refined the online portfolio reminder.",
+        "Matched progress labels to ring colours and tightened the ring layout.",
+        "Standardised EPA tiles as squares and moved the course identity into the Course tab."
+      ]
+    },
     {
       "version": "V2.23",
       "date": "2026-08-08",
