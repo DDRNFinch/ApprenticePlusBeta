@@ -5224,3 +5224,12 @@ p,.muted,.subtitle{line-height:1.48}
 .custom-course-qr-card{max-width:760px!important}
 #customCourseQrCanvas{width:100%;overflow:auto;display:flex;justify-content:center}
 #customCourseQrCanvas>canvas{display:block;max-width:100%;height:auto;border-radius:18px;background:#fff}
+
+/* V2.41 — portable Apprentice+ course files */
+.course-import-file{width:100%!important;margin-top:9px!important;display:flex!important;align-items:center;justify-content:center;gap:7px}
+.custom-course-share-card{max-width:480px!important;text-align:center}
+.course-share-icon{width:54px;height:54px;margin:0 auto 10px;border-radius:18px;background:#edf6e9;display:grid;place-items:center;color:#4aa92b}
+.course-share-icon svg{width:27px;height:27px}
+.course-share-name{font-weight:780;font-size:1.05rem;color:#1d2b22;margin:5px 0 9px}
+.course-file-download{width:100%!important;margin:14px 0 8px!important;display:flex!important;align-items:center;justify-content:center;gap:7px}
+.course-file-hint{font-size:.72rem;color:#77847b;margin:0 0 14px}

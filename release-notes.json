@@ -1,6 +1,17 @@
 {
-  "latest": "V2.40",
+  "latest": "V2.41",
   "releases": [
+    {
+      "version": "V2.41",
+      "date": "2026-08-08",
+      "title": "Shareable course files",
+      "features": [
+        "Developer-created courses are now shared as a single .apcourse file instead of QR codes.",
+        "Developer Mode provides Share course and Download Course File for every custom course.",
+        "Learners can import an .apcourse file directly from the Course selector; the imported course is saved permanently on that device.",
+        "Course files contain course structure, KSB/LO mappings and evidence requirements only, with no learner evidence or personal information."
+      ]
+    },
     {
       "version": "V2.40",
       "date": "2026-08-08",
