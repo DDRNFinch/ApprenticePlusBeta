@@ -245,7 +245,7 @@ function learnerPromptTitle(assignmentNumber,code,fallback){
  return LEARNER_PROMPTS[COURSE.id]?.[assignmentNumber]?.[code]||fallback;
 }
 
-const APP_VERSION='V2.37';
+const APP_VERSION='V2.38';
 function paintPdfPageBackground(ctx,W,H){ctx.fillStyle='#ffffff';ctx.fillRect(0,0,W,H);const r=Math.min(W,H)*0.58,g=ctx.createRadialGradient(0,0,0,0,0,r);g.addColorStop(0,'#DDF3D6');g.addColorStop(.42,'#EFF8EC');g.addColorStop(1,'#FFFFFF');ctx.fillStyle=g;ctx.fillRect(0,0,W,H)}
 
 const PORTFOLIO_UPLOAD_LIMIT_BYTES=1_000_000_000;
@@ -734,18 +734,18 @@ function sectionTitleText(section){return ({photos:'Take Photos',statement:'Writ
 function nvqOutcomeCoverage(n){
  const a=assignment(n),result={};if(!a||!COURSE.nvqUnits)return result;
  a.ksbs.forEach(([code])=>result[code]={count:0,sources:[]});
- const add=(code,source)=>{if(result[code]&&!result[code].sources.includes(source)){result[code].sources.push(source);result[code].count=Math.min(2,result[code].sources.length)}};
+ const required=Number(COURSE.evidenceRequirement||2),add=(code,source)=>{if(result[code]&&!result[code].sources.includes(source)){result[code].sources.push(source);result[code].count=Math.min(required,result[code].sources.length)}};
  sectionData(n,'practical').versions.forEach(v=>selectedNvqOutcomes(a,v).forEach(([code])=>add(code,'Assessor observation')));
  sectionData(n,'photos').versions.forEach(v=>selectedKsbCodes(a,v).forEach(code=>add(code,'Photographic evidence')));
  sectionData(n,'statement').versions.forEach(v=>selectedKsbCodes(a,v).filter(code=>/^K/i.test(code)).forEach(code=>add(code,'Learner statement')));
  sectionData(n,'discussion').versions.forEach(v=>Object.keys(v.recordings||{}).filter(code=>isVideoEvidenceRecording(v.recordings?.[code])).forEach(code=>add(code,'Video walkthrough')));
  sectionData(n,'professionalDiscussion').versions.forEach(v=>evidenceCodesFromVersion(a,'professionalDiscussion',v).forEach(code=>add(code,'Professional discussion')));
  sectionData(n,'witness').versions.forEach(v=>selectedNvqOutcomes(a,v).forEach(([code])=>add(code,'Witness testimony')));
- a.ksbs.forEach(([code])=>{if(criterionRPL(n,code))result[code]={count:2,sources:['RPL'],rpl:true}});
+ a.ksbs.forEach(([code])=>{if(criterionRPL(n,code))result[code]={count:Number(COURSE.evidenceRequirement||2),sources:['RPL'],rpl:true}});
  return result;
 }
-function nvqCoverageComplete(n){const values=Object.values(nvqOutcomeCoverage(n));return values.length>0&&values.every(item=>item.count>=2)}
-function nvqCoverageSummary(n){const coverage=nvqOutcomeCoverage(n),items=Object.entries(coverage),met=items.filter(([,v])=>v.count>=3).length;return {coverage,total:items.length,met,requirementsMet:items.reduce((sum,[,v])=>sum+Math.min(2,v.count),0),requirementsTotal:items.length*2,missing:items.filter(([,v])=>v.count<2).map(([code,v])=>`${code} ${v.count}/2`)}}
+function nvqCoverageComplete(n){const required=Number(COURSE.evidenceRequirement||2),values=Object.values(nvqOutcomeCoverage(n));return values.length>0&&values.every(item=>item.count>=required)}
+function nvqCoverageSummary(n){const required=Number(COURSE.evidenceRequirement||2),coverage=nvqOutcomeCoverage(n),items=Object.entries(coverage),met=items.filter(([,v])=>v.count>=required).length;return {coverage,total:items.length,met,requirementsMet:items.reduce((sum,[,v])=>sum+Math.min(required,v.count),0),requirementsTotal:items.length*required,missing:items.filter(([,v])=>v.count<required).map(([code,v])=>`${code} ${v.count}/${required}`)}}
 function selectedKsbCodes(a,d){
  const valid=new Set(a.ksbs.map(([code])=>code));
  const explicit=Array.isArray(d?.ksbEvidence)?d.ksbEvidence:[];
@@ -764,7 +764,7 @@ function selectedPracticalSkillCodes(a,d){
 function ksbEvidenceCoverage(n){
  const a=assignment(n),result={};if(!a||COURSE.nvqUnits)return result;
  a.ksbs.forEach(([code])=>result[code]={count:0,sources:[]});
- const add=(code,source)=>{if(result[code]&&!result[code].sources.includes(source)){result[code].sources.push(source);result[code].count=Math.min(2,result[code].sources.length)}};
+ const required=Number(COURSE.evidenceRequirement||2),add=(code,source)=>{if(result[code]&&!result[code].sources.includes(source)){result[code].sources.push(source);result[code].count=Math.min(required,result[code].sources.length)}};
  sectionData(n,'photos').versions.forEach(v=>selectedKsbCodes(a,v).filter(code=>/^S/i.test(code)).forEach(code=>add(code,'Photographic evidence')));
  sectionData(n,'statement').versions.forEach(v=>selectedKsbCodes(a,v).filter(code=>/^K/i.test(code)).forEach(code=>add(code,'Learner statement')));
  walkthroughKnowledge(a).forEach(([code])=>{if(walkthroughComplete(n,code))add(code,'Video walkthrough')});
@@ -772,13 +772,13 @@ function ksbEvidenceCoverage(n){
  sectionData(n,'practical').versions.forEach(v=>selectedKsbCodes(a,v).filter(code=>/^[SB]/i.test(String(code))).forEach(code=>add(code,'Assessor observation')));
  sectionData(n,'professionalDiscussion').versions.forEach(v=>evidenceCodesFromVersion(a,'professionalDiscussion',v).filter(code=>/^[KB]/i.test(code)).forEach(code=>add(code,'Professional discussion')));
  sectionData(n,'supporting').versions.forEach(v=>selectedKsbCodes(a,v).forEach(code=>add(code,'Uploaded evidence')));
- a.ksbs.forEach(([code])=>{if(criterionRPL(n,code))result[code]={count:2,sources:['RPL'],rpl:true}});
+ a.ksbs.forEach(([code])=>{if(criterionRPL(n,code))result[code]={count:Number(COURSE.evidenceRequirement||2),sources:['RPL'],rpl:true}});
  return result;
 }
-function ksbCoverageComplete(n){const values=Object.values(ksbEvidenceCoverage(n));return values.length>0&&values.every(item=>item.count>=2)}
-function ksbCoverageSummary(n){const coverage=ksbEvidenceCoverage(n),items=Object.entries(coverage);return {coverage,total:items.length,met:items.filter(([,v])=>v.count>=2).length,requirementsMet:items.reduce((sum,[,v])=>sum+Math.min(2,v.count),0),requirementsTotal:items.length*2,missing:items.filter(([,v])=>v.count<2).map(([code,v])=>`${code} ${v.count}/2`)}}
+function ksbCoverageComplete(n){const required=Number(COURSE.evidenceRequirement||2),values=Object.values(ksbEvidenceCoverage(n));return values.length>0&&values.every(item=>item.count>=required)}
+function ksbCoverageSummary(n){const required=Number(COURSE.evidenceRequirement||2),coverage=ksbEvidenceCoverage(n),items=Object.entries(coverage);return {coverage,total:items.length,met:items.filter(([,v])=>v.count>=required).length,requirementsMet:items.reduce((sum,[,v])=>sum+Math.min(required,v.count),0),requirementsTotal:items.length*required,missing:items.filter(([,v])=>v.count<required).map(([code,v])=>`${code} ${v.count}/${required}`)}}
 function evidenceCoverageCount(n,code){const coverage=COURSE.nvqUnits?nvqOutcomeCoverage(n):ksbEvidenceCoverage(n);return Number(coverage?.[code]?.count||0)}
-function evidenceCoverageBadge(n,code){if(criterionRPL(n,code))return '<span class="evidence-status-pill evidence-rpl-note" title="Completed through Recognition of Prior Learning">RPL</span>';const count=evidenceCoverageCount(n,code),required=2;return count>=required?`<span class="evidence-status-pill evidence-complete-note" title="${required}/${required} evidence requirement completed">✓ Completed</span>`:count>0?`<span class="evidence-status-pill evidence-progress-note" title="${count}/${required} distinct evidence types collected">${count}/${required}</span>`:''}
+function evidenceCoverageBadge(n,code){if(criterionRPL(n,code))return '<span class="evidence-status-pill evidence-rpl-note" title="Completed through Recognition of Prior Learning">RPL</span>';const count=evidenceCoverageCount(n,code),required=Number(COURSE.evidenceRequirement||2);return count>=required?`<span class="evidence-status-pill evidence-complete-note" title="${required}/${required} evidence requirement completed">✓ Completed</span>`:count>0?`<span class="evidence-status-pill evidence-progress-note" title="${count}/${required} distinct evidence types collected">${count}/${required}</span>`:''}
 
 function assignmentLearningHoursStats(n){
  const entries=otjEntries().filter(e=>Number(e.assignment)===Number(n));
@@ -875,6 +875,7 @@ async function load(){
  state.branding=await getStore(BRANDING_KEY)||null;
  const savedCustomCourses=await getStore('developerCustomCourses')||{};
  Object.entries(savedCustomCourses).forEach(([id,course])=>{if(course&&id)COURSES[id]=course});
+ const importedCourse=await importCourseFromLocationHash();
  ACTIVE_COURSE_ID=await getStore('activeCourse')||'site-carpentry-v1-4';
  if(!COURSES[ACTIVE_COURSE_ID])ACTIVE_COURSE_ID='site-carpentry-v1-4';
  COURSE=COURSES[ACTIVE_COURSE_ID];
@@ -5940,14 +5941,14 @@ function showOnboarding(editMode=false){
  const title=editMode?'Learner details':'Welcome to Apprentice+';
  const courseOptions=`${editMode?'':'<option value="" selected disabled>Select your course</option>'}${Object.values(COURSES).map(c=>`<option value="${c.id}" ${editMode&&c.id===selectedCourse.id?'selected':''}>${c.name} ${c.version} (${c.standard})</option>`).join('')}`;
  const profileFields=`<div class="field"><label>Contracted weekly work hours</label><input class="input" id="obWeeklyWorkHours" type="number" min="1" max="80" step="0.5" inputmode="decimal" placeholder="e.g. 35" value="${esc(state.profile?.contractedWeeklyWorkHours||'')}"><p class="help">OTJ target is 20% of these hours each week. For example, 35 hours = 7 OTJ hours per week.</p></div><div class="field"><label>Portfolio website address <span class="optional-label">Optional</span></label><input class="input" id="obPortfolioUrl" type="url" inputmode="url" placeholder="https://..." value="${esc(state.profile?.portfolioUrl||'')}"><p class="help">Used by the Open Portfolio button. Nothing is uploaded automatically.</p></div><div class="date-grid"><div class="field"><label>Course start date <span class="optional-label">Optional</span></label><input class="input" id="obStartDate" type="date" value="${esc(state.profile?.courseStartDate||'')}"></div><div class="field"><label>Planned end date <span class="optional-label">Optional</span></label><input class="input" id="obEndDate" type="date" value="${esc(state.profile?.plannedEndDate||'')}"></div></div><div class="field"><label>Functional Skills attendance</label><div class="profile-study-checks"><label class="checkbox"><input type="checkbox" id="obMathsCollege" ${state.profile?.attendsMathsCollege?'checked':''}> <span>Attending college for Maths</span></label><label class="checkbox"><input type="checkbox" id="obEnglishCollege" ${state.profile?.attendsEnglishCollege?'checked':''}> <span>Attending college for English</span></label></div><p class="help">ReviewMate only sets Maths or English Academy test targets when the matching option is ticked.</p></div>`;
- app.insertAdjacentHTML('beforeend',`<div class="modal" id="onboard"><div class="modal-card"><h2>${title}</h2><p class="muted">${editMode?'Update the learner, course, employer and portfolio details used across the app.':'Complete the learner profile before using the app. A course must be selected; the fields marked Optional can be added now or later.'}</p><div class="field"><label>Course <span class="required-label">Required</span></label><select class="input" id="obCourse" required aria-required="true">${courseOptions}</select><p class="help">Choose the course the learner is currently completing. This is required to set up the correct assignments and criteria.</p></div><div class="field"><label>Full name</label><input class="input" id="obName" value="${esc(state.profile?.fullName||'')}"></div>${profileFields}<div class="field"><label>Learner signature</label><div class="signature-entry locked" id="obSignatureEntry"><canvas class="signature-pad" id="obSig" aria-label="Learner signature box"></canvas><button type="button" class="signature-unlock" id="obUnlockSignature">Press here to add signature</button></div><button class="btn secondary" id="obClear" type="button">Clear</button></div><div class="disclaimer"><strong>Local storage notice</strong><br>All evidence is saved locally on this device and browser. Nothing is saved online or uploaded automatically. Clearing browser data or changing devices may remove evidence. Download completed packs and upload them to your official portfolio.</div><label class="checkbox"><input type="checkbox" id="obAccept" ${editMode?'checked':''}> <span>I understand and accept the local storage notice.</span></label><div class="btn-row"><button class="btn" id="obSave">${editMode?'Save changes':'Save and continue'}</button>${editMode?'<button class="btn secondary" id="obCancel">Cancel</button>':''}</div></div></div>`);
+ app.insertAdjacentHTML('beforeend',`<div class="modal" id="onboard"><div class="modal-card"><h2>${title}</h2><p class="muted">${editMode?'Update the learner, course, employer and portfolio details used across the app.':'Complete the learner profile before using the app. A course must be selected; the fields marked Optional can be added now or later.'}</p><div class="field"><label>Course <span class="required-label">Required</span></label><select class="input" id="obCourse" required aria-required="true">${courseOptions}</select><button type="button" class="btn secondary course-scan-qr" id="obScanCourseQr">${appIcon('qr','button-icon')} Scan QR Code</button><p class="help">Choose an installed course or scan a course QR code supplied by your college.</p></div><div class="field"><label>Full name</label><input class="input" id="obName" value="${esc(state.profile?.fullName||'')}"></div>${profileFields}<div class="field"><label>Learner signature</label><div class="signature-entry locked" id="obSignatureEntry"><canvas class="signature-pad" id="obSig" aria-label="Learner signature box"></canvas><button type="button" class="signature-unlock" id="obUnlockSignature">Press here to add signature</button></div><button class="btn secondary" id="obClear" type="button">Clear</button></div><div class="disclaimer"><strong>Local storage notice</strong><br>All evidence is saved locally on this device and browser. Nothing is saved online or uploaded automatically. Clearing browser data or changing devices may remove evidence. Download completed packs and upload them to your official portfolio.</div><label class="checkbox"><input type="checkbox" id="obAccept" ${editMode?'checked':''}> <span>I understand and accept the local storage notice.</span></label><div class="btn-row"><button class="btn" id="obSave">${editMode?'Save changes':'Save and continue'}</button>${editMode?'<button class="btn secondary" id="obCancel">Cancel</button>':''}</div></div></div>`);
  setupOnboardSig(editMode);
  if(editMode)document.getElementById('obCancel').onclick=()=>document.getElementById('onboard').remove();
 }
 function setupOnboardSig(editMode=false){
  const c=document.getElementById('obSig'),ctx=c.getContext('2d'),entry=document.getElementById('obSignatureEntry'),unlock=document.getElementById('obUnlockSignature');let drawing=false,enabled=false,sig=state.profile?.signature||'';const ratio=devicePixelRatio||1;c.width=c.clientWidth*ratio;c.height=c.clientHeight*ratio;ctx.scale(ratio,ratio);ctx.lineWidth=2.3;ctx.lineCap='round';
  if(sig){const img=new Image();img.onload=()=>ctx.drawImage(img,0,0,c.clientWidth,c.clientHeight);img.src=sig}
- const enable=()=>{enabled=true;entry?.classList.remove('locked');unlock?.remove();c.focus()};if(unlock)unlock.onclick=enable;
+ const enable=()=>{enabled=true;entry?.classList.remove('locked');unlock?.remove();c.focus()};if(unlock)unlock.onclick=enable; const scanCourse=document.getElementById('obScanCourseQr');if(scanCourse)scanCourse.onclick=()=>showCourseQrScanner(document.getElementById('obCourse'));
  const p=e=>{const r=c.getBoundingClientRect();return{x:e.clientX-r.left,y:e.clientY-r.top}};c.onpointerdown=e=>{if(!enabled)return;drawing=true;const q=p(e);ctx.beginPath();ctx.moveTo(q.x,q.y);e.preventDefault()};c.onpointermove=e=>{if(!enabled||!drawing)return;const q=p(e);ctx.lineTo(q.x,q.y);ctx.stroke();e.preventDefault()};window.addEventListener('pointerup',()=>{if(drawing){drawing=false;sig=c.toDataURL()}});document.getElementById('obClear').onclick=()=>{enable();ctx.clearRect(0,0,c.width,c.height);sig=''};document.getElementById('obSave').onclick=async()=>{
   const courseId=document.getElementById('obCourse').value;if(!COURSES[courseId])return toast('Select your course before continuing');
   const fullName=document.getElementById('obName').value.trim(),ok=document.getElementById('obAccept').checked;
@@ -6103,25 +6104,83 @@ function parseCustomCriteria(text){
  });
 }
 function customCourseUsage(draft){
- const use={};(draft?.criteria||[]).forEach(([code])=>use[code]=0);
- (draft?.assignments||[]).forEach(a=>(a.ksbs||[]).forEach(([code])=>use[code]=(use[code]||0)+1));
+ const use={};(draft?.criteria||[]).forEach(([code])=>use[code]=null);
+ (draft?.assignments||[]).forEach(a=>(a.ksbs||[]).forEach(([code])=>use[code]=a.n));
  return use;
 }
-function generateRandomCustomAssignments(criteria,count,required){
- const packs=Array.from({length:count},(_,i)=>({n:i+1,title:`Evidence Pack ${i+1}`,ksbs:[]}));
- const copies=[];criteria.forEach(row=>{for(let i=0;i<required;i++)copies.push(row)});
- copies.forEach((row,i)=>packs[i%packs.length].ksbs.push([...row]));
+function generateRandomCustomAssignments(criteria,count){
+ const safeCount=Math.max(1,Math.min(Number(count)||1,criteria.length||1));
+ const packs=Array.from({length:safeCount},(_,i)=>({n:i+1,title:`Evidence Pack ${i+1}`,ksbs:[]}));
+ criteria.forEach((row,i)=>packs[i%safeCount].ksbs.push([...row]));
  return packs;
 }
 async function saveCustomCourse(course){
  const saved=await getStore(CUSTOM_COURSES_KEY)||{};saved[course.id]=course;COURSES[course.id]=course;await putStore(CUSTOM_COURSES_KEY,saved);
 }
-function customCourseQrPayload(course){return JSON.stringify({type:'apprenticeplus-course',version:1,course})}
-function showCustomCourseQr(course){
+function customCourseCompact(course){
+ return {i:course.id,n:course.name,q:Number(course.evidenceRequirement||2),v:course.nvqUnits?1:0,a:(course.assignments||[]).map(a=>[a.title,(a.ksbs||[]).map(([code,text])=>[code,text])])};
+}
+function bytesToBase64Url(bytes){let binary='';for(let i=0;i<bytes.length;i+=0x8000)binary+=String.fromCharCode(...bytes.subarray(i,i+0x8000));return btoa(binary).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')}
+function base64UrlToBytes(value){let s=String(value||'').replace(/-/g,'+').replace(/_/g,'/');while(s.length%4)s+='=';const b=atob(s),u=new Uint8Array(b.length);for(let i=0;i<b.length;i++)u[i]=b.charCodeAt(i);return u}
+async function gzipText(text){
+ if(!window.CompressionStream)return new TextEncoder().encode(text);
+ const stream=new Blob([text]).stream().pipeThrough(new CompressionStream('gzip'));return new Uint8Array(await new Response(stream).arrayBuffer());
+}
+async function gunzipText(bytes){
+ if(!window.DecompressionStream)return new TextDecoder().decode(bytes);
+ const stream=new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'));return await new Response(stream).text();
+}
+async function customCourseQrPayload(course){
+ const bytes=await gzipText(JSON.stringify(customCourseCompact(course)));
+ const encoded=bytesToBase64Url(bytes);
+ return `${location.origin}${location.pathname}#apcourse=${encoded}`;
+}
+async function decodeCustomCoursePayload(raw){
+ let value=String(raw||'').trim(),encoded='';
+ try{const url=new URL(value,location.href);encoded=url.hash.startsWith('#apcourse=')?url.hash.slice(10):''}catch{}
+ if(!encoded&&value.startsWith('APCOURSE1:'))encoded=value.slice(10);
+ if(!encoded)throw new Error('This is not an Apprentice+ course QR code');
+ const json=await gunzipText(base64UrlToBytes(encoded)),c=JSON.parse(json);
+ if(!c?.n||!Array.isArray(c.a))throw new Error('Course data is incomplete');
+ return {id:c.i||customCourseId(c.n),name:c.n,standard:'Custom',version:'1.0',level:'',nvqUnits:!!c.v,evidenceRequirement:Math.max(1,Number(c.q)||2),assignments:c.a.map((row,i)=>({n:i+1,title:String(row?.[0]||`Evidence Pack ${i+1}`),ksbs:Array.isArray(row?.[1])?row[1]:[]})),custom:true};
+}
+async function showCustomCourseQr(course){
  document.getElementById('customCourseQrModal')?.remove();
- app.insertAdjacentHTML('beforeend',`<div class="modal" id="customCourseQrModal"><div class="modal-card custom-course-qr-card"><h2>${esc(course.name)}</h2><div id="customCourseQrCanvas"></div><p class="muted">Learners can scan this code from the course selector. The same code can be shared with multiple learners.</p><div class="btn-row"><button class="btn secondary" id="closeCustomCourseQr">Close</button></div></div></div>`);
- const host=document.getElementById('customCourseQrCanvas');if(window.ApprenticeQR)host.appendChild(window.ApprenticeQR.toCanvas(customCourseQrPayload(course),300));
- document.getElementById('closeCustomCourseQr').onclick=()=>document.getElementById('customCourseQrModal').remove();
+ app.insertAdjacentHTML('beforeend',`<div class="modal" id="customCourseQrModal"><div class="modal-card custom-course-qr-card"><h2>${esc(course.name)}</h2><div id="customCourseQrCanvas"><div class="muted">Creating QR code…</div></div><p class="muted">Learners can scan this from the course selector. The same QR can install the course on multiple learner devices.</p><div class="btn-row"><button class="btn" id="downloadCustomCourseQr" disabled>Save QR image</button><button class="btn secondary" id="closeCustomCourseQr">Close</button></div></div></div>`);
+ document.getElementById('closeCustomCourseQr').onclick=()=>document.getElementById('customCourseQrModal')?.remove();
+ const host=document.getElementById('customCourseQrCanvas');
+ try{
+  const payload=await customCourseQrPayload(course);
+  if(!window.ApprenticeQR)throw new Error('QR generator unavailable');
+  const canvas=window.ApprenticeQR.toCanvas(payload,420);host.innerHTML='';host.appendChild(canvas);
+  const save=document.getElementById('downloadCustomCourseQr');save.disabled=false;save.onclick=()=>{const a=document.createElement('a');a.href=canvas.toDataURL('image/png');a.download=`${course.name.replace(/[^a-z0-9]+/gi,'-')}-Course-QR.png`;a.click()};
+ }catch(error){console.error('Course QR generation failed',error);host.innerHTML=`<div class="admin-note">Unable to create the QR code for this course. ${esc(error?.message||'')}</div>`}
+}
+async function importCustomCourseFromQr(raw,selectElement=null){
+ const course=await decodeCustomCoursePayload(raw);await saveCustomCourse(course);
+ if(selectElement){let option=[...selectElement.options].find(o=>o.value===course.id);if(!option){option=document.createElement('option');option.value=course.id;option.textContent=`${course.name} 1.0 (Custom)`;selectElement.appendChild(option)}selectElement.value=course.id}
+ toast(`${course.name} installed`);
+ return course;
+}
+let courseQrScannerStream=null,courseQrScannerTimer=null;
+function closeCourseQrScanner(){clearTimeout(courseQrScannerTimer);courseQrScannerTimer=null;if(courseQrScannerStream){courseQrScannerStream.getTracks().forEach(t=>t.stop());courseQrScannerStream=null}document.getElementById('courseQrScanner')?.remove()}
+async function showCourseQrScanner(selectElement){
+ closeCourseQrScanner();
+ const modal=document.createElement('div');modal.className='modal';modal.id='courseQrScanner';modal.innerHTML=`<div class="modal-card course-qr-scanner-card"><h2>Scan course QR code</h2><div class="course-qr-video-wrap"><video id="courseQrVideo" playsinline muted></video><div class="course-qr-frame"></div></div><p class="muted" id="courseQrStatus">Point the camera at the Apprentice+ course QR code.</p><div class="btn-row"><label class="btn secondary course-qr-image-button">Scan saved QR image<input id="courseQrImage" type="file" accept="image/*" hidden></label><button class="btn secondary" id="closeCourseQrScanner">Cancel</button></div></div>`;document.body.appendChild(modal);
+ document.getElementById('closeCourseQrScanner').onclick=closeCourseQrScanner;
+ const status=document.getElementById('courseQrStatus'),video=document.getElementById('courseQrVideo');
+ if(!('BarcodeDetector' in window)){status.textContent='QR scanning is not supported by this browser. Open the QR with your phone camera instead; it will open Apprentice+ and install the course.';return}
+ const detector=new BarcodeDetector({formats:['qr_code']});
+ const accept=async raw=>{try{await importCustomCourseFromQr(raw,selectElement);closeCourseQrScanner()}catch(error){status.textContent=error?.message||'That QR code is not a valid Apprentice+ course.'}};
+ document.getElementById('courseQrImage').onchange=async e=>{const file=e.target.files?.[0];if(!file)return;try{const image=await createImageBitmap(file),codes=await detector.detect(image);if(codes[0]?.rawValue)await accept(codes[0].rawValue);else status.textContent='No QR code was found in that image.'}catch(error){status.textContent='Unable to read that QR image.'}};
+ try{
+  courseQrScannerStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}}});video.srcObject=courseQrScannerStream;await video.play();
+  const scan=async()=>{if(!document.getElementById('courseQrScanner'))return;try{const codes=await detector.detect(video);if(codes[0]?.rawValue){await accept(codes[0].rawValue);return}}catch{}courseQrScannerTimer=setTimeout(scan,180)};scan();
+ }catch(error){status.textContent='Camera access was not available. You can scan a saved QR image instead.'}
+}
+async function importCourseFromLocationHash(){
+ if(!location.hash.startsWith('#apcourse='))return false;
+ try{const course=await importCustomCourseFromQr(location.href);history.replaceState(null,'',location.pathname+location.search);return course}catch(error){console.warn('Course QR import failed',error);return false}
 }
 function showCustomCourseBuilder(step='setup'){
  document.getElementById('customCourseBuilder')?.remove();
@@ -6139,9 +6198,9 @@ function showCustomCourseBuilder(step='setup'){
   const d=customCourseDraft,usage=customCourseUsage(d),n=d.assignments.length+1;
   modal.innerHTML=`<div class="modal-card admin-modal-card custom-course-builder"><div class="admin-modal-head"><div><span class="admin-kicker">${esc(d.name)}</span><h2>EP${n}</h2></div><button class="admin-close" id="closeCustomBuilder">×</button></div>
    <div class="field"><label>EP${n} title</label><input class="input" id="customEpTitle" placeholder="Evidence Pack title"></div>
-   <div class="field"><label>${d.nvqUnits?'Learning Outcomes':'KSBs'}</label><div class="custom-criteria-list">${d.criteria.map(([code,text])=>`<label class="custom-criterion-choice"><input type="checkbox" value="${esc(code)}"><span><strong>${esc(code)}</strong><small>${esc(text)}</small></span><b>${usage[code]||0}× used</b></label>`).join('')}</div></div>
+   <div class="field"><label>${d.nvqUnits?'Learning Outcomes':'KSBs'}</label><div class="custom-criteria-list">${d.criteria.map(([code,text])=>{const used=usage[code];return `<label class="custom-criterion-choice ${used?'used':''}"><input type="checkbox" value="${esc(code)}" ${used?'disabled':''}><span><strong>${esc(code)}</strong><small>${esc(text)}</small></span><b>${used?`EP${used}`:'Available'}</b></label>`}).join('')}</div></div>
    ${d.assignments.length?`<div class="custom-built-packs">${d.assignments.map(a=>`<div><strong>EP${a.n} · ${esc(a.title)}</strong><span>${a.ksbs.map(x=>x[0]).join(', ')}</span></div>`).join('')}</div>`:''}
-   <div class="btn-row"><button class="btn" id="saveCustomEp">Save EP${n}</button><button class="btn secondary" id="completeCustomCourse" ${d.assignments.length?'':'disabled'}>Complete course</button></div></div>`;
+   <div class="custom-course-progress">${Object.values(usage).filter(Boolean).length} / ${d.criteria.length} ${d.nvqUnits?'LOs':'KSBs'} assigned · each must be evidenced ${d.evidenceRequirement} time${d.evidenceRequirement===1?'':'s'}</div><div class="btn-row"><button class="btn" id="saveCustomEp">Save EP${n}</button><button class="btn secondary" id="completeCustomCourse" ${d.assignments.length&&Object.values(usage).every(Boolean)?'':'disabled'}>Complete course</button></div></div>`;
  }
  document.body.appendChild(modal);document.getElementById('closeCustomBuilder').onclick=()=>modal.remove();
  if(step==='setup'){
@@ -6151,17 +6210,19 @@ function showCustomCourseBuilder(step='setup'){
    if(!name||!criteria.length)return toast('Add the course name and KSBs / Learning Outcomes');
    customCourseDraft={id:customCourseId(name),name,standard:'Custom',version:'1.0',level:'',nvqUnits:nvq,evidenceRequirement:required,criteria,assignments:[],custom:true};
    if(mode==='random'){
-    const count=Math.max(1,Number(document.getElementById('customPackCount').value)||1);customCourseDraft.assignments=generateRandomCustomAssignments(criteria,count,required);
+    const count=Math.max(1,Number(document.getElementById('customPackCount').value)||1);customCourseDraft.assignments=generateRandomCustomAssignments(criteria,count);
     await finishCustomCourse();
    }else showCustomCourseBuilder('manual');
   };
  }else{
-  document.getElementById('saveCustomEp').onclick=()=>{const title=document.getElementById('customEpTitle').value.trim(),codes=[...document.querySelectorAll('.custom-criteria-list input:checked')].map(x=>x.value);if(!title||!codes.length)return toast('Add an EP title and select at least one criterion');customCourseDraft.assignments.push({n:customCourseDraft.assignments.length+1,title,ksbs:codes.map(code=>customCourseDraft.criteria.find(x=>x[0]===code))});showCustomCourseBuilder('manual')};
+  document.getElementById('saveCustomEp').onclick=()=>{const title=document.getElementById('customEpTitle').value.trim(),usage=customCourseUsage(customCourseDraft),codes=[...document.querySelectorAll('.custom-criteria-list input:checked')].map(x=>x.value).filter(code=>!usage[code]);if(!title||!codes.length)return toast('Add an EP title and select at least one unused criterion');customCourseDraft.assignments.push({n:customCourseDraft.assignments.length+1,title,ksbs:codes.map(code=>customCourseDraft.criteria.find(x=>x[0]===code))});showCustomCourseBuilder('manual')};
   document.getElementById('completeCustomCourse').onclick=finishCustomCourse;
  }
 }
 async function finishCustomCourse(){
  const d=customCourseDraft;if(!d||!d.assignments.length)return toast('Add at least one Evidence Pack');
+ const usage=customCourseUsage(d),unassigned=d.criteria.filter(([code])=>!usage[code]);
+ if(unassigned.length)return toast(`Assign every ${d.nvqUnits?'Learning Outcome':'KSB'} to one Evidence Pack before completing the course`);
  const course={id:d.id,name:d.name,standard:d.standard,version:d.version,level:d.level,nvqUnits:d.nvqUnits,evidenceRequirement:d.evidenceRequirement,assignments:d.assignments,custom:true};
  await saveCustomCourse(course);customCourseDraft=null;document.getElementById('customCourseBuilder')?.remove();toast(`${course.name} saved permanently in Developer Mode`);showCustomCourseQr(course);
 }
