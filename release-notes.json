@@ -1,6 +1,17 @@
 {
-  "latest": "V2.38",
+  "latest": "V2.39",
   "releases": [
+    {
+      "version": "V2.39",
+      "date": "2026-08-08",
+      "title": "Standardised evidence workflow",
+      "features": [
+        "All courses now use the KSB-course evidence screens as the standard layout and interaction model.",
+        "NVQ and custom courses use the same Take Photos, Write About It, Record a Video, Talk About It and Verified by Someone Else workflows.",
+        "NVQ changes terminology only: Learning Outcomes replace KSB labels and GLH replaces OTJ.",
+        "Photographic evidence uses the same three shared landscape-photo slots across every course, and video evidence uses the same shared record-or-choose workflow."
+      ]
+    },
     {
       "version": "V2.38",
       "date": "2026-08-08",
