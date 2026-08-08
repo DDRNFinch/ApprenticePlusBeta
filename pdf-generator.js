@@ -140,7 +140,7 @@ async function generateEvidencePackPDF({course, assignment, profile, sections, b
 
   function selectedKsbDetails(d){return (assignment.ksbs||[]).filter(([code])=>selectedCodes(d).includes(code)).map(([code,summary])=>`${code} - ${summary}`).join('\n')}
   function linkedPhotoFileName(code,index=0){const item=(assignment.ksbs||[]).find(([itemCode])=>String(itemCode)===String(code)),summary=item?.[1]||'Evidence photograph',suffix=` - Photo ${Number(index)+1}.jpg`,base=`${code} - ${summary}`.replace(/[\\/:*?"<>|]/g,'-').replace(/\s+/g,' ').trim(),limit=Math.max(24,120-suffix.length);return `${base.slice(0,limit).replace(/[ .-]+$/,'')}${suffix}`}
-  function linkedRecordPhotoFileName(d,index=0){const codes=selectedCodes(d);if(codes.length===1)return linkedPhotoFileName(codes[0],index);const details=codes.map(code=>{const item=(assignment.ksbs||[]).find(([itemCode])=>String(itemCode)===String(code));return `${code} - ${item?.[1]||'Evidence'}`}),suffix=` - Photo ${Number(index)+1}.jpg`,base=(details.length?details.join(' + '):`EV${assignment.n} - ${assignment.title}`).replace(/[\\/:*?"<>|]/g,'-').replace(/\s+/g,' ').trim(),limit=Math.max(24,120-suffix.length);return `${base.slice(0,limit).replace(/[ .-]+$/,'')}${suffix}`}
+  function linkedRecordPhotoFileName(d,index=0){const codes=selectedCodes(d);if(codes.length===1)return linkedPhotoFileName(codes[0],index);const details=codes.map(code=>{const item=(assignment.ksbs||[]).find(([itemCode])=>String(itemCode)===String(code));return `${code} - ${item?.[1]||'Evidence'}`}),suffix=` - Photo ${Number(index)+1}.jpg`,base=(details.length?details.join(' + '):`EP${assignment.n} - ${assignment.title}`).replace(/[\\/:*?"<>|]/g,'-').replace(/\s+/g,' ').trim(),limit=Math.max(24,120-suffix.length);return `${base.slice(0,limit).replace(/[ .-]+$/,'')}${suffix}`}
   function scoredDetails(d){
     const criterionText={};skillCriteria().forEach(skill=>skill.criteria.forEach((criterion,i)=>criterionText[`${skill.code}::${i+1}`]=`${skill.code} practical mark ${i+1} - ${criterion}`));
     return Object.entries(d?.scores||{}).filter(([,score])=>Number(score)>0).map(([code,score])=>`${criterionText[code]||code}: ${score} / 5`).join('\n');
@@ -234,7 +234,7 @@ async function generateEvidencePackPDF({course, assignment, profile, sections, b
     x.fillStyle=INK;x.font='700 58px Arial';fitText(x,clean(course.name||'Apprenticeship Course'),M,358,W-2*M,58);
     x.fillStyle=MUTED;x.font='500 20px Arial';x.fillText(`${clean(course.standard||'')}  ·  Level ${clean(course.level||'-')}`,M,402);
     x.fillStyle=TEAL;x.fillRect(M,456,52,3);
-    x.fillStyle=INK;x.font='700 34px Arial';fitText(x,`EV${assignment.n} · ${clean(assignment.title)}`,M,522,W-2*M,34);
+    x.fillStyle=INK;x.font='700 34px Arial';fitText(x,`EP${assignment.n} · ${clean(assignment.title)}`,M,522,W-2*M,34);
     let y=632;const rows=[['Learner',profile.fullName],['Employer',profile.employer],['Training provider',branding?.name||profile.trainingProvider||profile.provider||'-'],['Assessor',profile.mentor],['Portfolio date',new Date().toLocaleDateString('en-GB')],['Evidence items',String(evidenceCatalogue.length)]];
     rows.forEach(([a,b])=>{x.fillStyle=MUTED;x.font='600 13px Arial';x.fillText(clean(a).toUpperCase(),M,y);x.fillStyle=INK;x.font='600 21px Arial';fitText(x,clean(b||'-'),M,y+31,W-2*M,21);x.fillStyle='#ECEFEE';x.fillRect(M,y+55,W-2*M,1);y+=92});
     x.fillStyle=MUTED;x.font='500 14px Arial';x.fillText('A complete record of submitted evidence and mapped assessment criteria.',M,H-112);
