@@ -1,6 +1,17 @@
 {
-  "latest": "V2.35",
+  "latest": "V2.36",
   "releases": [
+    {
+      "version": "V2.36",
+      "date": "2026-08-08",
+      "title": "Compiled OTJ and GLH evidence",
+      "features": [
+        "Removed individual OTJ/GLH PDF previews and the standalone learning-hours PDF archive/export route.",
+        "All OTJ/GLH entries for an Evidence Pack are compiled into that Evidence Pack's single current PDF.",
+        "Saving, editing or deleting learning-hours entries regenerates and replaces the same cumulative Evidence Pack PDF.",
+        "NVQ GLH saves now refresh the assigned Evidence Pack PDF in the same way as apprenticeship OTJ."
+      ]
+    },
     {
       "version": "V2.35",
       "date": "2026-08-08",
