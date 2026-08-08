@@ -245,7 +245,7 @@ function learnerPromptTitle(assignmentNumber,code,fallback){
  return LEARNER_PROMPTS[COURSE.id]?.[assignmentNumber]?.[code]||fallback;
 }
 
-const APP_VERSION='V2.15';
+const APP_VERSION='V2.16';
 const PORTFOLIO_UPLOAD_LIMIT_BYTES=1_000_000_000;
 const PORTFOLIO_SAFE_TARGET_BYTES=900_000_000;
 const APP_VIDEO_BITS_PER_SECOND=1_400_000;
@@ -5224,6 +5224,21 @@ function createLearningHoursEntryPreview(entry){
  const block=(heading,value)=>{const lines=wrap(value,W-2*M,'16px Arial');x.fillStyle='#52605f';x.font='700 13px Arial';x.fillText(heading.toUpperCase(),M,y);y+=24;x.fillStyle='#172426';x.font='16px Arial';for(const line of lines){x.fillText(line,M,y);y+=22}y+=16};
  if(isNvq)block('Activity',entry.did||entry.activityType||'—');block(isNvq?'What did you learn?':'What did you do and learn?',entry.learned||'—');if(isNvq&&codes.length)block('Learning Outcomes',codes.join(', '));if(entry.activityType)block('Activity type',entry.activityType);
  x.strokeStyle='#d9dedc';x.beginPath();x.moveTo(M,H-72);x.lineTo(W-M,H-72);x.stroke();x.fillStyle='#657273';x.font='13px Arial';x.fillText(`Apprentice+ · ${short} evidence`,M,H-36);x.textAlign='right';x.fillText('Individual evidence record',W-M,H-36);x.textAlign='left';return c.toDataURL('image/jpeg',0.9)
+}
+function selectedCodesForEvidence(a,item,section=''){
+ const valid=new Set((a?.ksbs||[]).map(([code])=>String(code)));
+ const found=[];
+ const add=code=>{code=String(code||'').trim();if(code&&(!valid.size||valid.has(code))&&!found.includes(code))found.push(code)};
+ (Array.isArray(item?.ksbEvidence)?item.ksbEvidence:[]).forEach(add);
+ (Array.isArray(item?.selectedCodes)?item.selectedCodes:[]).forEach(add);
+ (Array.isArray(item?.confirmedCodes)?item.confirmedCodes:[]).forEach(add);
+ if(item?.code)add(item.code);
+ Object.keys(item?.outcomePhotos||{}).forEach(code=>{if(item.outcomePhotos?.[code]?.data)add(code)});
+ Object.keys(item?.skillPhotos||{}).forEach(code=>{if((item.skillPhotos?.[code]||[]).some(photo=>photo?.data))add(code)});
+ Object.keys(item?.scores||{}).forEach(key=>{const code=String(key).split('::')[0],raw=item.scores?.[key];if(Number(raw)>0)add(code)});
+ Object.keys(item?.recordings||{}).forEach(code=>{const recording=item.recordings?.[code];if(recording?.data||recording?.blobKey)add(code)});
+ if(section==='photos'&&!found.length){Object.keys(item?.outcomePhotos||{}).forEach(add);Object.keys(item?.skillPhotos||{}).forEach(add)}
+ return found;
 }
 async function buildDirectEvidencePreviewPages(a,section,item,index=0){
  const W=1240,H=1754,M=72,FOOTER_Y=H-70,SIG_H=item?.signature?122:0,SIG_TOP=item?.signature?FOOTER_Y-SIG_H-20:FOOTER_Y-12;
