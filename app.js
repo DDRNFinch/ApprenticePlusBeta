@@ -245,7 +245,7 @@ function learnerPromptTitle(assignmentNumber,code,fallback){
  return LEARNER_PROMPTS[COURSE.id]?.[assignmentNumber]?.[code]||fallback;
 }
 
-const APP_VERSION='V2.59';
+const APP_VERSION='V2.62';
 function paintPdfPageBackground(ctx,W,H){ctx.fillStyle='#ffffff';ctx.fillRect(0,0,W,H);const r=Math.min(W,H)*0.58,g=ctx.createRadialGradient(0,0,0,0,0,r);g.addColorStop(0,'#DDF3D6');g.addColorStop(.42,'#EFF8EC');g.addColorStop(1,'#FFFFFF');ctx.fillStyle=g;ctx.fillRect(0,0,W,H)}
 
 const PORTFOLIO_UPLOAD_LIMIT_BYTES=1_000_000_000;
@@ -5291,7 +5291,7 @@ function renderCourse(){
  app.innerHTML=shell(`<section class="course-list-summary course-identity-band"><div><small>${COURSE.nvqUnits?'NVQ':'APPRENTICESHIP'}</small><h2>${esc(COURSE.name)}</h2></div><strong>${done} of ${courseAssignments().length} complete</strong></section><section class="assignment-list">${courseAssignments().map(a=>{
   const sts=COURSE.nvqUnits?[['camera','photos'],['statement','statement'],['video','discussion'],['microphone','professionalDiscussion'],['supporting','supporting'],['witness','verified']]:[['camera','photos'],['statement','statement'],['video','walkthrough'],['microphone','professionalDiscussion'],['academy','otj'],['witness','verified']];
   const needsOptional=!!a.selectOptional;const packTitle=needsOptional?'Select one of Units 238, 690, 828 or 837':a.title;const homeCoverage=!needsOptional?(COURSE.nvqUnits?nvqCoverageSummary(a.n):ksbCoverageSummary(a.n)):null;
-  return `<button type="button" class="assignment-card compact-assignment-card ${assignmentComplete(a.n)?'complete':''} ${assignmentSubmitted(a.n)?'submitted':''} ${assignmentRPL(a.n)?'rpl':assignmentHasIndividualRPL(a.n)?'individual-rpl':''}" data-open="${a.n}" aria-label="Open ${esc(assignmentCardCode(a)+' - '+packTitle)}">${assignmentRPL(a.n)?'<span class="submitted-ribbon rpl-ribbon">RPL</span>':''}<span class="assignment-head"><h3>${assignmentCardCode(a)} - ${esc(packTitle)}</h3></span><span class="icons nvq-six-icons">${sts.map(([i,s])=>{let status='empty';if(assignmentRPL(a.n))status='complete';else if(s==='walkthrough')status=walkthroughStatus(a.n);else if(s==='verified')status=verifiedEvidenceSummary(a.n).status;else if(s==='otj')status=otjEntries().some(e=>Number(e.assignment)===Number(a.n))?'complete':'empty';else status=sectionStatus(a.n,s);return `<span class="icon-state ${status==='complete'?'done':status==='incomplete'?'warning':''}">${appIcon(i,'state-icon')}${statusMark(status)}</span>`}).join('')}</span><span class="ksb-row">${needsOptional?'<span class="ksb-mini">Choose unit</span>':a.ksbs.map(k=>{const count=homeCoverage?.coverage?.[k[0]]?.count||0,rplKsb=criterionRPL(a.n,k[0]);return `<span class="ksb-mini ${rplKsb?'coverage-rpl':count>=2?'coverage-complete':count>0?'coverage-partial':'coverage-none'}" title="${rplKsb?'Recognition of Prior Learning':`${count}/2 evidence requirements met`}">${k[0]}${rplKsb?' · RPL':''}</span>`}).join('')}</span></button>`}).join('')}</section>`);
+  return `<button type="button" class="assignment-card compact-assignment-card ${assignmentComplete(a.n)?'complete':''} ${assignmentSubmitted(a.n)?'submitted':''} ${assignmentRPL(a.n)?'rpl':assignmentHasIndividualRPL(a.n)?'individual-rpl':''}" data-open="${a.n}" aria-label="Open ${esc(assignmentCardCode(a)+' - '+packTitle)}">${assignmentRPL(a.n)?'<span class="submitted-ribbon rpl-ribbon">RPL</span>':''}<span class="assignment-head"><h3>${assignmentCardCode(a)} - ${esc(packTitle)}</h3></span><span class="icons nvq-six-icons">${sts.map(([i,s])=>{let status='empty';if(assignmentRPL(a.n))status='complete';else if(s==='walkthrough')status=walkthroughStatus(a.n);else if(s==='verified')status=verifiedEvidenceSummary(a.n).status;else if(s==='otj'){const lh=assignmentLearningHoursStats(a.n);status=lh.complete?'complete':lh.total>0?'incomplete':'empty'}else status=sectionStatus(a.n,s);return `<span class="icon-state ${status==='complete'?'done':status==='incomplete'?'warning':''}">${appIcon(i,'state-icon')}${statusMark(status)}</span>`}).join('')}</span><span class="ksb-row">${needsOptional?'<span class="ksb-mini">Choose unit</span>':a.ksbs.map(k=>{const count=homeCoverage?.coverage?.[k[0]]?.count||0,rplKsb=criterionRPL(a.n,k[0]);const required=Number(COURSE.evidenceRequirement||2);return `<span class="ksb-mini ${rplKsb?'coverage-rpl':count>=required?'coverage-complete':count>0?'coverage-partial':'coverage-none'}" title="${rplKsb?'Recognition of Prior Learning':`${count}/${required} evidence requirements met`}">${k[0]}${rplKsb?' · RPL':''}</span>`}).join('')}</span></button>`}).join('')}</section>`);
  const list=app.querySelector('.assignment-list');
  if(list)list.onclick=event=>{const card=event.target.closest('.assignment-card[data-open]');if(!card||!list.contains(card))return;const n=Number(card.dataset.open);if(!Number.isFinite(n)||!assignment(n))return;event.preventDefault();state.assignment=n;state.view='assignment';state.section=null;render();window.scrollTo(0,0)};
 
@@ -6684,40 +6684,35 @@ function monthlyEvidenceFile(entry,assignmentNumber,counters){
  const filename=`${base}${codePart}${needsNumber?` ${String(number).padStart(2,'0')}`:''}${monthlyFileExtension(original,fallback)}`;
  return {folder:monthlyAssignmentFolder(assignmentNumber),filename,path:`${monthlyAssignmentFolder(assignmentNumber)}/${filename}`,label,code,assignment:assignmentNumber,data:entry.data};
 }
-function createPortfolioEvidenceMatrixPages(){
- const W=1240,H=1754,M=72,pages=[];let c,x,y,pageNo=0;
+function createPortfolioEvidenceMatrixPages(matrixRecords=[]){
+ const W=1240,H=1754,M=72,pages=[];let c,x,y;
  const required=Math.max(1,Number(COURSE.evidenceRequirement||2)),criterionLabel=COURSE.nvqUnits?'LO':'KSB';
- const newPage=()=>{c=document.createElement('canvas');c.width=W;c.height=H;x=c.getContext('2d');if(!x)throw new Error('Portfolio matrix canvas unavailable');paintPdfPageBackground(x,W,H);x.fillStyle='#58B51F';x.fillRect(0,0,W,20);x.fillStyle='#18231E';x.font='800 38px Arial';x.fillText(`${criterionLabel} Evidence Matrix`,M,82);x.fillStyle='#68756D';x.font='17px Arial';x.fillText(`${state.profile?.fullName||'Learner'} · ${COURSE.name}`,M,118);x.fillText(`Evidence requirement: ${required} distinct form${required===1?'':'s'} of evidence per ${criterionLabel}`,M,146);y=194;pages.push(c);pageNo++};
- const header=()=>{x.fillStyle='#EAF4E7';x.fillRect(M,y,W-2*M,42);x.fillStyle='#294236';x.font='800 14px Arial';x.fillText(criterionLabel,M+12,y+27);x.fillText('MET',M+130,y+27);x.fillText('EVIDENCE REFERENCE / WHERE',M+220,y+27);y+=48};
+ const newPage=()=>{c=document.createElement('canvas');c.width=W;c.height=H;x=c.getContext('2d');if(!x)throw new Error('Portfolio matrix canvas unavailable');paintPdfPageBackground(x,W,H);x.fillStyle='#58B51F';x.fillRect(0,0,W,20);x.fillStyle='#18231E';x.font='800 38px Arial';x.fillText('Overall Evidence Matrix',M,82);x.fillStyle='#68756D';x.font='17px Arial';x.fillText(`${state.profile?.fullName||'Learner'} · ${COURSE.name}`,M,118);x.fillText(`${criterionLabel} evidence requirement: ${required} form${required===1?'':'s'} of evidence`,M,146);y=194;pages.push(c)};
+ const header=()=>{x.fillStyle='#EAF4E7';x.fillRect(M,y,W-2*M,42);x.fillStyle='#294236';x.font='800 14px Arial';x.fillText(criterionLabel,M+12,y+27);x.fillText('MET',M+128,y+27);x.fillText('WHERE IT IS EVIDENCED',M+220,y+27);y+=48};
  const ensure=h=>{if(y+h>H-95){newPage();header()}};
  newPage();header();
- const rows=[];
- for(const a of courseAssignments().filter(a=>a&&!a.selectOptional)){
-   const coverage=COURSE.nvqUnits?nvqOutcomeCoverage(a.n):ksbEvidenceCoverage(a.n);
-   for(const [code,summary] of (a.ksbs||[])){
-     const item=coverage?.[code]||{count:0,sources:[]},refs=(item.sources||[]).map(source=>`${monthlyAssignmentFolder(a.n)} / ${source}`);
-     rows.push({code,summary,count:Number(item.count||0),refs,item,a});
-   }
+ for(const row of matrixRecords){
+  const refs=(row.refs||[]).length?row.refs:['No submitted evidence PDF'];
+  x.font='700 13px Arial';const refLines=[];refs.forEach(ref=>refLines.push(...wrapPdfText(x,ref,W-470,'13px Arial')));
+  x.font='13px Arial';const summaryLines=wrapPdfText(x,row.summary||'',W-520,'13px Arial');
+  const h=Math.max(62,32+Math.max(refLines.length,summaryLines.length+1)*18);ensure(h);
+  x.fillStyle=row.count>=required?'#F0F8EC':row.count>0?'#FFF9E7':'#FFFFFF';x.fillRect(M,y,W-2*M,h-4);x.strokeStyle='#DDE7DD';x.lineWidth=1;x.strokeRect(M,y,W-2*M,h-4);
+  x.fillStyle='#1F3228';x.font='800 16px Arial';x.fillText(row.code,M+12,y+24);
+  x.fillStyle=row.count>=required?'#287A2D':row.count>0?'#8A6500':'#7C8780';x.font='800 16px Arial';x.fillText(`${Math.min(required,row.count)}/${required}`,M+128,y+24);
+  x.fillStyle='#617068';x.font='12px Arial';summaryLines.slice(0,3).forEach((line,i)=>x.fillText(line,M+12,y+45+i*16));
+  x.fillStyle='#30473A';x.font='700 13px Arial';refLines.forEach((line,i)=>x.fillText(line,M+220,y+24+i*18));
+  y+=h;
  }
- for(const row of rows){
-   const refs=row.refs.length?row.refs:['No evidence recorded'];
-   const summaryLines=wrapPdfText(x,row.summary||'',W-520,'14px Arial');
-   const refLines=[];refs.forEach(ref=>refLines.push(...wrapPdfText(x,ref,W-330,'14px Arial')));
-   const lines=Math.max(1,summaryLines.length+1,refLines.length),h=Math.max(58,24+lines*19);ensure(h);
-   x.fillStyle=row.count>=required?'#F0F8EC':'#FFFFFF';x.fillRect(M,y,W-2*M,h-4);
-   x.strokeStyle='#DDE7DD';x.lineWidth=1;x.strokeRect(M,y,W-2*M,h-4);
-   x.fillStyle='#1F3228';x.font='800 16px Arial';x.fillText(row.code,M+12,y+24);
-   x.fillStyle=row.count>=required?'#287A2D':'#8A6500';x.font='800 16px Arial';x.fillText(`${Math.min(required,row.count)}/${required}`,M+130,y+24);
-   x.fillStyle='#53635A';x.font='13px Arial';x.fillText(String(row.summary||'').slice(0,58),M+12,y+45);
-   x.fillStyle='#30473A';x.font='14px Arial';refLines.forEach((line,i)=>x.fillText(line,M+220,y+24+i*19));
-   y+=h;
- }
- pages.forEach((canvas,i)=>{const cx=canvas.getContext('2d');if(!cx)return;cx.fillStyle='#58B51F';cx.fillRect(0,H-58,W,58);cx.fillStyle='#F3F8F2';cx.font='600 14px Arial';cx.fillText(`Evidence Matrix · Page ${i+1} of ${pages.length}`,M,H-23)});
+ pages.forEach((canvas,i)=>{const cx=canvas.getContext('2d');if(!cx)return;cx.fillStyle='#58B51F';cx.fillRect(0,H-58,W,58);cx.fillStyle='#F3F8F2';cx.font='600 14px Arial';cx.fillText(`Overall Evidence Matrix · Page ${i+1} of ${pages.length}`,M,H-23)});
  return pages;
 }
+function createPortfolioEvidenceMatrixPdf(matrixRecords=[]){
+ const pages=createPortfolioEvidenceMatrixPages(matrixRecords);return makeImagePDF(pages.map(c=>dataUrlBytes(c.toDataURL('image/jpeg',.92))),1240,1754);
+}
+
 function createMonthlySummaryPdf(delta,assignmentGroups=[]){
  const W=1240,H=1754,M=72,pages=[],portfolioSize=portfolioSizeEstimate();let c,x,y;
- const page=()=>{c=document.createElement('canvas');c.width=W;c.height=H;x=c.getContext('2d');paintPdfPageBackground(x,W,H);x.fillStyle='#58B51F';x.fillRect(0,0,W,20);x.fillStyle='#18231E';x.font='800 42px Arial';x.fillText('01 - Portfolio Index & Upload Record',M,84);x.fillStyle='#68756D';x.font='18px Arial';x.fillText(`${state.profile?.fullName||'Learner'} · ${COURSE.name}`,M,122);x.fillText(`${new Date().toLocaleDateString('en-GB')} · Apprentice+ ${APP_VERSION}`,M,150);x.fillStyle='#EAF7E4';x.fillRect(M,176,W-2*M,4);y=218;pages.push(c)};page();
+ const page=()=>{c=document.createElement('canvas');c.width=W;c.height=H;x=c.getContext('2d');paintPdfPageBackground(x,W,H);x.fillStyle='#58B51F';x.fillRect(0,0,W,20);x.fillStyle='#18231E';x.font='800 42px Arial';x.fillText('01 - New Evidence Since Last Upload',M,84);x.fillStyle='#68756D';x.font='18px Arial';x.fillText(`${state.profile?.fullName||'Learner'} · ${COURSE.name}`,M,122);x.fillText(`${new Date().toLocaleDateString('en-GB')} · Apprentice+ ${APP_VERSION}`,M,150);x.fillStyle='#EAF7E4';x.fillRect(M,176,W-2*M,4);y=218;pages.push(c)};page();
  const ensure=h=>{if(y+h>H-90)page()};
  const heading=t=>{ensure(70);x.fillStyle='#18231E';x.font='800 25px Arial';x.fillText(t,M,y);y+=40};
  const line=(t,bold=false)=>{const rows=wrapPdfText(x,t,W-2*M,bold?'700 18px Arial':'18px Arial');for(const row of rows){ensure(32);x.fillStyle=bold?'#18231E':'#405047';x.font=bold?'700 18px Arial':'18px Arial';x.fillText(row,M,y);y+=27}y+=5};
@@ -6726,9 +6721,9 @@ function createMonthlySummaryPdf(delta,assignmentGroups=[]){
  heading('New KSBs and learning outcomes');if(delta.newKsbs.length)delta.newKsbs.forEach(k=>line(`${k.code} — ${k.summary} · EP${k.assignment}: ${k.title}`));else line('No additional criteria became fully met during this upload period.');
  heading(`New ${learningHoursMateName()} evidence`);if(delta.newOtjEntries.length){line(`${learningHoursShortLabel()}/${learningHoursMateName()} Monthly Evidence.pdf`,true);delta.newOtjEntries.forEach(e=>line(`${formatShortDate(e.date)} · ${e.portfolioBuilding?'Portfolio building':String(e.place||learningHoursShortLabel()).replace(/^./,c=>c.toUpperCase())} · ${Number(e.hours||0).toFixed(1)} hours · ${e.did||`${learningHoursShortLabel()} activity`}`))}else line(`No new ${learningHoursMateName()} entries were added during this upload period.`);
  heading('Recognition of Prior Learning');if(delta.newRplUnits.length)delta.newRplUnits.forEach(r=>line(`Full assignment RPL · ${r.unit?`Unit ${r.unit} · `:''}EP${r.assignment}: ${r.title}`));if(delta.newRplCriteria.length)delta.newRplCriteria.forEach(r=>line(`Individual ${COURSE.nvqUnits?'LO':'KSB'} RPL · ${r.unit?`Unit ${r.unit} · `:''}${r.code} — ${r.summary}`));if(!delta.newRplUnits.length&&!delta.newRplCriteria.length)line('No new RPL units or individual criteria were awarded during this upload period.');
- heading('Evidence Pack contents');if(!assignmentGroups.length)line('No course assignments are available.');assignmentGroups.forEach(g=>{line(`${g.folder} — ${g.title}`,true);line(g.items.length?g.items.map(i=>i.filename).join(' · '):'Evidence Pack PDF only')});
- heading('Folder structure');line('01 - Portfolio Index & Upload Record.pdf — upload comparison, progress and full KSB/LO evidence matrix');line('02 - Academy Activity.pdf — tests taken, scores and completed Knowledge Slides');line(`${learningHoursShortLabel()}/${learningHoursMateName()} Complete Evidence.pdf — the complete manual and Portfolio building ${learningHoursShortLabel()} history; the summary identifies entries added since the previous upload`);line('EP folders — every course Evidence Pack is included on every upload, with all saved evidence and media currently held on the device.');line('Each EP folder contains one complete Evidence Pack PDF. Videos, recorded discussions, observation media and original RPL source files are included alongside it because they cannot be embedded as playable evidence in the PDF.');
- pages.splice(1,0,createMonthlyProgressPage(),...createPortfolioEvidenceMatrixPages());
+ heading('Evidence Pack contents');if(!assignmentGroups.length)line('No course assignments are available.');assignmentGroups.forEach(g=>{line(`${g.folder} — ${g.title}`,true);line(g.items.length?g.items.map(i=>i.filename).join(' · '):'No submitted evidence PDFs')});
+ heading('Folder structure');line('00 - Overall Evidence Matrix.pdf — KSB/LO coverage, evidence count and exact PDF/media location');line('01 - New Evidence Since Last Upload.pdf — comparison with the previous confirmed upload');line('02 - Academy Activity.pdf — tests taken, scores and completed Knowledge Slides');line(`${learningHoursShortLabel()}/${learningHoursMateName()} Complete Evidence.pdf — the complete manual and Portfolio building ${learningHoursShortLabel()} history; the summary identifies entries added since the previous upload`);line('EP folders — every course Evidence Pack is included on every upload, with all saved evidence and media currently held on the device.');line('Each EP folder contains its own Evidence Matrix and one Complete Evidence Pack PDF containing all printable evidence and the complete OTJ/GLH history for that EP. Playable videos/discussions and original source attachments sit alongside it where required.');
+ pages.splice(1,0,createMonthlyProgressPage());
  pages.forEach((canvas,i)=>{const cx=canvas.getContext('2d');cx.fillStyle='#58B51F';cx.fillRect(0,H-58,W,58);cx.fillStyle='#F3F8F2';cx.font='600 15px Arial';cx.fillText(`Apprentice+ ${APP_VERSION}`,M,H-23);cx.textAlign='right';cx.fillText(`Page ${i+1} of ${pages.length}`,W-M,H-23);cx.textAlign='left'});
  return makeImagePDF(pages.map(canvas=>dataUrlBytes(canvas.toDataURL('image/jpeg',.92))),W,H);
 }
@@ -6836,6 +6831,74 @@ function createPortfolioFallbackPdf(title,lines=[]){
  x.fillStyle='#58B51F';x.fillRect(0,H-58,W,58);x.fillStyle='#F3F8F2';x.font='600 14px Arial';x.fillText(`Apprentice+ ${APP_VERSION}`,M,H-23);
  return makeImagePDF([dataUrlBytes(c.toDataURL('image/jpeg',.92))],W,H);
 }
+function createEpEvidenceMatrixPdf(a,sections,completePdfName){
+ const W=1240,H=1754,M=72,pages=[];let c,x,y;
+ const required=Math.max(1,Number(COURSE.evidenceRequirement||2)),label=COURSE.nvqUnits?'LO':'KSB',coverage=COURSE.nvqUnits?nvqOutcomeCoverage(a.n):ksbEvidenceCoverage(a.n);
+ const page=()=>{c=document.createElement('canvas');c.width=W;c.height=H;x=c.getContext('2d');if(!x)throw new Error('EP matrix canvas unavailable');paintPdfPageBackground(x,W,H);x.fillStyle='#58B51F';x.fillRect(0,0,W,20);x.fillStyle='#18231E';x.font='800 38px Arial';x.fillText(`${assignmentCardCode(a)} · Evidence Matrix`,M,82);x.fillStyle='#68756D';x.font='17px Arial';x.fillText(a.title,M,118);x.fillText(`Requirement: ${required} distinct evidence form${required===1?'':'s'} per ${label}`,M,146);y=194;pages.push(c)};
+ const header=()=>{x.fillStyle='#EAF4E7';x.fillRect(M,y,W-2*M,42);x.fillStyle='#294236';x.font='800 14px Arial';x.fillText(label,M+12,y+27);x.fillText('MET',M+125,y+27);x.fillText('WHERE IN THIS EVIDENCE PACK',M+210,y+27);y+=50};
+ const ensure=h=>{if(y+h>H-92){page();header()}};
+ const sourceLabel=s=>{const t=String(s||'').toLowerCase();if(t.includes('photo'))return 'Take Photos';if(t.includes('statement'))return 'Write About It';if(t.includes('professional')||t.includes('discussion')||t.includes('voice'))return 'Talk About It';if(t.includes('video')||t.includes('walkthrough'))return 'Record a Video';if(t.includes('witness'))return 'Witness Testimony';if(t.includes('practical')||t.includes('observation'))return 'Assessor Observation';if(t.includes('support'))return 'Uploaded Evidence';if(t.includes('rpl'))return 'RPL';return String(s||'Evidence')};
+ page();header();
+ for(const [code,summary] of a.ksbs||[]){
+   const item=coverage?.[code]||{count:0,sources:[]},rpl=criterionRPL(a.n,code)||assignmentRPL(a.n),count=rpl?required:Math.min(required,Number(item.count||0)),sources=[...new Set((item.sources||[]).map(sourceLabel))];if(rpl&&!sources.includes('RPL'))sources.unshift('RPL');
+   const refs=sources.length?sources.map(s=>`${completePdfName} · ${s}`):['No evidence recorded'];
+   x.font='14px Arial';const refLines=refs.flatMap(ref=>wrapPdfText(x,ref,W-520,'14px Arial')),descLines=wrapPdfText(x,summary||'',W-620,'13px Arial'),h=Math.max(66,28+Math.max(refLines.length,descLines.length+1)*19);ensure(h);
+   x.fillStyle=count>=required?'#F0F8EC':'#FFFFFF';x.fillRect(M,y,W-2*M,h-5);x.strokeStyle='#DDE7DD';x.strokeRect(M+.5,y+.5,W-2*M-1,h-6);
+   x.fillStyle='#1F3228';x.font='800 16px Arial';x.fillText(code,M+12,y+24);x.fillStyle=count>=required?'#287A2D':'#9A6B00';x.fillText(`${count}/${required}`,M+125,y+24);
+   x.fillStyle='#53635A';x.font='13px Arial';descLines.slice(0,3).forEach((line,i)=>x.fillText(line,M+12,y+45+i*17));x.fillStyle='#30473A';x.font='14px Arial';refLines.forEach((line,i)=>x.fillText(line,M+210,y+24+i*19));y+=h;
+ }
+ pages.forEach((canvas,i)=>{const cx=canvas.getContext('2d');cx.fillStyle='#58B51F';cx.fillRect(0,H-58,W,58);cx.fillStyle='#F3F8F2';cx.font='600 14px Arial';cx.fillText(`${assignmentCardCode(a)} Evidence Matrix · ${i+1}/${pages.length}`,M,H-23)});
+ return makeImagePDF(pages.map(canvas=>dataUrlBytes(canvas.toDataURL('image/jpeg',.92))),W,H);
+}
+async function buildCompleteEpPortfolio(a,sections){
+ const generated=await generateEvidencePackPDF({course:COURSE,assignment:a,profile:state.profile,sections,branding:state.branding,returnPackage:true,newEvidence:{},assignmentRpl:assignmentRPL(a.n),rplKsbCodes:assignmentIndividualRplCodes(a.n),learningHours:assignmentLearningHoursPdfPayload(a.n)});
+ const pdfEntry=(generated?.entries||[]).find(entry=>String(entry.name||'').toLowerCase().endsWith('.pdf'));
+ if(!pdfEntry?.data)throw new Error(`${assignmentCardCode(a)} complete Evidence Pack PDF was not generated`);
+ const completeName=`${assignmentCardCode(a)} - ${safeZipName(a.title)} - Complete Evidence Pack.pdf`;
+ const matrixName=`${assignmentCardCode(a)} - Evidence Matrix.pdf`;
+ return {
+   pdf:{filename:completeName,bytes:pdfEntry.data,label:'Complete Evidence Pack',codes:(a.ksbs||[]).map(([code])=>code),section:'complete'},
+   matrix:{filename:matrixName,bytes:createEpEvidenceMatrixPdf(a,sections,completeName),label:'Evidence Matrix',codes:(a.ksbs||[]).map(([code])=>code),section:'matrix'},
+   generated
+ };
+}
+async function portfolioIndividualEvidencePdfs(a){
+ const rows=submittedEvidenceRows(a),out=[];
+ for(const row of rows){
+  try{
+   const made=await makeIndividualEvidencePdf(a,row.section,row.index,row.otjId||'');
+   let item=null;if(row.section==='walkthrough'){const all=await collectWalkthroughEvidence(a.n,a);item=all[row.index]||null}else item=sectionData(a.n,row.section).versions?.[row.index]||null;
+   const codes=selectedCodesForEvidence(a,item||{},row.section);
+   const label=friendlyEvidenceSection(row.section).replace(/\s+/g,' ').trim(),filename=`${String(out.length+1).padStart(2,'0')} - ${safeZipName(label)} - Attempt ${Number(row.index)+1}.pdf`;
+   out.push({section:row.section,index:row.index,label,codes,filename,bytes:made.bytes,item});
+  }catch(error){console.error(`Unable to create individual evidence PDF for ${assignmentCardCode(a)} ${row.section} ${row.index+1}`,error)}
+ }
+ const learning=otjEntries().filter(e=>Number(e.assignment)===Number(a.n));
+ if(learning.length){const pages=learning.slice().sort((l,r)=>String(l.date||'').localeCompare(String(r.date||''))).map(createLearningHoursEntryPreview);out.push({section:'otj',index:0,label:learningHoursShortLabel(),codes:COURSE.nvqUnits?[...new Set(learning.flatMap(e=>e.loCodes||[]))]:[],filename:`${learningHoursShortLabel()} - Complete Evidence.pdf`,bytes:makeImagePDF(pages.map(dataUrlBytes),1240,1754),item:{entries:learning}})}
+ const rpl=rplDraft(a.n),rplCodes=assignmentRPL(a.n)?(a.ksbs||[]).map(([code])=>code):assignmentIndividualRplCodes(a.n),rplEntries=rpl.entries||[];
+ if(rplCodes.length||rplEntries.length){const lines=[`Evidence Pack: ${assignmentCardCode(a)} · ${a.title}`,`${COURSE.nvqUnits?'Learning Outcomes':'KSBs'} completed through RPL: ${rplCodes.join(', ')||'See saved RPL records'}`];rplEntries.forEach((entry,i)=>lines.push(`RPL record ${i+1}: ${(entry.codes||[]).join(', ')||'Evidence'} · ${(entry.files||[]).map(f=>f.name).join(', ')||'No source filename'}`));out.push({section:'rpl',index:0,label:'Recognition of Prior Learning',codes:rplCodes,filename:'RPL Evidence.pdf',bytes:createPortfolioFallbackPdf('Recognition of Prior Learning',lines),item:{entries:rplEntries}})}
+ return out;
+}
+function portfolioMatrixRecordsFromExports(exported=[]){
+ const required=Math.max(1,Number(COURSE.evidenceRequirement||2)),rows=[];
+ for(const a of courseAssignments().filter(a=>a&&!a.selectOptional)){
+  const coverage=COURSE.nvqUnits?nvqOutcomeCoverage(a.n):ksbEvidenceCoverage(a.n),epExports=exported.filter(e=>Number(e.assignment)===Number(a.n));
+  for(const [code,summary] of a.ksbs||[]){
+   const item=coverage?.[code]||{count:0,sources:[]},refs=[];
+   epExports.filter(e=>(e.codes||[]).includes(code)&&e.section!=='matrix').forEach(e=>{if(!refs.includes(e.path))refs.push(e.path)});
+   if(!refs.length&&criterionRPL(a.n,code)){const rpl=epExports.find(e=>e.section==='rpl');if(rpl)refs.push(rpl.path)}
+   rows.push({assignment:a.n,code,summary,count:Math.min(required,Number(item.count||0)),required,refs});
+  }
+ }
+ return rows;
+}
+function portfolioAddSourceFiles(a,sections,packageEntries,items,existingPaths,exports){
+ const folder=monthlyAssignmentFolder(a.n),add=(sub,name,data,label,codes=[])=>{if(!data)return;const path=`${folder}/${sub}/${name}`;if(existingPaths.has(path.toLowerCase()))return;let bytes;try{bytes=data instanceof Uint8Array?data:dataUrlBytes(data)}catch{return}packageEntries.push({name:path,data:bytes});items.push({folder,filename:name,path,label,assignment:a.n,data:bytes});existingPaths.add(path.toLowerCase());exports.push({assignment:a.n,section:sub,codes:[...new Set(codes||[])],path,label})};
+ (sections.walkthrough||[]).forEach((rec,i)=>{if(rec?.data){const codes=rec.codes||rec.confirmedCodes||(rec.code?[rec.code]:[]),name=`${safeZipName(codes.join('-')||`Video ${i+1}`)} - Video${monthlyFileExtension(rec.name,'.webm')}`;add('Video Evidence',name,rec.data,'Video evidence',codes)}});
+ for(const section of ['discussion','professionalDiscussion','practical'])for(let vi=0;vi<(sections[section]||[]).length;vi++){const v=sections[section][vi],baseCodes=selectedCodesForEvidence(a,v,section);for(const [code,rec] of Object.entries(v.recordings||{})){if(rec?.data){const kind=String(rec.type||'').startsWith('video/')?'Video':'Discussion',sub=kind==='Video'?'Video Evidence':'Discussions';add(sub,`${safeZipName(code)} - ${kind} ${vi+1}${monthlyFileExtension(rec.name,'.webm')}`,rec.data,kind,[code])}}for(const [code,media] of Object.entries(v.observationRecordings||{})){if(media?.video?.data)add('Observation Media',`${safeZipName(code)} - Observation Video ${vi+1}${monthlyFileExtension(media.video.name,'.webm')}`,media.video.data,'Observation video',[code]);if(media?.audio?.data)add('Observation Media',`${safeZipName(code)} - Assessor Discussion ${vi+1}${monthlyFileExtension(media.audio.name,'.webm')}`,media.audio.data,'Assessor discussion',[code])}
+   (v.files||[]).forEach((file,fi)=>{if(file?.data){const ext=monthlyFileExtension(file.name,'.bin'),base=safeZipName(file.name||`Source File ${fi+1}`),name=base.toLowerCase().endsWith(ext.toLowerCase())?base:base+ext;add('Source Files',name,file.data,'Source attachment',baseCodes)}})}
+ const rpl=rplDraft(a.n);(rpl.entries||[]).forEach((entry,ri)=>(entry.files||[]).forEach((file,fi)=>{if(file?.data){const ext=monthlyFileExtension(file.name,'.bin'),base=safeZipName(file.name||`RPL Evidence ${fi+1}`),name=base.toLowerCase().endsWith(ext.toLowerCase())?base:base+ext;add('RPL Source Files',`${String(ri+1).padStart(2,'0')} - ${name}`,file.data,'RPL source evidence',entry.codes||[])}}));
+}
 async function storedEvidencePackPdfBytes(n){
  try{
   const stored=await getStore(`latestEvidencePackPdf:${COURSE.id}:${n}`);
@@ -6845,46 +6908,31 @@ async function storedEvidencePackPdfBytes(n){
  return null;
 }
 async function downloadEntirePortfolio(){
- const delta=portfolioDelta();
- const assignments=courseAssignments().filter(a=>a&&!a.selectOptional);
- if(!assignments.length)return toast('No course assignments are available to export');
- if(!window.generateEvidencePackPDF||!window.makeZipBlob)return toast('Portfolio generator unavailable');
- const button=document.getElementById('downloadEntirePortfolio');if(button){button.disabled=true;button.textContent='Preparing monthly upload...'}
+ const delta=portfolioDelta(),assignments=courseAssignments().filter(a=>a&&!a.selectOptional);
+ if(!assignments.length)return toast('No Evidence Packs are available to export');
+ if(!window.makeZipBlob)return toast('Portfolio generator unavailable');
+ const button=document.getElementById('downloadEntirePortfolio');if(button){button.disabled=true;button.textContent='Preparing portfolio...'}
  try{
-  const packageEntries=[],assignmentGroups=[],counters={};toast(`Preparing the complete course · ${assignments.length} Evidence Pack${assignments.length===1?'':'s'}...`);
+  const packageEntries=[],assignmentGroups=[],exportedRefs=[];toast(`Preparing ${assignments.length} Evidence Pack${assignments.length===1?'':'s'}...`);
   for(let index=0;index<assignments.length;index++){
-   const a=assignments[index],sections={};PORTFOLIO_SECTIONS.forEach(section=>sections[section]=sectionData(a.n,section).versions.map(version=>structuredClone(version)));sections.walkthrough=walkthroughCount(a.n).done?await collectWalkthroughEvidence(a.n,a):[];
-   let result;
-   try{
-    result=await generateEvidencePackPDF({course:COURSE,assignment:a,profile:state.profile,sections,branding:state.branding,returnPackage:true,newEvidence:newEvidenceMapForAssignment(delta,a.n),assignmentRpl:assignmentRPL(a.n),rplKsbCodes:assignmentIndividualRplCodes(a.n),learningHours:assignmentLearningHoursPdfPayload(a.n)});
-   }catch(pdfError){
-    console.error(`Evidence Pack ${a.n} PDF generation failed; using safe portfolio fallback`,pdfError);
-    const stored=await storedEvidencePackPdfBytes(a.n);
-    const fallbackPdf=stored||{name:`EP${a.n} - ${safeZipName(a.title)} - Evidence Pack.pdf`,data:createPortfolioFallbackPdf(`EP${a.n} · ${a.title}`,[`The live Evidence Pack PDF renderer encountered: ${pdfError?.message||'unknown rendering error'}.`,`This portfolio still contains the saved evidence and media held on the device.`,`${COURSE.nvqUnits?'Learning Outcomes':'KSBs'}: ${(a.ksbs||[]).map(([code])=>code).join(', ')||'None mapped'}`])};
-    result={entries:[fallbackPdf],pdfName:fallbackPdf.name,packageName:fallbackPdf.name};
-   }
-   const items=[];const existingPaths=new Set();
-   for(const entry of result.entries||[]){const file=monthlyEvidenceFile(entry,a.n,counters);packageEntries.push({name:file.path,data:file.data});items.push(file);existingPaths.add(file.path.toLowerCase())}
-   // Keep each EP as one complete PDF. Only evidence that cannot live inside a PDF is added separately.
-   const addExternal=(path,data,label)=>{if(!data||existingPaths.has(path.toLowerCase()))return;let bytes;try{bytes=data instanceof Uint8Array?data:dataUrlBytes(data)}catch{return}packageEntries.push({name:path,data:bytes});items.push({folder:monthlyAssignmentFolder(a.n),filename:path.split('/').pop(),path,label,assignment:a.n,data:bytes});existingPaths.add(path.toLowerCase())};
-   for(let vi=0;vi<(sections.walkthrough||[]).length;vi++){const rec=sections.walkthrough[vi];if(rec?.data){const code=safeZipName(rec.code||rec.codes?.join('-')||`Video ${vi+1}`),ext=monthlyFileExtension(rec.name,'.webm');addExternal(`${monthlyAssignmentFolder(a.n)}/Video Evidence/${code} - Video${ext}`,rec.data,'Video evidence')}}
-   for(const section of ['professionalDiscussion','practical'])for(let vi=0;vi<(sections[section]||[]).length;vi++){const v=sections[section][vi];for(const [code,rec] of Object.entries(v.recordings||{})){if(rec?.data)addExternal(`${monthlyAssignmentFolder(a.n)}/Discussions/${safeZipName(code)} - Discussion ${vi+1}${monthlyFileExtension(rec.name,'.webm')}`,rec.data,'Professional discussion')}
-     for(const [code,media] of Object.entries(v.observationRecordings||{})){if(media?.video?.data)addExternal(`${monthlyAssignmentFolder(a.n)}/Observation Media/${safeZipName(code)} - Observation Video ${vi+1}${monthlyFileExtension(media.video.name,'.webm')}`,media.video.data,'Observation video');if(media?.audio?.data)addExternal(`${monthlyAssignmentFolder(a.n)}/Observation Media/${safeZipName(code)} - Assessor Discussion ${vi+1}${monthlyFileExtension(media.audio.name,'.webm')}`,media.audio.data,'Assessor discussion')}}
-   const rpl=rplDraft(a.n);(rpl.entries||[]).forEach((entry,ri)=>(entry.files||[]).forEach((file,fi)=>{if(file?.data){const ext=monthlyFileExtension(file.name,'.bin'),base=safeZipName(file.name||`RPL Evidence ${fi+1}`),name=base.toLowerCase().endsWith(ext.toLowerCase())?base:base+ext;addExternal(`${monthlyAssignmentFolder(a.n)}/RPL/${String(ri+1).padStart(2,'0')} - ${name}`,file.data,'RPL source evidence')}}));
-   assignmentGroups.push({folder:monthlyAssignmentFolder(a.n),title:a.title,items});
-   toast(`Prepared EP ${index+1} of ${assignments.length}`);
+   const a=assignments[index],folder=monthlyAssignmentFolder(a.n),sections={};PORTFOLIO_SECTIONS.forEach(section=>sections[section]=sectionData(a.n,section).versions.map(version=>structuredClone(version)));sections.walkthrough=await collectWalkthroughEvidence(a.n,a);
+   const complete=await buildCompleteEpPortfolio(a,sections),items=[],existingPaths=new Set();
+   for(const pdf of [complete.matrix,complete.pdf]){const path=`${folder}/${pdf.filename}`;packageEntries.push({name:path,data:pdf.bytes});items.push({folder,filename:pdf.filename,path,label:pdf.label,assignment:a.n,data:pdf.bytes});existingPaths.add(path.toLowerCase());exportedRefs.push({assignment:a.n,section:pdf.section,codes:pdf.codes||[],path,label:pdf.label})}
+   // Only files that must remain playable/original sit beside the complete EP PDF.
+   portfolioAddSourceFiles(a,sections,packageEntries,items,existingPaths,exportedRefs);
+   assignmentGroups.push({folder,title:a.title,items});toast(`Prepared ${assignmentCardCode(a)} · ${index+1}/${assignments.length}`);
   }
-  let academyPdf,summaryPdf;
-  try{academyPdf=createMonthlyAcademyPdf(delta)}catch(error){console.error('Academy PDF render failed; using fallback',error);academyPdf=createPortfolioFallbackPdf('02 - Academy Activity',[`Academy activity PDF fallback generated because the visual renderer reported: ${error?.message||'rendering error'}.`,`Completed Academy tests: ${delta.current?.academy?.tests?.length||0}`,`Completed Knowledge Slide packs: ${delta.current?.academy?.slides?.length||0}`])}
-  try{summaryPdf=createMonthlySummaryPdf(delta,assignmentGroups)}catch(error){console.error('Monthly Summary PDF render failed; using fallback',error);summaryPdf=createPortfolioFallbackPdf('01 - Monthly Summary',[`Previous upload: ${delta.status.uploadedAt?new Date(delta.status.uploadedAt).toLocaleString('en-GB'):'First portfolio upload'}`,`New evidence items: ${delta.newEvidence.reduce((n,e)=>n+e.added,0)}`,`New ${COURSE.nvqUnits?'Learning Outcomes':'KSBs'} met: ${delta.newKsbs.length}`,`New ${learningHoursShortLabel()} hours: ${delta.otjHours.toFixed(1)}`,`Assignments included: ${assignmentGroups.length}`])}
-  packageEntries.unshift({name:'02 - Academy Activity.pdf',data:academyPdf});
-  packageEntries.unshift({name:'01 - Portfolio Index & Upload Record.pdf',data:summaryPdf});
+  const matrixRecords=portfolioMatrixRecordsFromExports(exportedRefs);
+  packageEntries.unshift({name:'02 - Academy Activity.pdf',data:createMonthlyAcademyPdf(delta)});
+  packageEntries.unshift({name:'01 - New Evidence Since Last Upload.pdf',data:createMonthlySummaryPdf(delta,assignmentGroups)});
+  packageEntries.unshift({name:'00 - Overall Evidence Matrix.pdf',data:createPortfolioEvidenceMatrixPdf(matrixRecords)});
   const packageBlob=makeZipBlob(packageEntries);if(packageBlob.size>PORTFOLIO_UPLOAD_LIMIT_BYTES)throw new Error(`The ZIP is ${formatMediaSize(packageBlob.size)} and exceeds Aptem’s 1 GB limit. Remove or replace the largest original video files, then export again.`);if(packageBlob.size>PORTFOLIO_SAFE_TARGET_BYTES&&!confirm(`This ZIP is ${formatMediaSize(packageBlob.size)}, above the 900 MB safety target. It is still below 1 GB, but leaves very little upload headroom. Download it anyway?`))return;
-  const learner=safeZipName(state.profile?.fullName||'Learner').slice(0,24),date=new Date().toISOString().slice(0,10),download=await downloadBlob(packageBlob,'application/zip',`${learner}-Monthly-${date}.zip`);
+  const learner=safeZipName(state.profile?.fullName||'Learner').slice(0,24),date=new Date().toISOString().slice(0,10),download=await downloadBlob(packageBlob,'application/zip',`${learner}-Portfolio-${date}.zip`);
   state.data[MONTHLY_PORTFOLIO_KEY()]={...delta.status,downloadedAt:new Date().toISOString(),downloadedSize:download.size,pendingSnapshot:delta.current,pendingNewKsbs:delta.newKsbs.map(x=>x.key),pendingNewRplUnits:delta.newRplUnits.map(x=>x.assignment),pendingNewRplCriteria:delta.newRplCriteria.map(x=>x.criterionKey),pendingProgressGain:delta.progressGain,pendingOtjEntryIds:delta.newOtjEntries.map(e=>e.id),pendingAcademyTestKeys:delta.newAcademyTests.map(e=>e.key),pendingKnowledgeSlideKeys:delta.newKnowledgeSlides.map(e=>e.key),reminderStage:'open',reminderSnoozedUntil:0,reminderNextAt:Date.now(),portfolioOpenedAt:null};
-  await saveData();render();setTimeout(()=>showMonthlyPortfolioReminder(true),250);toast(`Monthly upload downloaded · ${formatMediaSize(download.size)}`);
- }catch(error){console.error('Monthly portfolio download failed',error);toast(`Unable to download monthly portfolio${error?.message?`: ${error.message}`:''}`)}finally{if(button){button.disabled=false;button.textContent='Download complete portfolio'}}
+  await saveData();render();setTimeout(()=>showMonthlyPortfolioReminder(true),250);toast(`Portfolio downloaded · ${formatMediaSize(download.size)}`);
+ }catch(error){console.error('Portfolio download failed',error);toast(`Unable to download portfolio${error?.message?`: ${error.message}`:''}`)}finally{if(button){button.disabled=false;button.textContent='Download portfolio'}}
 }
+
 async function confirmMonthlyPortfolioUpload(){
  const status=monthlyPortfolioState();if(!status.downloadedAt||!status.pendingSnapshot)return toast('Download the latest monthly portfolio first');
  if(!confirm('Confirm that the downloaded monthly portfolio ZIP has been uploaded to the learner’s online portfolio.'))return;

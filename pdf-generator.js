@@ -355,7 +355,7 @@ async function generateEvidencePackPDF({course, assignment, profile, sections, b
   const jpegPages=previewPages.map(dataUrlBytes);
   const pdf=makeImagePDF(jpegPages,W,H);
   const safe=clean(profile.fullName).replace(/[^a-z0-9]+/gi,'-').replace(/^-|-$/g,'');
-  const pdfName=`${safe||'Learner'}-Assignment-${assignment.n}-Evidence-Pack.pdf`;
+  const pdfName=`${safe||'Learner'}-EP-${assignment.n}-Evidence-Pack.pdf`;
   const evidenceFiles=[];
   for(const sectionName of ['witness','supporting'])for(let sectionIndex=0;sectionIndex<(sections[sectionName]||[]).length;sectionIndex++){const version=sections[sectionName][sectionIndex],codes=selectedKsbCodesForMedia(assignment,version);for(const file of version.files||[])if(file?.data)evidenceFiles.push({file,codes,attempt:sectionIndex+1,sectionName})}
   const walkthroughVideos=[];
