@@ -1,6 +1,19 @@
 {
-  "latest": "V2.55",
+  "latest": "V2.56",
   "releases": [
+    {
+      "version": "V2.56",
+      "date": "2026-08-08",
+      "title": "Professional desktop workspace",
+      "features": [
+        "Desktop Mode now has its own professional workspace layout instead of stretching the mobile app.",
+        "Added a compact fixed application sidebar, sticky desktop header and wider responsive content area.",
+        "Home is now a desktop dashboard with Overview heading, progress workspace and right-side status column.",
+        "Course, Evidence Pack, Toolkit and EPA grids use desktop-specific spacing and column layouts.",
+        "The visual language remains consistent with the green Apprentice+ mobile design.",
+        "Mobile and tablet layouts are unchanged."
+      ]
+    },
     {
       "version": "V2.55",
       "date": "2026-08-08",
