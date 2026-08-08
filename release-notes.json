@@ -1,6 +1,17 @@
 {
-  "latest": "V2.30",
+  "latest": "V2.31",
   "releases": [
+    {
+      "version": "V2.31",
+      "date": "2026-08-08",
+      "title": "Evidence and learning-hours completion",
+      "features": [
+        "Every KSB or NVQ Learning Outcome now requires two distinct evidence forms unless completed through RPL.",
+        "Evidence PDFs clearly identify the KSBs or Learning Outcomes met by each evidence item.",
+        "OTJ/GLH targets are part of Evidence Pack completion and the matching learning-hours records are included in the same Evidence Pack PDF.",
+        "Monthly portfolio export no longer creates a separate OTJ/GLH PDF; regenerated pack PDFs contain the latest learning-hours evidence."
+      ]
+    },
     {
       "version": "V2.30",
       "date": "2026-08-08",

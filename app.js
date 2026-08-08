@@ -245,7 +245,7 @@ function learnerPromptTitle(assignmentNumber,code,fallback){
  return LEARNER_PROMPTS[COURSE.id]?.[assignmentNumber]?.[code]||fallback;
 }
 
-const APP_VERSION='V2.30';
+const APP_VERSION='V2.31';
 function paintPdfPageBackground(ctx,W,H){ctx.fillStyle='#ffffff';ctx.fillRect(0,0,W,H);const r=Math.min(W,H)*0.58,g=ctx.createRadialGradient(0,0,0,0,0,r);g.addColorStop(0,'#DDF3D6');g.addColorStop(.42,'#EFF8EC');g.addColorStop(1,'#FFFFFF');ctx.fillStyle=g;ctx.fillRect(0,0,W,H)}
 
 const PORTFOLIO_UPLOAD_LIMIT_BYTES=1_000_000_000;
@@ -734,18 +734,18 @@ function sectionTitleText(section){return ({photos:'Take Photos',statement:'Writ
 function nvqOutcomeCoverage(n){
  const a=assignment(n),result={};if(!a||!COURSE.nvqUnits)return result;
  a.ksbs.forEach(([code])=>result[code]={count:0,sources:[]});
- const add=(code,source)=>{if(result[code]&&!result[code].sources.includes(source)){result[code].sources.push(source);result[code].count=Math.min(3,result[code].sources.length)}};
+ const add=(code,source)=>{if(result[code]&&!result[code].sources.includes(source)){result[code].sources.push(source);result[code].count=Math.min(2,result[code].sources.length)}};
  sectionData(n,'practical').versions.forEach(v=>selectedNvqOutcomes(a,v).forEach(([code])=>add(code,'Assessor observation')));
  sectionData(n,'photos').versions.forEach(v=>selectedKsbCodes(a,v).forEach(code=>add(code,'Photographic evidence')));
  sectionData(n,'statement').versions.forEach(v=>selectedKsbCodes(a,v).filter(code=>/^K/i.test(code)).forEach(code=>add(code,'Learner statement')));
  sectionData(n,'discussion').versions.forEach(v=>Object.keys(v.recordings||{}).filter(code=>isVideoEvidenceRecording(v.recordings?.[code])).forEach(code=>add(code,'Video walkthrough')));
  sectionData(n,'professionalDiscussion').versions.forEach(v=>evidenceCodesFromVersion(a,'professionalDiscussion',v).forEach(code=>add(code,'Professional discussion')));
  sectionData(n,'witness').versions.forEach(v=>selectedNvqOutcomes(a,v).forEach(([code])=>add(code,'Witness testimony')));
- a.ksbs.forEach(([code])=>{if(criterionRPL(n,code))result[code]={count:3,sources:['RPL'],rpl:true}});
+ a.ksbs.forEach(([code])=>{if(criterionRPL(n,code))result[code]={count:2,sources:['RPL'],rpl:true}});
  return result;
 }
-function nvqCoverageComplete(n){const values=Object.values(nvqOutcomeCoverage(n));return values.length>0&&values.every(item=>item.count>=3)}
-function nvqCoverageSummary(n){const coverage=nvqOutcomeCoverage(n),items=Object.entries(coverage),met=items.filter(([,v])=>v.count>=3).length;return {coverage,total:items.length,met,requirementsMet:items.reduce((sum,[,v])=>sum+Math.min(3,v.count),0),requirementsTotal:items.length*3,missing:items.filter(([,v])=>v.count<3).map(([code,v])=>`${code} ${v.count}/3`)}}
+function nvqCoverageComplete(n){const values=Object.values(nvqOutcomeCoverage(n));return values.length>0&&values.every(item=>item.count>=2)}
+function nvqCoverageSummary(n){const coverage=nvqOutcomeCoverage(n),items=Object.entries(coverage),met=items.filter(([,v])=>v.count>=3).length;return {coverage,total:items.length,met,requirementsMet:items.reduce((sum,[,v])=>sum+Math.min(2,v.count),0),requirementsTotal:items.length*2,missing:items.filter(([,v])=>v.count<2).map(([code,v])=>`${code} ${v.count}/2`)}}
 function selectedKsbCodes(a,d){
  const valid=new Set(a.ksbs.map(([code])=>code));
  const explicit=Array.isArray(d?.ksbEvidence)?d.ksbEvidence:[];
@@ -764,7 +764,7 @@ function selectedPracticalSkillCodes(a,d){
 function ksbEvidenceCoverage(n){
  const a=assignment(n),result={};if(!a||COURSE.nvqUnits)return result;
  a.ksbs.forEach(([code])=>result[code]={count:0,sources:[]});
- const add=(code,source)=>{if(result[code]&&!result[code].sources.includes(source)){result[code].sources.push(source);result[code].count=Math.min(1,result[code].sources.length)}};
+ const add=(code,source)=>{if(result[code]&&!result[code].sources.includes(source)){result[code].sources.push(source);result[code].count=Math.min(2,result[code].sources.length)}};
  sectionData(n,'photos').versions.forEach(v=>selectedKsbCodes(a,v).filter(code=>/^S/i.test(code)).forEach(code=>add(code,'Photographic evidence')));
  sectionData(n,'statement').versions.forEach(v=>selectedKsbCodes(a,v).filter(code=>/^K/i.test(code)).forEach(code=>add(code,'Learner statement')));
  walkthroughKnowledge(a).forEach(([code])=>{if(walkthroughComplete(n,code))add(code,'Video walkthrough')});
@@ -775,12 +775,21 @@ function ksbEvidenceCoverage(n){
  a.ksbs.forEach(([code])=>{if(criterionRPL(n,code))result[code]={count:2,sources:['RPL'],rpl:true}});
  return result;
 }
-function ksbCoverageComplete(n){const values=Object.values(ksbEvidenceCoverage(n));return values.length>0&&values.every(item=>item.count>=1)}
-function ksbCoverageSummary(n){const coverage=ksbEvidenceCoverage(n),items=Object.entries(coverage);return {coverage,total:items.length,met:items.filter(([,v])=>v.count>=1).length,requirementsMet:items.reduce((sum,[,v])=>sum+Math.min(1,v.count),0),requirementsTotal:items.length,missing:items.filter(([,v])=>v.count<1).map(([code])=>`${code} 0/1`)}}
+function ksbCoverageComplete(n){const values=Object.values(ksbEvidenceCoverage(n));return values.length>0&&values.every(item=>item.count>=2)}
+function ksbCoverageSummary(n){const coverage=ksbEvidenceCoverage(n),items=Object.entries(coverage);return {coverage,total:items.length,met:items.filter(([,v])=>v.count>=2).length,requirementsMet:items.reduce((sum,[,v])=>sum+Math.min(2,v.count),0),requirementsTotal:items.length*2,missing:items.filter(([,v])=>v.count<2).map(([code,v])=>`${code} ${v.count}/2`)}}
 function evidenceCoverageCount(n,code){const coverage=COURSE.nvqUnits?nvqOutcomeCoverage(n):ksbEvidenceCoverage(n);return Number(coverage?.[code]?.count||0)}
-function evidenceCoverageBadge(n,code){if(criterionRPL(n,code))return '<span class="evidence-status-pill evidence-rpl-note" title="Completed through Recognition of Prior Learning">RPL</span>';const count=evidenceCoverageCount(n,code),required=COURSE.nvqUnits?3:2;return count>=required?`<span class="evidence-status-pill evidence-complete-note" title="${required}/${required} evidence requirement completed">✓ Completed</span>`:count>0?`<span class="evidence-status-pill evidence-progress-note" title="${count}/${required} distinct evidence types collected">${count}/${required}</span>`:''}
+function evidenceCoverageBadge(n,code){if(criterionRPL(n,code))return '<span class="evidence-status-pill evidence-rpl-note" title="Completed through Recognition of Prior Learning">RPL</span>';const count=evidenceCoverageCount(n,code),required=2;return count>=required?`<span class="evidence-status-pill evidence-complete-note" title="${required}/${required} evidence requirement completed">✓ Completed</span>`:count>0?`<span class="evidence-status-pill evidence-progress-note" title="${count}/${required} distinct evidence types collected">${count}/${required}</span>`:''}
 
-function assignmentComplete(n){return assignmentRPL(n)||(COURSE.nvqUnits?nvqCoverageComplete(n):ksbCoverageComplete(n))}
+function assignmentLearningHoursStats(n){
+ const a=assignment(n);
+ const entries=otjEntries().filter(e=>Number(e.assignment)===Number(n));
+ const total=entries.reduce((sum,e)=>sum+(Number(e.hours)||0),0);
+ const target=COURSE.nvqUnits?Number(a?.glh||0):assignmentOtjTarget(n);
+ const targetKnown=COURSE.nvqUnits?target>0:!!courseOtjAllocation()?.valid;
+ return {entries,total,target,targetKnown,complete:targetKnown&&total>=target};
+}
+function assignmentLearningHoursComplete(n){return assignmentLearningHoursStats(n).complete}
+function assignmentComplete(n){return assignmentRPL(n)||((COURSE.nvqUnits?nvqCoverageComplete(n):ksbCoverageComplete(n))&&assignmentLearningHoursComplete(n))}
 function packDownloaded(n){return !!state.data[packStatusKey(n)]?.downloaded}
 function packUploaded(n){return !!state.data[packStatusKey(n)]?.uploaded}
 function assignmentSubmitted(n){return assignmentRPL(n)||packUploaded(n)}
@@ -799,7 +808,7 @@ function assignmentHasSavedPortfolioEvidence(n){
  return ['practical','photos','statement','discussion','professionalDiscussion','witness','supporting'].some(section=>sectionData(n,section).versions.length>0)||walkthroughCount(n).done>0;
 }
 function completedKsbStats(){
- const required=COURSE.nvqUnits?3:2,outcomes=new Map();
+ const required=2,outcomes=new Map();
  courseAssignments().filter(a=>!a.selectOptional).forEach(a=>{
   const coverage=COURSE.nvqUnits?nvqOutcomeCoverage(a.n):ksbEvidenceCoverage(a.n);
   (a.ksbs||[]).forEach(([code])=>{
@@ -6318,12 +6327,11 @@ async function downloadEntirePortfolio(){
   const packageEntries=[],assignmentGroups=[],counters={};toast(`Preparing the complete course · ${assignments.length} assignment${assignments.length===1?'':'s'}...`);
   for(let index=0;index<assignments.length;index++){
    const a=assignments[index],sections={};PORTFOLIO_SECTIONS.forEach(section=>sections[section]=sectionData(a.n,section).versions.map(version=>structuredClone(version)));sections.walkthrough=walkthroughCount(a.n).done?await collectWalkthroughEvidence(a.n,a):[];
-   const result=await generateEvidencePackPDF({course:COURSE,assignment:a,profile:state.profile,sections,branding:state.branding,returnPackage:true,newEvidence:newEvidenceMapForAssignment(delta,a.n),assignmentRpl:assignmentRPL(a.n),rplKsbCodes:assignmentIndividualRplCodes(a.n)});
+   const result=await generateEvidencePackPDF({course:COURSE,assignment:a,profile:state.profile,sections,branding:state.branding,returnPackage:true,newEvidence:newEvidenceMapForAssignment(delta,a.n),assignmentRpl:assignmentRPL(a.n),rplKsbCodes:assignmentIndividualRplCodes(a.n),learningHours:assignmentLearningHoursPdfPayload(a.n)});
    const items=[];for(const entry of result.entries||[]){const file=monthlyEvidenceFile(entry,a.n,counters);packageEntries.push({name:file.path,data:file.data});items.push(file)}
    assignmentGroups.push({folder:monthlyAssignmentFolder(a.n),title:a.title,items});
    toast(`Prepared assignment ${index+1} of ${assignments.length}`);
   }
-  packageEntries.push({name:`${learningHoursShortLabel()}/${learningHoursMateName()} Complete Evidence.pdf`,data:createMonthlyOtjPdf(allOtjEntries(),delta)});
   packageEntries.unshift({name:'02 - Academy Activity.pdf',data:createMonthlyAcademyPdf(delta)});
   packageEntries.unshift({name:'01 - Monthly Summary.pdf',data:createMonthlySummaryPdf(delta,assignmentGroups)});
   const packageBlob=makeZipBlob(packageEntries);if(packageBlob.size>PORTFOLIO_UPLOAD_LIMIT_BYTES)throw new Error(`The ZIP is ${formatMediaSize(packageBlob.size)} and exceeds Aptem’s 1 GB limit. Remove or replace the largest original video files, then export again.`);if(packageBlob.size>PORTFOLIO_SAFE_TARGET_BYTES&&!confirm(`This ZIP is ${formatMediaSize(packageBlob.size)}, above the 900 MB safety target. It is still below 1 GB, but leaves very little upload headroom. Download it anyway?`))return;
@@ -6341,6 +6349,17 @@ async function confirmMonthlyPortfolioUpload(){
  await saveData();render();toast('Monthly evidence upload confirmed');
 }
 
+function assignmentLearningHoursPdfPayload(n){
+ const stats=assignmentLearningHoursStats(n);
+ return {
+  label:COURSE.nvqUnits?'GLH':'OTJ',
+  longLabel:COURSE.nvqUnits?'Guided Learning Hours':'Off-the-Job Learning',
+  target:stats.target,
+  total:stats.total,
+  complete:stats.complete,
+  entries:stats.entries.map(e=>({date:e.date,hours:Number(e.hours||0),place:e.place||'',activity:e.activityType||e.subjectTitle||'',did:e.did||'',learned:e.learned||''}))
+ };
+}
 async function downloadPack(n){
  const a=assignment(n);if(!window.generateEvidencePackPDF)return toast('PDF generator unavailable');
  const sections={};
@@ -6349,7 +6368,7 @@ async function downloadPack(n){
  sections.walkthrough=await collectWalkthroughEvidence(n,a);
  try{
   toast('Creating complete evidence package...');
-  const result=await generateEvidencePackPDF({course:COURSE,assignment:a,profile:state.profile,sections,branding:state.branding,assignmentRpl:assignmentRPL(n),rplKsbCodes:assignmentIndividualRplCodes(n)});
+  const result=await generateEvidencePackPDF({course:COURSE,assignment:a,profile:state.profile,sections,branding:state.branding,assignmentRpl:assignmentRPL(n),rplKsbCodes:assignmentIndividualRplCodes(n),learningHours:assignmentLearningHoursPdfPayload(n)});
   state.data[packStatusKey(n)]={downloaded:true,uploaded:false,downloadedAt:new Date().toISOString()};
   
   await saveData();render();toast('Evidence package download started — check your Downloads folder');

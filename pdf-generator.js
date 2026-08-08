@@ -4,8 +4,8 @@
 function apprenticePdfBackground(ctx,W,H){ctx.fillStyle='#FFFFFF';ctx.fillRect(0,0,W,H);const r=Math.min(W,H)*0.58,g=ctx.createRadialGradient(0,0,0,0,0,r);g.addColorStop(0,'#DDF3D6');g.addColorStop(.42,'#EFF8EC');g.addColorStop(1,'#FFFFFF');ctx.fillStyle=g;ctx.fillRect(0,0,W,H)}
 
 /* Apprentice+ offline PDF generator. Evidence stays in the browser; no data is uploaded. */
-async function generateEvidencePackPDF({course, assignment, profile, sections, branding, returnPackage=false, newEvidence={}, assignmentRpl=false, rplKsbCodes=[]}) {
-  if(course && course.nvqUnits) return generateNVQEvidencePackPDF({course, assignment, profile, sections, branding, returnPackage, newEvidence, assignmentRpl, rplKsbCodes});
+async function generateEvidencePackPDF({course, assignment, profile, sections, branding, returnPackage=false, newEvidence={}, assignmentRpl=false, rplKsbCodes=[], learningHours=null}) {
+  if(course && course.nvqUnits) return generateNVQEvidencePackPDF({course, assignment, profile, sections, branding, returnPackage, newEvidence, assignmentRpl, rplKsbCodes, learningHours});
   const W=1240,H=1754,M=88,TEAL='#58B51F',GREEN='#58B51F',LIGHT_GREEN='#EAF7E4',SOFT_GREEN='#D9EFD0',INK='#18231E',MUTED='#68756D',PALE='#F3F8F2',WHITE='#ffffff';
   const pages=[];
   const rplCodes=new Set((rplKsbCodes||[]).map(code=>String(code)));
@@ -281,18 +281,18 @@ async function generateEvidencePackPDF({course, assignment, profile, sections, b
   // Assessor observation: one fixed page with a 3x3 photograph grid.
   for(let i=0;i<(sections.practical||[]).length;i++){
     const d=sections.practical[i],v=i+1;d._version=v;
-    await addFixedPhotoEvidenceRecord(d,{title:`Verified by Someone Else · AO${v}`,version:`Attempt ${v}`,date:d.date,type:'Assessor Observation',signatureTitle:'Tutor / assessor signature',assessor:true,summaryFields:[['Observer',d.tutor],['Activity observed',d.activity],['KSBs observed',selectedKsbDetails(d)],['Observation record',d.feedback],['Assessor discussion / recordings',observationRecordingDetails(d)]]});
+    await addFixedPhotoEvidenceRecord(d,{title:`Verified by Someone Else · AO${v}`,version:`Attempt ${v}`,date:d.date,type:'Assessor Observation',signatureTitle:'Tutor / assessor signature',assessor:true,summaryFields:[['Observer',d.tutor],['Activity observed',d.activity],['KSBs met by this evidence',selectedKsbDetails(d)],['Observation record',d.feedback],['Assessor discussion / recordings',observationRecordingDetails(d)]]});
   }
 
   // Photographic evidence: one fixed page with three landscape photographs side by side.
   for(let i=0;i<(sections.photos||[]).length;i++){
     const d=sections.photos[i],v=i+1;
-    await addFixedPhotoEvidenceRecord(d,{title:`Take Photos · PE${v}`,version:v,date:d.date,type:'Photographic Evidence',signatureTitle:'Learner signature',assessor:false,summaryFields:[['Activity / photo notes',d.activity],['KSBs evidenced',selectedKsbDetails(d)]]});
+    await addFixedPhotoEvidenceRecord(d,{title:`Take Photos · PE${v}`,version:v,date:d.date,type:'Photographic Evidence',signatureTitle:'Learner signature',assessor:false,summaryFields:[['Activity / photo notes',d.activity],['KSBs met by this evidence',selectedKsbDetails(d)]]});
   }
 
   // Statements
   for(let i=0;i<(sections.statement||[]).length;i++){
-    const d=sections.statement[i],v=i+1;await addCompleteEvidenceRecord({title:`Write About It · LS${v}`,version:v,date:d.date,type:'Learner Statement',fields:[['Knowledge and Behaviours evidenced',selectedKsbDetails(d)],['Learner response',d.text||d.statement||d.learnerStatement]],signatureTitle:'Learner signature',signatureData:d.signature});
+    const d=sections.statement[i],v=i+1;await addCompleteEvidenceRecord({title:`Write About It · LS${v}`,version:v,date:d.date,type:'Learner Statement',fields:[['KSBs met by this evidence',selectedKsbDetails(d)],['Learner response',d.text||d.statement||d.learnerStatement]],signatureTitle:'Learner signature',signatureData:d.signature});
   }
 
   for(let i=0;i<(sections.discussion||[]).length;i++){
@@ -302,7 +302,7 @@ async function generateEvidencePackPDF({course, assignment, profile, sections, b
   // Witness testimony: preserve every field without repeating it on a summary page.
   for(let i=0;i<(sections.witness||[]).length;i++){
     const d=sections.witness[i],v=i+1;
-    await addCompleteEvidenceRecord({title:`Verified by Someone Else · WT${v}`,version:`Attempt ${v}`,date:d.date,type:'Witness Testimony',fields:[['Evidence source',d.type],['Name',d.personName],['Role',d.role],['Preferred contact details',d.contactDetails||d.organisation],['Activity witnessed',d.activity],['KSBs observed',selectedKsbDetails(d)],['Ratings',witnessRatingDetails(d)],['Witness Testimony / Additional Comments',d.feedback],['Additional Comments',d.additionalComments],['Attached files',fileDetails(d)],['Photographs and captions',captionDetails(d)]],signatureTitle:`${d.type||'Witness'} signature`,signatureData:d.signature});
+    await addCompleteEvidenceRecord({title:`Verified by Someone Else · WT${v}`,version:`Attempt ${v}`,date:d.date,type:'Witness Testimony',fields:[['Evidence source',d.type],['Name',d.personName],['Role',d.role],['Preferred contact details',d.contactDetails||d.organisation],['Activity witnessed',d.activity],['KSBs met by this evidence',selectedKsbDetails(d)],['Ratings',witnessRatingDetails(d)],['Witness Testimony / Additional Comments',d.feedback],['Additional Comments',d.additionalComments],['Attached files',fileDetails(d)],['Photographs and captions',captionDetails(d)]],signatureTitle:`${d.type||'Witness'} signature`,signatureData:d.signature});
     await addSubmittedPhotoPages(d,`Verified by Someone Else · WT${v}`,`Attempt ${v}`,d.date,'Witness Testimony');
     await addFilePreviewPages(d,`Verified by Someone Else · WT${v}`,`Attempt ${v}`,d.date,'Witness Testimony');
   }
@@ -316,7 +316,7 @@ async function generateEvidencePackPDF({course, assignment, profile, sections, b
   // Supporting evidence - include every name, description, mapping, score and statement field.
   for(let i=0;i<(sections.supporting||[]).length;i++){
     const d=sections.supporting[i],v=i+1;
-    await addCompleteEvidenceRecord({title:`Upload Evidence · SE${v}`,version:`Attempt ${v}`,date:d.date,type:'Supporting Evidence',fields:[['Evidence tab',d.tab],['Evidence type',d.type],['Name',d.personName],['Role',d.role],['Organisation',d.organisation],['Activity / description',d.activity],['KSBs evidenced',selectedKsbDetails(d)],['All marks awarded',scoredDetails(d)],['Assessment Summary',d.feedbackSummary],['Areas for Improvement',d.feedbackDevelopment],['Additional Comments',d.feedback],['Attached files',fileDetails(d)],['Photographs and captions',captionDetails(d)]],signatureTitle:`${d.type||'Supporting evidence'} signature`,signatureData:d.signature});
+    await addCompleteEvidenceRecord({title:`Upload Evidence · SE${v}`,version:`Attempt ${v}`,date:d.date,type:'Supporting Evidence',fields:[['Evidence tab',d.tab],['Evidence type',d.type],['Name',d.personName],['Role',d.role],['Organisation',d.organisation],['Activity / description',d.activity],['KSBs met by this evidence',selectedKsbDetails(d)],['All marks awarded',scoredDetails(d)],['Assessment Summary',d.feedbackSummary],['Areas for Improvement',d.feedbackDevelopment],['Additional Comments',d.feedback],['Attached files',fileDetails(d)],['Photographs and captions',captionDetails(d)]],signatureTitle:`${d.type||'Supporting evidence'} signature`,signatureData:d.signature});
     await addSubmittedPhotoPages(d,`Upload Evidence · SE${v}`,`Attempt ${v}`,d.date,'Supporting Evidence');
     await addFilePreviewPages(d,`Upload Evidence · SE${v}`,`Attempt ${v}`,d.date,'Supporting Evidence');
   }
@@ -324,7 +324,28 @@ async function generateEvidencePackPDF({course, assignment, profile, sections, b
   // Individually saved walkthrough clips are evidence submissions in their own right.
   for(let i=0;i<(sections.walkthrough||[]).length;i++){
     const f=sections.walkthrough[i],v=i+1;
-    await addCompleteEvidenceRecord({title:`Record a Video · VW${v}`,version:v,date:f.date,type:'Video Walkthrough',newEvidenceType:'walkthrough',fields:[['KSB evidenced',[f.code,f.summary].filter(Boolean).join(' - ')],['Video filename',ksbMediaFileName(f)],['Original filename',f.name],['Recorded date',f.date],['Duration',f.duration],['Media format',f.type],['File size',Number(f.size)>0?`${Math.round(Number(f.size)/1024)} KB`:'']]});
+    await addCompleteEvidenceRecord({title:`Record a Video · VW${v}`,version:v,date:f.date,type:'Video Walkthrough',newEvidenceType:'walkthrough',fields:[['KSB met by this evidence',[f.code,f.summary].filter(Boolean).join(' - ')],['Video filename',ksbMediaFileName(f)],['Original filename',f.name],['Recorded date',f.date],['Duration',f.duration],['Media format',f.type],['File size',Number(f.size)>0?`${Math.round(Number(f.size)/1024)} KB`:'']]});
+  }
+
+  if(learningHours){
+    const p=newPage(`${learningHours.label||'Learning'} Evidence`,`${learningHours.longLabel||'Learning hours'}`),x=p.ctx;
+    let y=sectionHeading(x,`${learningHours.longLabel||'Learning hours'} · Evidence Pack requirement`,p.y);
+    x.fillStyle=PALE;x.fillRect(M,y,W-2*M,116);
+    x.fillStyle=INK;x.font='700 20px Arial';x.fillText(`Completed: ${Number(learningHours.total||0).toFixed(1)} hrs`,M+22,y+38);
+    x.fillText(`Required: ${Number(learningHours.target||0).toFixed(1)} hrs`,M+390,y+38);
+    x.fillStyle=learningHours.complete?GREEN:'#b45309';x.font='800 18px Arial';x.fillText(learningHours.complete?'Requirement complete':'Requirement not yet complete',M+22,y+78);
+    y+=148;
+    const rows=Array.isArray(learningHours.entries)?learningHours.entries:[];
+    if(!rows.length){x.fillStyle=MUTED;x.font='400 18px Arial';x.fillText(`No ${learningHours.label||''} entries have been recorded for this Evidence Pack.`,M,y);}
+    for(const e of rows){
+      if(y>H-190){break}
+      x.fillStyle='#ffffff';x.strokeStyle='#DCE7DA';x.lineWidth=1;x.fillRect(M,y,W-2*M,96);x.strokeRect(M+.5,y+.5,W-2*M-1,95);
+      x.fillStyle=TEAL;x.font='700 15px Arial';x.fillText(`${e.date||'-'} · ${Number(e.hours||0).toFixed(1)} hrs${e.activity?` · ${clean(e.activity)}`:''}`,M+16,y+27);
+      x.fillStyle=INK;x.font='400 14px Arial';
+      const detail=clean(e.learned||e.did||e.place||'');
+      wrap(x,detail,W-2*M-32,'400 14px Arial').slice(0,3).forEach((line,i)=>x.fillText(line,M+16,y+52+i*18));
+      y+=106;
+    }
   }
 
 
@@ -373,7 +394,7 @@ function ksbMediaFileName(f){return `${safeZipName(`${f.code||'KSB'} - ${f.summa
 /* NVQ-only portfolio PDF. This branch is intentionally isolated so the original
    Bricklaying, Site Carpentry, Architectural Joiner and Property Maintenance
    PDF layouts and grading logic remain unchanged. */
-async function generateNVQEvidencePackPDF({course, assignment, profile, sections, branding, returnPackage=false, newEvidence={}, assignmentRpl=false, rplKsbCodes=[]}) {
+async function generateNVQEvidencePackPDF({course, assignment, profile, sections, branding, returnPackage=false, newEvidence={}, assignmentRpl=false, rplKsbCodes=[], learningHours=null}) {
   const W=1240,H=1754,M=88,TEAL='#58B51F',GREEN='#58B51F',YELLOW='#F7D75C',GREY='#EEF5EE',INK='#18231E',MUTED='#68756D',PALE='#F3F8F2',WHITE='#ffffff';
   const pages=[];
   const newEvidenceAliases={practical:'practical',practicalassessment:'practical',assessorobservation:'practical',photos:'photos',photoevidence:'photos',photographicevidence:'photos',statement:'statement',learnerstatement:'statement',discussion:'discussion',videowalkthrough:'walkthrough',professionaldiscussion:'professionalDiscussion',witness:'witness',witnesstestimony:'witness',supporting:'supporting',supportingevidence:'supporting',walkthrough:'walkthrough'};
@@ -460,7 +481,7 @@ async function generateNVQEvidencePackPDF({course, assignment, profile, sections
     const items=[];for(const [code,photo] of Object.entries(d?.outcomePhotos||{}))if(photo?.data)items.push({code,photo,caption:String(d?.captions?.[code]||'')});(d?.photos||[]).forEach((photo,index)=>{if(photo?.data)items.push({code:`Photo ${index+1}`,photo,caption:String(photo.caption||'')})});
     const p=meta(newPage('Verified by Someone Else',`Attempt ${attempt}`),d.date,'Assessor Observation',attempt),x=p.x,signatureTop=H-258;let y=sectionHeading(x,'Assessor Observation',p.y),gap=10,bw=(W-2*M-gap)/2;
     drawFixedTextBox(x,'Assessor',d.tutor||'-',M,y,bw,68);drawFixedTextBox(x,'Activity observed',d.activity||'-',M+bw+gap,y,bw,68);y+=78;
-    drawFixedTextBox(x,'KSBs observed',selectedKsbDetails(d)||'-',M,y,bw,78);drawFixedTextBox(x,'Observation / comments',d.feedback||'-',M+bw+gap,y,bw,78);y+=90;
+    drawFixedTextBox(x,'KSBs met by this evidence',selectedKsbDetails(d)||'-',M,y,bw,78);drawFixedTextBox(x,'Observation / comments',d.feedback||'-',M+bw+gap,y,bw,78);y+=90;
     const discussion=observationRecordingOutcomeDetails(d);if(discussion){drawFixedTextBox(x,'Assessor discussion / recordings',discussion,M,y,W-2*M,58);y+=68}
     await drawFixedPhotoGrid(x,items.slice(0,9),{py:y,cols:3,rows:3,gap:10,captionH:18});
     if(d.signature){const sig=await loadImage(d.signature);signature(x,sig,signatureTop,'Assessor signature',d.signatureName||d.tutor||d.assessor||'',d.signatureDate||d.date||'')}
@@ -479,13 +500,32 @@ async function generateNVQEvidencePackPDF({course, assignment, profile, sections
   // One fixed page per submission. Assessor observations use a 3x3 photograph grid.
   for(let i=0;i<(sections.practical||[]).length;i++){const d=sections.practical[i],attempt=i+1;await addCompactNvqAssessorRecord(d,attempt)}
   for(let i=0;i<(sections.photos||[]).length;i++){const d=sections.photos[i],attempt=i+1;await addCompactNvqPhotoRecord(d,attempt)}
-  for(let i=0;i<(sections.statement||[]).length;i++){const d=sections.statement[i],attempt=i+1;await addCompleteNvqRecord({title:'Write About It',attempt,date:d.date,type:'Learner Statement',fields:[['Learning Outcomes evidenced',selectedOutcomeDetails(d)],['Learner response',d.text||d.statement||d.learnerStatement]],signatureTitle:'Learner signature',signatureData:d.signature})}
-  for(let i=0;i<(sections.discussion||[]).length;i++){const d=sections.discussion[i],attempt=i+1,codes=selectedVideoCodes(d);await addCompleteNvqRecord({title:'Record a Video',attempt,date:d.date,type:'Video Walkthrough',newEvidenceType:'discussion',fields:[['Learning Outcomes evidenced',codes.map(code=>{const row=(assignment.ksbs||[]).find(([itemCode])=>itemCode===code);return `${code} - ${row?.[1]||'Learning Outcome video'}`}).join('\n')],['Video recordings',videoRecordingOutcomeDetails(d)] ]})}
+  for(let i=0;i<(sections.statement||[]).length;i++){const d=sections.statement[i],attempt=i+1;await addCompleteNvqRecord({title:'Write About It',attempt,date:d.date,type:'Learner Statement',fields:[['Learning Outcomes met by this evidence',selectedOutcomeDetails(d)],['Learner response',d.text||d.statement||d.learnerStatement]],signatureTitle:'Learner signature',signatureData:d.signature})}
+  for(let i=0;i<(sections.discussion||[]).length;i++){const d=sections.discussion[i],attempt=i+1,codes=selectedVideoCodes(d);await addCompleteNvqRecord({title:'Record a Video',attempt,date:d.date,type:'Video Walkthrough',newEvidenceType:'discussion',fields:[['Learning Outcomes met by this evidence',codes.map(code=>{const row=(assignment.ksbs||[]).find(([itemCode])=>itemCode===code);return `${code} - ${row?.[1]||'Learning Outcome video'}`}).join('\n')],['Video recordings',videoRecordingOutcomeDetails(d)] ]})}
   for(let i=0;i<(sections.professionalDiscussion||[]).length;i++){const d=sections.professionalDiscussion[i],attempt=i+1;await addCompleteNvqRecord({title:'Talk About It',attempt,date:d.date,type:'Professional Discussion',fields:[['Discussion lead',d.assessor],['Activity discussed',d.activity],['Learning Outcome recordings and notes',recordingOutcomeDetails(d,'Audio recording')]],signatureTitle:'Assessor / discussion lead signature',signatureData:d.signature})}
   for(let i=0;i<(sections.witness||[]).length;i++){const d=sections.witness[i],attempt=i+1,outcomes=selectedScores(d);await addCompleteNvqRecord({title:'Verified by Someone Else',attempt,date:d.date,type:'Witness Testimony',fields:[['Evidence source',d.type],['Name',d.personName],['Role',d.role],['Preferred contact details',d.contactDetails||d.organisation],['Activity witnessed',d.activity],['Learning Outcomes witnessed',selectedOutcomeDetails(d)],['All marks awarded',scoredOutcomeDetails(d)],['Witness Testimony / Additional Comments',d.feedback],['Additional Comments',d.additionalComments],['Attached files',fileOutcomeDetails(d)],['Photographs and captions',photoOutcomeDetails(d)]],signatureTitle:'Witness signature',signatureData:d.signature})}
-  for(let i=0;i<(sections.supporting||[]).length;i++){const d=sections.supporting[i],attempt=i+1;await addCompleteNvqRecord({title:'Documents',attempt,date:d.date,type:'Supporting Evidence',fields:[['Evidence tab',d.tab],['Evidence type',d.type],['Name',d.personName],['Role',d.role],['Organisation',d.organisation],['Activity / description',d.activity],['Learning Outcomes evidenced',selectedOutcomeDetails(d)],['All marks awarded',scoredOutcomeDetails(d)],['Assessment Summary',d.feedbackSummary],['Areas for Improvement',d.feedbackDevelopment],['Additional Comments',d.feedback],['Attached files',fileOutcomeDetails(d)],['Photographs and captions',photoOutcomeDetails(d)]],signatureTitle:`${d.type||'Supporting evidence'} signature`,signatureData:d.signature})}
+  for(let i=0;i<(sections.supporting||[]).length;i++){const d=sections.supporting[i],attempt=i+1;await addCompleteNvqRecord({title:'Documents',attempt,date:d.date,type:'Supporting Evidence',fields:[['Evidence tab',d.tab],['Evidence type',d.type],['Name',d.personName],['Role',d.role],['Organisation',d.organisation],['Activity / description',d.activity],['Learning Outcomes met by this evidence',selectedOutcomeDetails(d)],['All marks awarded',scoredOutcomeDetails(d)],['Assessment Summary',d.feedbackSummary],['Areas for Improvement',d.feedbackDevelopment],['Additional Comments',d.feedback],['Attached files',fileOutcomeDetails(d)],['Photographs and captions',photoOutcomeDetails(d)]],signatureTitle:`${d.type||'Supporting evidence'} signature`,signatureData:d.signature})}
 
-  for(let i=0;i<(sections.walkthrough||[]).length;i++){const rec=sections.walkthrough[i],attempt=i+1;await addCompleteNvqRecord({title:'Record a Video',attempt,date:rec.date,type:'Video Walkthrough',newEvidenceType:'walkthrough',fields:[['Learning Outcome evidenced',[rec.code,rec.summary].filter(Boolean).join(' - ')],['Video filename',ksbMediaFileName(rec)],['Original filename',rec.name],['Recorded date',rec.date],['Duration',rec.duration],['Media format',rec.type],['File size',Number(rec.size)>0?`${Math.round(Number(rec.size)/1024)} KB`:'']]})}
+  for(let i=0;i<(sections.walkthrough||[]).length;i++){const rec=sections.walkthrough[i],attempt=i+1;await addCompleteNvqRecord({title:'Record a Video',attempt,date:rec.date,type:'Video Walkthrough',newEvidenceType:'walkthrough',fields:[['Learning Outcome met by this evidence',[rec.code,rec.summary].filter(Boolean).join(' - ')],['Video filename',ksbMediaFileName(rec)],['Original filename',rec.name],['Recorded date',rec.date],['Duration',rec.duration],['Media format',rec.type],['File size',Number(rec.size)>0?`${Math.round(Number(rec.size)/1024)} KB`:'']]})}
+
+
+  if(learningHours){
+    const p=newPage(`${learningHours.label||'GLH'} Evidence`,`Evidence Pack learning hours`),x=p.ctx;
+    let y=sectionHeading(x,`${learningHours.longLabel||'Guided Learning Hours'} · Evidence Pack requirement`,p.y);
+    x.fillStyle=PALE;x.fillRect(M,y,W-2*M,116);
+    x.fillStyle=INK;x.font='700 20px Arial';x.fillText(`Completed: ${Number(learningHours.total||0).toFixed(1)} hrs`,M+22,y+38);
+    x.fillText(`Required: ${Number(learningHours.target||0).toFixed(1)} hrs`,M+390,y+38);
+    x.fillStyle=learningHours.complete?GREEN:'#b45309';x.font='800 18px Arial';x.fillText(learningHours.complete?'Requirement complete':'Requirement not yet complete',M+22,y+78);
+    y+=148;
+    const rows=Array.isArray(learningHours.entries)?learningHours.entries:[];
+    if(!rows.length){x.fillStyle=MUTED;x.font='400 18px Arial';x.fillText('No GLH entries have been recorded for this Evidence Pack.',M,y);}
+    for(const e of rows){
+      if(y>H-190)break;
+      x.fillStyle='#ffffff';x.strokeStyle='#DCE7DA';x.lineWidth=1;x.fillRect(M,y,W-2*M,96);x.strokeRect(M+.5,y+.5,W-2*M-1,95);
+      x.fillStyle=TEAL;x.font='700 15px Arial';x.fillText(`${e.date||'-'} · ${Number(e.hours||0).toFixed(1)} hrs${e.activity?` · ${clean(e.activity)}`:''}`,M+16,y+27);
+      x.fillStyle=INK;x.font='400 14px Arial';const detail=clean(e.learned||e.did||e.place||'');wrap(x,detail,W-2*M-32,'400 14px Arial').slice(0,3).forEach((line,i)=>x.fillText(line,M+16,y+52+i*18));y+=106;
+    }
+  }
 
   const total=pages.length;pages.forEach((p,i)=>{const x=p.ctx;x.fillStyle='#DCE7DA';x.fillRect(M,H-72,W-2*M,1);x.fillStyle=MUTED;x.font='500 13px Arial';x.fillText('Apprentice+ · NVQ Evidence Pack',M,H-34);x.textAlign='right';x.fillText(`${i+1} / ${total}`,W-M,H-34);x.textAlign='left'});
   if(assignmentRpl)pages.forEach(p=>drawRecordedPriorLearningStamp(p.ctx));
