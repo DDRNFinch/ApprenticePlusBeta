@@ -245,7 +245,7 @@ function learnerPromptTitle(assignmentNumber,code,fallback){
  return LEARNER_PROMPTS[COURSE.id]?.[assignmentNumber]?.[code]||fallback;
 }
 
-const APP_VERSION='V2.33';
+const APP_VERSION='V2.35';
 function paintPdfPageBackground(ctx,W,H){ctx.fillStyle='#ffffff';ctx.fillRect(0,0,W,H);const r=Math.min(W,H)*0.58,g=ctx.createRadialGradient(0,0,0,0,0,r);g.addColorStop(0,'#DDF3D6');g.addColorStop(.42,'#EFF8EC');g.addColorStop(1,'#FFFFFF');ctx.fillStyle=g;ctx.fillRect(0,0,W,H)}
 
 const PORTFOLIO_UPLOAD_LIMIT_BYTES=1_000_000_000;
@@ -781,12 +781,11 @@ function evidenceCoverageCount(n,code){const coverage=COURSE.nvqUnits?nvqOutcome
 function evidenceCoverageBadge(n,code){if(criterionRPL(n,code))return '<span class="evidence-status-pill evidence-rpl-note" title="Completed through Recognition of Prior Learning">RPL</span>';const count=evidenceCoverageCount(n,code),required=2;return count>=required?`<span class="evidence-status-pill evidence-complete-note" title="${required}/${required} evidence requirement completed">✓ Completed</span>`:count>0?`<span class="evidence-status-pill evidence-progress-note" title="${count}/${required} distinct evidence types collected">${count}/${required}</span>`:''}
 
 function assignmentLearningHoursStats(n){
- const a=assignment(n);
  const entries=otjEntries().filter(e=>Number(e.assignment)===Number(n));
  const total=entries.reduce((sum,e)=>sum+(Number(e.hours)||0),0);
- const target=COURSE.nvqUnits?Number(a?.glh||0):assignmentOtjTarget(n);
- const targetKnown=COURSE.nvqUnits?target>0:!!courseOtjAllocation()?.valid;
- const percent=targetKnown&&target>0?Math.min(100,Math.round(total/target*100)):0;
+ const allocation=courseOtjAllocation(),target=assignmentOtjTarget(n);
+ const targetKnown=!!allocation?.valid&&target>0;
+ const percent=targetKnown?Math.min(100,Math.round(total/target*100)):0;
  return {entries,total,target,targetKnown,percent,complete:targetKnown&&total>=target};
 }
 function assignmentLearningHoursComplete(n){return assignmentLearningHoursStats(n).complete}
@@ -809,7 +808,7 @@ function assignmentHasSavedPortfolioEvidence(n){
  return ['practical','photos','statement','discussion','professionalDiscussion','witness','supporting'].some(section=>sectionData(n,section).versions.length>0)||walkthroughCount(n).done>0;
 }
 function completedKsbStats(){
- const required=2,outcomes=new Map();
+ const required=Number(COURSE.evidenceRequirement||2),outcomes=new Map();
  courseAssignments().filter(a=>!a.selectOptional).forEach(a=>{
   const coverage=COURSE.nvqUnits?nvqOutcomeCoverage(a.n):ksbEvidenceCoverage(a.n);
   (a.ksbs||[]).forEach(([code])=>{
@@ -874,6 +873,8 @@ async function load(){
  state.data=await getStore('data')||{};
  state.dev=!!(await getStore('dev'));
  state.branding=await getStore(BRANDING_KEY)||null;
+ const savedCustomCourses=await getStore('developerCustomCourses')||{};
+ Object.entries(savedCustomCourses).forEach(([id,course])=>{if(course&&id)COURSES[id]=course});
  ACTIVE_COURSE_ID=await getStore('activeCourse')||'site-carpentry-v1-4';
  if(!COURSES[ACTIVE_COURSE_ID])ACTIVE_COURSE_ID='site-carpentry-v1-4';
  COURSE=COURSES[ACTIVE_COURSE_ID];
@@ -3996,24 +3997,25 @@ function portfolioBuildingOtjEntries(){
 }
 function allOtjEntries(){return otjEntries().sort((a,b)=>String(b.date).localeCompare(String(a.date))||String(b.created).localeCompare(String(a.created)))}
 function courseOtjAllocation(){
- if(COURSE.nvqUnits)return null;
- const assignments=courseAssignments().filter(a=>!a.selectOptional),startRaw=state.profile?.courseStartDate,endRaw=state.profile?.plannedEndDate,weeklyWorkHours=Number(state.profile?.contractedWeeklyWorkHours||0);
+ const assignments=courseAssignments().filter(a=>!a.selectOptional);
+ const packCount=assignments.length;
+ if(COURSE.nvqUnits){
+   const totalTarget=assignments.reduce((sum,a)=>sum+(Number(a.glh)||0),0);
+   const perPackTarget=packCount?totalTarget/packCount:0;
+   const assignmentTargets={};
+   assignments.forEach(a=>assignmentTargets[a.n]=perPackTarget);
+   return {totalTarget,packCount,perPackTarget,assignmentTargets,valid:totalTarget>0,validDates:true,validWorkHours:true,courseWeeks:0,weeklyWorkHours:0,weeklyOtjHours:0,assignmentKsbCounts:Object.fromEntries(assignments.map(a=>[a.n,(a.ksbs||[]).length]))};
+ }
+ const startRaw=state.profile?.courseStartDate,endRaw=state.profile?.plannedEndDate,weeklyWorkHours=Number(state.profile?.contractedWeeklyWorkHours||0);
  const start=startRaw?new Date(`${startRaw}T00:00:00`):null,end=endRaw?new Date(`${endRaw}T00:00:00`):null;
  const validDates=!!(start&&end&&Number.isFinite(start.getTime())&&Number.isFinite(end.getTime())&&end>start),validWorkHours=Number.isFinite(weeklyWorkHours)&&weeklyWorkHours>0;
  const courseWeeks=validDates?Math.max(0,(end-start)/604800000):0,weeklyOtjHours=validWorkHours?weeklyWorkHours*.2:0,totalTarget=validDates&&validWorkHours?courseWeeks*weeklyOtjHours:0;
- // All KSB courses use one shared OTJ rule. Each unique KSB owns one equal share of the
- // whole-course target. If a standard legitimately maps the same KSB into more than one
- // assignment, that KSB's share is divided across those placements so the course total
- // can never be inflated by duplicate mappings.
- const placements=new Map(),assignmentKsbCounts={};
- assignments.forEach(a=>{assignmentKsbCounts[a.n]=(a.ksbs||[]).length;(a.ksbs||[]).forEach(([code])=>{const key=String(code);if(!placements.has(key))placements.set(key,[]);placements.get(key).push(a.n)})});
- const uniqueKsbCount=placements.size,perKsbTarget=uniqueKsbCount?totalTarget/uniqueKsbCount:0,assignmentTargets={};
- assignments.forEach(a=>assignmentTargets[a.n]=0);
- placements.forEach(assignmentNumbers=>{const share=assignmentNumbers.length?perKsbTarget/assignmentNumbers.length:0;assignmentNumbers.forEach(n=>assignmentTargets[n]=(assignmentTargets[n]||0)+share)});
- return {courseWeeks,weeklyWorkHours,weeklyOtjHours,totalTarget,uniqueKsbCount,perKsbTarget,assignmentTargets,assignmentKsbCounts,validDates,validWorkHours,valid:validDates&&validWorkHours};
+ const perPackTarget=packCount?totalTarget/packCount:0,assignmentTargets={},assignmentKsbCounts={};
+ assignments.forEach(a=>{assignmentTargets[a.n]=perPackTarget;assignmentKsbCounts[a.n]=(a.ksbs||[]).length});
+ return {courseWeeks,weeklyWorkHours,weeklyOtjHours,totalTarget,packCount,perPackTarget,assignmentTargets,assignmentKsbCounts,validDates,validWorkHours,valid:validDates&&validWorkHours};
 }
 function assignmentOtjTarget(n){const allocation=courseOtjAllocation();return allocation?.valid?Number(allocation.assignmentTargets?.[Number(n)]||0):0}
-function otjProgressStats(){const entries=allOtjEntries(),portfolio=[],total=entries.reduce((n,e)=>n+(Number(e.hours)||0),0),start=state.profile?.courseStartDate?new Date(`${state.profile.courseStartDate}T00:00:00`):new Date(),now=new Date(),weeks=Math.max(0,(now-start)/604800000),officialGlh=COURSE.nvqUnits?courseAssignments().filter(a=>!a.selectOptional).reduce((sum,a)=>sum+(Number(a.glh)||0),0):0,allocation=COURSE.nvqUnits?null:courseOtjAllocation(),fullExpected=COURSE.nvqUnits?officialGlh:(allocation?.valid?allocation.totalTarget:0),timeFraction=courseTimeFraction(),expected=timeFraction===null?fullExpected:fullExpected*timeFraction;return {total,weeks,expected,expectedToDate:expected,fullExpected,timeFraction,percent:expected?Math.round(total/expected*100):(total>0?100:0),portfolioHours:portfolio.reduce((n,e)=>n+Number(e.hours||0),0),portfolioCount:portfolio.length,courseWeeks:allocation?.courseWeeks||weeks,weeklyWorkHours:allocation?.weeklyWorkHours||0,weeklyOtjHours:allocation?.weeklyOtjHours||0,perKsbTarget:allocation?.perKsbTarget||0,uniqueKsbCount:allocation?.uniqueKsbCount||0}}
+function otjProgressStats(){const entries=allOtjEntries(),portfolio=[],total=entries.reduce((n,e)=>n+(Number(e.hours)||0),0),start=state.profile?.courseStartDate?new Date(`${state.profile.courseStartDate}T00:00:00`):new Date(),now=new Date(),weeks=Math.max(0,(now-start)/604800000),allocation=courseOtjAllocation(),officialGlh=COURSE.nvqUnits?(allocation?.totalTarget||0):0,fullExpected=allocation?.valid?allocation.totalTarget:0,timeFraction=courseTimeFraction(),expected=timeFraction===null?fullExpected:fullExpected*timeFraction;return {total,weeks,expected,expectedToDate:expected,fullExpected,timeFraction,percent:expected?Math.round(total/expected*100):(total>0?100:0),portfolioHours:portfolio.reduce((n,e)=>n+Number(e.hours||0),0),portfolioCount:portfolio.length,courseWeeks:allocation?.courseWeeks||weeks,weeklyWorkHours:allocation?.weeklyWorkHours||0,weeklyOtjHours:allocation?.weeklyOtjHours||0,perPackTarget:allocation?.perPackTarget||0,packCount:allocation?.packCount||0}}
 function otjWordCount(v){const t=String(v||'').trim();return t?t.split(/\s+/).length:0}
 function otjDefaults(place='college'){const assignmentNumber=COURSE.nvqUnits?state.glhAssignment:state.otjReturnAssignment,a=assignmentNumber?assignment(Number(assignmentNumber)):null;return {id:uid(),date:isoToday(),place,hours:place==='college'?6:1,did:'',learned:'',assignment:a?.n||null,unit:a?.unit||null,loCodes:[],activityType:'',created:new Date().toISOString(),exportedAt:null,exportId:null}}
 function assignmentOtjSuggestions(a){
@@ -4027,7 +4029,7 @@ function assignmentOtjSuggestions(a){
   ['Structured study or e-learning',`Planned learning, research or online training that develops new knowledge for ${title}.`]
  ];
 }
-function assignmentOtjSuggestionHtml(a){const saved=otjEntries().filter(e=>Number(e.assignment)===Number(a.n)),hours=saved.reduce((sum,e)=>sum+Number(e.hours||0),0),recent=saved.slice(0,5),allocation=courseOtjAllocation(),target=assignmentOtjTarget(a.n),pct=target?Math.min(100,Math.round(hours/target*100)):0,targetText=allocation?.validDates?`${hours.toFixed(1)} / ${target.toFixed(1)} hrs`:`${hours.toFixed(1)} hrs`;return `<section class="card panel assignment-otj-guidance"><div class="assignment-otj-overview"><div class="otj-mini-ring" style="--otj-pct:${pct}%"><span><strong>${target?`${pct}%`:hours.toFixed(1)}</strong><small>${target?'OTJ':'hrs'}</small></span></div><div><div class="number">OFF-THE-JOB LEARNING</div><h3>${esc(a.title)}</h3><p class="muted">${allocation?.valid?`${targetText} · ${allocation.assignmentKsbCounts?.[a.n]||0} KSB${(allocation.assignmentKsbCounts?.[a.n]||0)===1?'':'s'}`:!allocation?.validDates?'Add course start and end dates to calculate this Evidence Pack’s OTJ target.':'Add contracted weekly work hours to calculate this Evidence Pack’s OTJ target.'}</p></div></div><div class="otj-suggestion-grid">${assignmentOtjSuggestions(a).map(([title,copy])=>`<button type="button" class="otj-suggestion" data-otj-suggestion="${esc(title)}"><strong>${esc(title)}</strong><span>${esc(copy)}</span></button>`).join('')}</div>${saved.length?`<details class="otj-saved-compact"><summary><span><strong>Saved OTJ</strong><small>${saved.length} entr${saved.length===1?'y':'ies'} · ${hours.toFixed(1)} hrs${target?` / ${target.toFixed(1)} hrs target`:''}</small></span><b aria-hidden="true">›</b></summary><div class="otj-compact-list">${recent.map(e=>`<div class="otj-compact-row"><button type="button" class="otj-compact-open" data-edit-otj="${e.id}"><span><strong>${esc(assignmentOtjRecordTitle(e,a))}</strong><small>${formatShortDate(e.date)} · ${Number(e.hours||0).toFixed(1)} hrs</small></span><b>›</b></button><button type="button" class="icon-button danger" data-delete-otj="${e.id}" aria-label="Delete OTJ entry">×</button></div>`).join('')}${saved.length>recent.length?`<small class="otj-more-note">Showing latest ${recent.length} of ${saved.length}</small>`:''}</div></details>`:''}</section>`}
+function assignmentOtjSuggestionHtml(a){const saved=otjEntries().filter(e=>Number(e.assignment)===Number(a.n)),hours=saved.reduce((sum,e)=>sum+Number(e.hours||0),0),recent=saved.slice(0,5),allocation=courseOtjAllocation(),target=assignmentOtjTarget(a.n),pct=target?Math.min(100,Math.round(hours/target*100)):0,targetText=allocation?.validDates?`${hours.toFixed(1)} / ${target.toFixed(1)} hrs`:`${hours.toFixed(1)} hrs`;return `<section class="card panel assignment-otj-guidance"><div class="assignment-otj-overview"><div class="otj-mini-ring" style="--otj-pct:${pct}%"><span><strong>${target?`${pct}%`:hours.toFixed(1)}</strong><small>${target?'OTJ':'hrs'}</small></span></div><div><div class="number">OFF-THE-JOB LEARNING</div><h3>${esc(a.title)}</h3><p class="muted">${allocation?.valid?`${targetText} · equal share of ${allocation.packCount||0} Evidence Packs`:!allocation?.validDates?'Add course start and end dates to calculate this Evidence Pack’s OTJ target.':'Add contracted weekly work hours to calculate this Evidence Pack’s OTJ target.'}</p></div></div><div class="otj-suggestion-grid">${assignmentOtjSuggestions(a).map(([title,copy])=>`<button type="button" class="otj-suggestion" data-otj-suggestion="${esc(title)}"><strong>${esc(title)}</strong><span>${esc(copy)}</span></button>`).join('')}</div>${saved.length?`<details class="otj-saved-compact"><summary><span><strong>Saved OTJ</strong><small>${saved.length} entr${saved.length===1?'y':'ies'} · ${hours.toFixed(1)} hrs${target?` / ${target.toFixed(1)} hrs target`:''}</small></span><b aria-hidden="true">›</b></summary><div class="otj-compact-list">${recent.map(e=>`<div class="otj-compact-row"><button type="button" class="otj-compact-open" data-edit-otj="${e.id}"><span><strong>${esc(assignmentOtjRecordTitle(e,a))}</strong><small>${formatShortDate(e.date)} · ${Number(e.hours||0).toFixed(1)} hrs</small></span><b>›</b></button><button type="button" class="icon-button danger" data-delete-otj="${e.id}" aria-label="Delete OTJ entry">×</button></div>`).join('')}${saved.length>recent.length?`<small class="otj-more-note">Showing latest ${recent.length} of ${saved.length}</small>`:''}</div></details>`:''}</section>`}
 function assignmentOtjRecordTitle(e,a=null){const assignmentRow=a||(e?.assignment?assignment(Number(e.assignment)):null),assignmentTitle=assignmentRow?.title||'',activity=String(e?.activityType||'').trim();return String(e?.subjectTitle||((assignmentTitle&&activity)?`${assignmentTitle} - ${activity}`:activity||assignmentTitle||'Off-the-Job Learning'))}
 function otjCopyText(e){return COURSE.nvqUnits?`Date: ${formatShortDate(e.date)}\nPlace completed: ${String(e.place||'').replace(/^./,c=>c.toUpperCase())}\nHours: ${Number(e.hours||0).toFixed(1)}\n\nWhat did you do?\n${e.did||''}\n\nWhat did you learn?\n${e.learned||''}`:`${assignmentOtjRecordTitle(e)}\nDate: ${formatShortDate(e.date)}\nHours: ${Number(e.hours||0).toFixed(1)}\n\nExplain what you did, and what you learned\n${e.learned||''}`}
 async function copyOtjEntry(e){const text=otjCopyText(e),label=learningHoursShortLabel();try{await navigator.clipboard.writeText(text);toast(`${label} entry copied to clipboard`)}catch{const area=document.createElement('textarea');area.value=text;area.style.position='fixed';area.style.opacity='0';document.body.appendChild(area);area.select();document.execCommand('copy');area.remove();toast(`${label} entry copied to clipboard`)}}
@@ -6082,8 +6084,84 @@ Create one clean portrait A4 college workshop task sheet. Keep the drawings larg
 function updateDrawingPromptPreview(){const d=collectDrawingDraft(),e=workshopEstimate(d),a=COURSES['bricklayer-st0095-v1-2']?.assignments?.find(x=>x.n===d.assignmentNumber);const q=document.getElementById('drawingBrickQuantity'),r=document.getElementById('drawingRecommendedTime'),time=document.getElementById('drawingTime');if(q)q.textContent=String(e.quantity);if(r)r.textContent=formatWorkshopHours(e.recommended);if(time&&!time.dataset.manual)time.value=formatWorkshopHours(e.recommended);const t=document.getElementById('drawingPromptText');if(t)t.value=workshopPromptText(d);const f=document.getElementById('drawingFilename'),c=document.getElementById('drawingCriteriaCount');if(f)f.textContent=`BWKAS${d.assignmentNumber}.png`;if(c)c.textContent=String(a?.ksbs?.length||0)}
 function showDrawingPromptBuilder(){document.getElementById('drawingBuilderModal')?.remove();let draft={};try{draft=JSON.parse(localStorage.getItem(DRAWING_PROMPT_DRAFT_KEY)||'{}')}catch{};app.insertAdjacentHTML('beforeend',`<div class="modal drawing-builder-modal" id="drawingBuilderModal"><div class="modal-card drawing-builder-card">${workshopSheetFormHTML(draft)}</div></div>`);const modal=document.getElementById('drawingBuilderModal'),assignment=document.getElementById('drawingAssignment');const bind=()=>document.querySelectorAll('#drawingBuilderModal input,#drawingBuilderModal textarea,#drawingBuilderModal select').forEach(el=>{if(el.dataset.bound)return;el.dataset.bound='1';const changed=()=>{if(el.id==='drawingTime')el.dataset.manual='1';updateDrawingPromptPreview()};el.addEventListener('input',changed);el.addEventListener('change',changed)});assignment.addEventListener('change',()=>{const d=collectDrawingDraft(),a=COURSES['bricklayer-st0095-v1-2']?.assignments?.find(x=>x.n===d.assignmentNumber);document.getElementById('drawingTask').value=a?.title||'';updateDrawingPromptPreview()});bind();updateDrawingPromptPreview();document.getElementById('copyDrawingPrompt').onclick=async()=>{const text=workshopPromptText();try{await navigator.clipboard.writeText(text)}catch{const ta=document.getElementById('drawingPromptText');ta.value=text;ta.select();document.execCommand('copy')}toast('Workshop-sheet prompt copied')};document.getElementById('saveDrawingDraft').onclick=()=>{localStorage.setItem(DRAWING_PROMPT_DRAFT_KEY,JSON.stringify(collectDrawingDraft()));toast('Workshop-sheet draft saved')};document.getElementById('clearDrawingForm').onclick=()=>{if(!confirm('Clear the current workshop-sheet form and saved draft?'))return;localStorage.removeItem(DRAWING_PROMPT_DRAFT_KEY);modal.remove();showDrawingPromptBuilder()};document.getElementById('closeDrawingBuilder').onclick=()=>modal.remove();modal.onclick=e=>{if(e.target===modal)modal.remove()}}
 
+
+const CUSTOM_COURSES_KEY='developerCustomCourses';
+let customCourseDraft=null;
+function customCourseId(name){return `custom-${String(name||'course').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,42)}-${Date.now().toString(36)}`}
+function parseCustomCriteria(text){
+ return String(text||'').split(/\n+/).map(line=>line.trim()).filter(Boolean).map((line,index)=>{
+   const match=line.match(/^([A-Za-z]+\s*\d+(?:\.\d+)*)\s*[-:–—]?\s*(.*)$/);
+   return [match?match[1].replace(/\s+/g,''): `LO${index+1}`,match&&match[2]?match[2].trim():line];
+ });
+}
+function customCourseUsage(draft){
+ const use={};(draft?.criteria||[]).forEach(([code])=>use[code]=0);
+ (draft?.assignments||[]).forEach(a=>(a.ksbs||[]).forEach(([code])=>use[code]=(use[code]||0)+1));
+ return use;
+}
+function generateRandomCustomAssignments(criteria,count,required){
+ const packs=Array.from({length:count},(_,i)=>({n:i+1,title:`Evidence Pack ${i+1}`,ksbs:[]}));
+ const copies=[];criteria.forEach(row=>{for(let i=0;i<required;i++)copies.push(row)});
+ copies.forEach((row,i)=>packs[i%packs.length].ksbs.push([...row]));
+ return packs;
+}
+async function saveCustomCourse(course){
+ const saved=await getStore(CUSTOM_COURSES_KEY)||{};saved[course.id]=course;COURSES[course.id]=course;await putStore(CUSTOM_COURSES_KEY,saved);
+}
+function customCourseQrPayload(course){return JSON.stringify({type:'apprenticeplus-course',version:1,course})}
+function showCustomCourseQr(course){
+ document.getElementById('customCourseQrModal')?.remove();
+ app.insertAdjacentHTML('beforeend',`<div class="modal" id="customCourseQrModal"><div class="modal-card custom-course-qr-card"><h2>${esc(course.name)}</h2><div id="customCourseQrCanvas"></div><p class="muted">Learners can scan this code from the course selector. The same code can be shared with multiple learners.</p><div class="btn-row"><button class="btn secondary" id="closeCustomCourseQr">Close</button></div></div></div>`);
+ const host=document.getElementById('customCourseQrCanvas');if(window.ApprenticeQR)host.appendChild(window.ApprenticeQR.toCanvas(customCourseQrPayload(course),300));
+ document.getElementById('closeCustomCourseQr').onclick=()=>document.getElementById('customCourseQrModal').remove();
+}
+function showCustomCourseBuilder(step='setup'){
+ document.getElementById('customCourseBuilder')?.remove();
+ const modal=document.createElement('div');modal.className='modal admin-modal';modal.id='customCourseBuilder';
+ if(step==='setup'){
+  modal.innerHTML=`<div class="modal-card admin-modal-card custom-course-builder"><div class="admin-modal-head"><div><span class="admin-kicker">Developer Mode</span><h2>Create course</h2></div><button class="admin-close" id="closeCustomBuilder">×</button></div><div class="custom-course-form">
+   <div class="field"><label>Full course name</label><input class="input" id="customCourseName" placeholder="e.g. Level 2 Bricklaying"></div>
+   <div class="field"><label>KSBs / Learning Outcomes</label><textarea class="input" id="customCriteria" rows="10" placeholder="K1 - Description&#10;S1 - Description&#10;B1 - Description"></textarea><small>Enter one criterion per line.</small></div>
+   <div class="field"><label>How many times must each KSB / LO be met?</label><input class="input" id="customRequired" type="number" min="1" max="10" value="2"></div>
+   <div class="field"><label>Course type</label><select class="input" id="customCriterionType"><option value="ksb">KSB apprenticeship course</option><option value="lo">NVQ / Learning Outcomes</option></select></div>
+   <div class="field"><label>Build Evidence Packs</label><div class="segmented"><button type="button" class="active" data-custom-mode="random">Generate automatically</button><button type="button" data-custom-mode="manual">Create my own</button></div></div>
+   <div class="field" id="customPackCountField"><label>Number of Evidence Packs</label><input class="input" id="customPackCount" type="number" min="1" max="50" value="10"></div>
+   <button class="btn admin-primary" id="startCustomCourse">Continue</button></div></div>`;
+ }else{
+  const d=customCourseDraft,usage=customCourseUsage(d),n=d.assignments.length+1;
+  modal.innerHTML=`<div class="modal-card admin-modal-card custom-course-builder"><div class="admin-modal-head"><div><span class="admin-kicker">${esc(d.name)}</span><h2>EP${n}</h2></div><button class="admin-close" id="closeCustomBuilder">×</button></div>
+   <div class="field"><label>EP${n} title</label><input class="input" id="customEpTitle" placeholder="Evidence Pack title"></div>
+   <div class="field"><label>${d.nvqUnits?'Learning Outcomes':'KSBs'}</label><div class="custom-criteria-list">${d.criteria.map(([code,text])=>`<label class="custom-criterion-choice"><input type="checkbox" value="${esc(code)}"><span><strong>${esc(code)}</strong><small>${esc(text)}</small></span><b>${usage[code]||0}× used</b></label>`).join('')}</div></div>
+   ${d.assignments.length?`<div class="custom-built-packs">${d.assignments.map(a=>`<div><strong>EP${a.n} · ${esc(a.title)}</strong><span>${a.ksbs.map(x=>x[0]).join(', ')}</span></div>`).join('')}</div>`:''}
+   <div class="btn-row"><button class="btn" id="saveCustomEp">Save EP${n}</button><button class="btn secondary" id="completeCustomCourse" ${d.assignments.length?'':'disabled'}>Complete course</button></div></div>`;
+ }
+ document.body.appendChild(modal);document.getElementById('closeCustomBuilder').onclick=()=>modal.remove();
+ if(step==='setup'){
+  let mode='random';document.querySelectorAll('[data-custom-mode]').forEach(b=>b.onclick=()=>{mode=b.dataset.customMode;document.querySelectorAll('[data-custom-mode]').forEach(x=>x.classList.toggle('active',x===b));document.getElementById('customPackCountField').hidden=mode!=='random'});
+  document.getElementById('startCustomCourse').onclick=async()=>{
+   const name=document.getElementById('customCourseName').value.trim(),criteria=parseCustomCriteria(document.getElementById('customCriteria').value),required=Math.max(1,Number(document.getElementById('customRequired').value)||2),nvq=document.getElementById('customCriterionType').value==='lo';
+   if(!name||!criteria.length)return toast('Add the course name and KSBs / Learning Outcomes');
+   customCourseDraft={id:customCourseId(name),name,standard:'Custom',version:'1.0',level:'',nvqUnits:nvq,evidenceRequirement:required,criteria,assignments:[],custom:true};
+   if(mode==='random'){
+    const count=Math.max(1,Number(document.getElementById('customPackCount').value)||1);customCourseDraft.assignments=generateRandomCustomAssignments(criteria,count,required);
+    await finishCustomCourse();
+   }else showCustomCourseBuilder('manual');
+  };
+ }else{
+  document.getElementById('saveCustomEp').onclick=()=>{const title=document.getElementById('customEpTitle').value.trim(),codes=[...document.querySelectorAll('.custom-criteria-list input:checked')].map(x=>x.value);if(!title||!codes.length)return toast('Add an EP title and select at least one criterion');customCourseDraft.assignments.push({n:customCourseDraft.assignments.length+1,title,ksbs:codes.map(code=>customCourseDraft.criteria.find(x=>x[0]===code))});showCustomCourseBuilder('manual')};
+  document.getElementById('completeCustomCourse').onclick=finishCustomCourse;
+ }
+}
+async function finishCustomCourse(){
+ const d=customCourseDraft;if(!d||!d.assignments.length)return toast('Add at least one Evidence Pack');
+ const course={id:d.id,name:d.name,standard:d.standard,version:d.version,level:d.level,nvqUnits:d.nvqUnits,evidenceRequirement:d.evidenceRequirement,assignments:d.assignments,custom:true};
+ await saveCustomCourse(course);customCourseDraft=null;document.getElementById('customCourseBuilder')?.remove();toast(`${course.name} saved permanently in Developer Mode`);showCustomCourseQr(course);
+}
+function customCourseDeveloperList(){
+ const rows=Object.values(COURSES).filter(c=>c.custom);return rows.length?`<div class="custom-course-library">${rows.map(c=>`<div class="custom-course-row"><span><strong>${esc(c.name)}</strong><small>${c.assignments.length} Evidence Packs</small></span><button class="btn admin-soft" data-custom-course-qr="${esc(c.id)}">QR code</button></div>`).join('')}</div>`:'<p class="muted">No developer-created courses yet.</p>';
+}
 function hiddenDeveloperPanel(){
- return `<div class="admin-dashboard developer-tools-dashboard"><div class="admin-course-summary developer-summary"><div><span>Secret developer area</span><strong>Apprentice+ Developer Mode</strong><small>Build technical-drawing prompts for college workshop task sheets.</small></div><span class="admin-status">${APP_VERSION}</span></div><section class="admin-section drawing-builder-launch"><div class="admin-section-head"><div class="admin-section-icon">${appIcon('course')}</div><div><h3>Create college task sheet</h3><p>Build one clear Bricklaying workshop-sheet prompt using the simple college layout.</p></div></div><div class="admin-section-body"><button class="btn admin-primary" id="openDrawingBuilder">Create college task sheet</button></div></section><section class="admin-section"><div class="admin-section-head"><div class="admin-section-icon">${appIcon('settings')}</div><div><h3>Developer access</h3><p>This hidden screen closes when you leave it and remains separate from Admin Mode.</p></div></div><div class="admin-section-body"><button class="btn admin-primary" id="closeDeveloperToolsBottom">Close Developer Mode</button></div></section></div>`;
+ return `<div class="admin-dashboard developer-tools-dashboard"><div class="admin-course-summary developer-summary"><div><span>Secret developer area</span><strong>Apprentice+ Developer Mode</strong><small>Build technical-drawing prompts for college workshop task sheets.</small></div><span class="admin-status">${APP_VERSION}</span></div><section class="admin-section custom-course-launch"><div class="admin-section-head"><div class="admin-section-icon">${appIcon('course')}</div><div><h3>Create Apprentice+ course</h3><p>Build a reusable course, Evidence Packs and KSB/LO mapping, then share it with learners by QR code.</p></div></div><div class="admin-section-body"><button class="btn admin-primary" id="openCustomCourseBuilder">Create course</button>${customCourseDeveloperList()}</div></section><section class="admin-section drawing-builder-launch"><div class="admin-section-head"><div class="admin-section-icon">${appIcon('course')}</div><div><h3>Create college task sheet</h3><p>Build one clear Bricklaying workshop-sheet prompt using the simple college layout.</p></div></div><div class="admin-section-body"><button class="btn admin-primary" id="openDrawingBuilder">Create college task sheet</button></div></section><section class="admin-section"><div class="admin-section-head"><div class="admin-section-icon">${appIcon('settings')}</div><div><h3>Developer access</h3><p>This hidden screen closes when you leave it and remains separate from Admin Mode.</p></div></div><div class="admin-section-body"><button class="btn admin-primary" id="closeDeveloperToolsBottom">Close Developer Mode</button></div></section></div>`;
 }
 function showHiddenDeveloperTools(){
  document.getElementById('developerToolsModal')?.remove();
@@ -6096,7 +6174,7 @@ function showHiddenDeveloperTools(){
  document.addEventListener('keydown',function developerEscape(e){if(e.key!=='Escape'||!document.getElementById('developerToolsModal'))return;document.removeEventListener('keydown',developerEscape);close()});
  bindHiddenDeveloperTools();
 }
-function bindHiddenDeveloperTools(){
+function bindHiddenDeveloperTools(){ const customBuilderButton=document.getElementById('openCustomCourseBuilder');if(customBuilderButton)customBuilderButton.onclick=()=>{document.getElementById('developerToolsModal')?.remove();showCustomCourseBuilder('setup')};document.querySelectorAll('[data-custom-course-qr]').forEach(btn=>btn.onclick=()=>showCustomCourseQr(COURSES[btn.dataset.customCourseQr]));
  const drawingButton=document.getElementById('openDrawingBuilder');
  if(drawingButton){
   drawingButton.onclick=event=>{

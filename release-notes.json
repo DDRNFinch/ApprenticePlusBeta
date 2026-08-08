@@ -1,6 +1,28 @@
 {
-  "latest": "V2.33",
+  "latest": "V2.35",
   "releases": [
+    {
+      "version": "V2.35",
+      "date": "2026-08-08",
+      "title": "Developer Course Builder",
+      "features": [
+        "Developer Mode can create and permanently save custom Apprentice+ courses.",
+        "Custom courses support KSB or Learning Outcome lists and configurable evidence repetition requirements.",
+        "Evidence Packs can be generated automatically or manually mapped with live criterion usage counts.",
+        "Completed custom courses generate a reusable course QR code for learner distribution."
+      ]
+    },
+    {
+      "version": "V2.34",
+      "date": "2026-08-08",
+      "title": "Standardised Evidence Pack learning hours",
+      "features": [
+        "Total course OTJ/GLH is now divided evenly across every Evidence Pack.",
+        "Each Evidence Pack uses the same OTJ/GLH target regardless of KSB/LO count.",
+        "The same rule now applies to apprenticeship standards and NVQ courses.",
+        "Example: 725 total hours across 10 Evidence Packs gives a 72.5-hour requirement per pack."
+      ]
+    },
     {
       "version": "V2.33",
       "date": "2026-08-08",

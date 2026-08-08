@@ -5143,3 +5143,13 @@ p,.muted,.subtitle{line-height:1.48}
 .nvq-glh-title>span{display:grid;gap:2px;text-align:left}
 .nvq-glh-title small{font-size:.68rem;font-weight:650;color:#78857e}
 .nvq-glh-summary.complete .nvq-glh-track i{background:#55b928}
+
+/* V2.35 Developer course builder */
+.custom-course-builder{max-width:760px!important}
+.custom-course-form{display:grid;gap:16px}
+.custom-criteria-list{display:grid;gap:8px;max-height:360px;overflow:auto;padding:4px}
+.custom-criterion-choice{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:12px;padding:12px 14px;border-radius:18px;background:#f3f7f1}
+.custom-criterion-choice span{display:grid;gap:2px}.custom-criterion-choice small{color:#78847d}.custom-criterion-choice b{font-size:.72rem;color:#66736b}
+.custom-built-packs,.custom-course-library{display:grid;gap:8px}.custom-built-packs>div,.custom-course-row{display:flex;justify-content:space-between;gap:14px;align-items:center;padding:12px 14px;border-radius:18px;background:#f3f7f1}
+.custom-built-packs span,.custom-course-row span{display:grid;gap:2px}.custom-course-row small{color:#78847d}
+.custom-course-qr-card{text-align:center}.custom-course-qr-card canvas{width:min(300px,100%);height:auto;border-radius:18px}
