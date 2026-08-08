@@ -245,7 +245,7 @@ function learnerPromptTitle(assignmentNumber,code,fallback){
  return LEARNER_PROMPTS[COURSE.id]?.[assignmentNumber]?.[code]||fallback;
 }
 
-const APP_VERSION='V2.31';
+const APP_VERSION='V2.32';
 function paintPdfPageBackground(ctx,W,H){ctx.fillStyle='#ffffff';ctx.fillRect(0,0,W,H);const r=Math.min(W,H)*0.58,g=ctx.createRadialGradient(0,0,0,0,0,r);g.addColorStop(0,'#DDF3D6');g.addColorStop(.42,'#EFF8EC');g.addColorStop(1,'#FFFFFF');ctx.fillStyle=g;ctx.fillRect(0,0,W,H)}
 
 const PORTFOLIO_UPLOAD_LIMIT_BYTES=1_000_000_000;
@@ -6230,8 +6230,38 @@ function bindMonthlyReminderActions(root=document){root.querySelectorAll('[data-
 function showMonthlyPortfolioReminder(force=false){if(!monthlyReminderPending()||document.getElementById('monthlyUploadReminderModal'))return;const s=monthlyPortfolioState(),now=Date.now();if(!force&&(Number(s.reminderSnoozedUntil||0)>now||Number(s.reminderNextAt||0)>now))return;const stage=monthlyReminderStage(),title=stage==='open'?'Open Portfolio':'Uploaded online?',body=stage==='open'?'Your complete monthly portfolio has downloaded. Open your linked portfolio now and upload the ZIP.':'Has the latest complete monthly portfolio been uploaded to the linked online portfolio?',primary=stage==='open'?'<button class="btn" data-monthly-reminder-open>Open Portfolio</button>':'<button class="btn" data-monthly-reminder-done>Yes, all done</button>';app.insertAdjacentHTML('beforeend',`<div class="modal monthly-upload-reminder-modal" id="monthlyUploadReminderModal"><div class="modal-card"><h2>${title}</h2><p>${body}</p><div class="btn-row">${primary}<button class="btn secondary" data-monthly-reminder-snooze>Give me an hour</button></div></div></div>`);bindMonthlyReminderActions(document.getElementById('monthlyUploadReminderModal'));updateMonthlyReminder({reminderNextAt:now+MONTHLY_REMINDER_MINUTE})}
 function checkMonthlyPortfolioReminder(){if(monthlyReminderPending())showMonthlyPortfolioReminder(false)}
 function monthlyPortfolioCard(){
- const d=portfolioDelta(),size=portfolioSizeEstimate(),last=d.status.uploadedAt?new Date(d.status.uploadedAt).toLocaleDateString('en-GB'):'Not yet',downloaded=!!d.status.downloadedAt&&!!d.status.pendingSnapshot,newItems=d.newEvidence.reduce((n,x)=>n+x.added,0),meter=Math.min(100,Math.max(0,size.totalBytes/PORTFOLIO_SAFE_TARGET_BYTES*100)),sizeMessage=size.tone==='over'?'Over Aptem’s 1 GB upload limit — remove or replace large original videos before exporting.':size.tone==='warning'?`Above the 900 MB safety target · ${formatMediaSize(Math.max(0,PORTFOLIO_UPLOAD_LIMIT_BYTES-size.totalBytes))} remains before 1 GB.`:`${formatMediaSize(size.remaining)} available before the 900 MB safety target.`,mate=learningHoursMateName(),short=learningHoursShortLabel(),criterion=COURSE.nvqUnits?'LOs':'KSBs';
- return `<section class="card panel entire-portfolio-card monthly-portfolio-card monthly-portfolio-mini"><div class="monthly-mini-top"><div><div class="number">Monthly upload</div><strong>Complete course portfolio</strong><small>Last upload: ${esc(last)}</small></div><div class="monthly-mini-delta"><span><b>+${newItems}</b> evidence</span><span><b>+${d.ksbGain}</b> ${criterion}</span><span><b>${d.otjHours.toFixed(1)}</b> ${short} hrs</span></div></div><div class="monthly-mini-size ${size.tone}"><span>${formatMediaSize(size.totalBytes)} / 900 MB</span><div class="portfolio-size-meter" role="progressbar" aria-label="Estimated complete portfolio size" aria-valuemin="0" aria-valuemax="900" aria-valuenow="${Math.min(900,Math.round(size.totalBytes/1_000_000))}"><span style="width:${meter}%"></span></div></div><div class="btn-row monthly-upload-actions monthly-mini-actions"><button class="btn" id="downloadEntirePortfolio">${d.status.uploadedAt?'Download portfolio':'Download first portfolio'}</button>${downloaded?'<button class="btn secondary" id="openMonthlyPortfolio">Open</button><button class="btn" id="confirmMonthlyUpload">Uploaded</button>':''}</div></section>`;
+ const d=portfolioDelta(),size=portfolioSizeEstimate(),last=d.status.uploadedAt?new Date(d.status.uploadedAt).toLocaleDateString('en-GB'):'Not yet',downloaded=!!d.status.downloadedAt&&!!d.status.pendingSnapshot,newItems=d.newEvidence.reduce((n,x)=>n+x.added,0),meter=Math.min(100,Math.max(0,size.totalBytes/PORTFOLIO_SAFE_TARGET_BYTES*100)),short=learningHoursShortLabel(),criterion=COURSE.nvqUnits?'LOs':'KSBs';
+ const statusLabel=downloaded?'Ready to upload':(d.status.uploadedAt?'Portfolio updated':'Ready for first export');
+ return `<section class="card panel entire-portfolio-card monthly-portfolio-card monthly-portfolio-refined">
+   <div class="monthly-refined-head">
+     <div class="monthly-refined-title">
+       <span class="monthly-refined-kicker">Monthly upload</span>
+       <strong>Course portfolio</strong>
+     </div>
+     <span class="monthly-refined-status">${esc(statusLabel)}</span>
+   </div>
+
+   <div class="monthly-refined-meta">
+     <span>Last upload <b>${esc(last)}</b></span>
+     <span>Portfolio <b>${formatMediaSize(size.totalBytes)}</b></span>
+   </div>
+
+   <div class="monthly-refined-metrics">
+     <div><b>+${newItems}</b><span>Evidence</span></div>
+     <div><b>+${d.ksbGain}</b><span>${criterion}</span></div>
+     <div><b>${d.otjHours.toFixed(1)}</b><span>${short} hrs</span></div>
+   </div>
+
+   <div class="monthly-refined-storage ${size.tone}">
+     <div class="monthly-refined-storage-row"><span>Storage</span><b>${formatMediaSize(size.totalBytes)} / 900 MB</b></div>
+     <div class="portfolio-size-meter monthly-refined-meter" role="progressbar" aria-label="Estimated complete portfolio size" aria-valuemin="0" aria-valuemax="900" aria-valuenow="${Math.min(900,Math.round(size.totalBytes/1_000_000))}"><span style="width:${meter}%"></span></div>
+   </div>
+
+   <div class="monthly-refined-actions">
+     <button class="btn monthly-refined-primary" id="downloadEntirePortfolio">${d.status.uploadedAt?'Download portfolio':'Download portfolio'}</button>
+     ${downloaded?`<div class="monthly-refined-secondary"><button class="btn secondary" id="openMonthlyPortfolio">Open</button><button class="btn" id="confirmMonthlyUpload">Uploaded</button></div>`:''}
+   </div>
+ </section>`;
 }
 function wrapPdfText(ctx,text,maxWidth,font){ctx.font=font;const words=String(text||'').split(/\s+/),lines=[];let line='';for(const word of words){const test=line?`${line} ${word}`:word;if(ctx.measureText(test).width>maxWidth&&line){lines.push(line);line=word}else line=test}if(line)lines.push(line);return lines}
 function monthlyEvidenceCode(name){const m=String(name||'').match(/(?:^|[^A-Z0-9])((?:K|S|B|LO)\s*\d+(?:\.\d+)?)(?:[^A-Z0-9]|$)/i);return m?m[1].replace(/\s+/g,'').toUpperCase():''}
