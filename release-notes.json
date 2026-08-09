@@ -1,6 +1,17 @@
 {
-  "latest": "V2.68",
+  "latest": "V2.69",
   "releases": [
+    {
+      "version": "V2.69",
+      "date": "2026-08-09",
+      "title": "NVQ Theory upload evidence",
+      "features": [
+        "NVQ Theory now has Upload Evidence alongside Write About It and Talk About It.",
+        "Learners can upload existing completed question packs, workbooks and other theory evidence.",
+        "Theory uploads are tagged separately from practical document evidence so the Evidence Matrix shows them against Theory criteria only.",
+        "The NVQ Evidence Matrix displays Uploaded Theory / Question Pack as an evidence source where applicable."
+      ]
+    },
     {
       "version": "V2.68",
       "date": "2026-08-09",
@@ -238,7 +249,7 @@
       "date": "2026-08-08",
       "title": "Focused MiniApps",
       "features": [
-        "Learner MiniApps reduced to StudyMate, ReviewMate, MeasureMate and NoteMate in a clean 2×2 layout.",
+        "Learner MiniApps reduced to StudyMate, ReviewMate, MeasureMate and NoteMate in a clean 2\u00d72 layout.",
         "MaterialMate has been merged into MeasureMate as a Materials section while retaining its existing calculators.",
         "Skills Card, DrawingMate, ProjectMate, FeedbackMate and RemindMate have been removed from the learner MiniApps screen.",
         "CADMate has been removed from learner MiniApps and retained in Developer Mode as CADMate Beta for future multi-trade development.",
@@ -535,7 +546,7 @@
         "Assessor Observation now shows the full Knowledge, Skills and Behaviours list for each assignment instead of filtering out Knowledge criteria.",
         "Assessor Observation PDF mapping now records every selected K, S and B criterion.",
         "Take Photos PDFs use three fixed 16:9 landscape photo boxes side by side on one page.",
-        "Assessor Observation PDFs use up to nine optional fixed 16:9 photo boxes in a 3 × 3 grid.",
+        "Assessor Observation PDFs use up to nine optional fixed 16:9 photo boxes in a 3 \u00d7 3 grid.",
         "Text-based evidence PDFs now use compact fixed metadata boxes and a dedicated main evidence box, with the signature reserved at the bottom."
       ]
     },
@@ -544,7 +555,7 @@
       "title": "Evidence pack icons and assessor observation media",
       "features": [
         "Evidence Pack front-page icons now match the evidence types shown inside the pack.",
-        "Assessor Observation supports up to 9 optional photos in a compact 3 × 3 layout.",
+        "Assessor Observation supports up to 9 optional photos in a compact 3 \u00d7 3 layout.",
         "Each observed KSB has a compact Record control offering Video or Dictaphone.",
         "Incremented the app, service-worker cache and asset versions so installed copies recognise this as a new update."
       ]
@@ -642,9 +653,9 @@
       "date": "2026-08-08",
       "title": "Reliable evidence PDF previews",
       "features": [
-        "Individual evidence PDF previews now render directly inside Apprentice+ instead of depending on the browser’s embedded PDF viewer.",
+        "Individual evidence PDF previews now render directly inside Apprentice+ instead of depending on the browser\u2019s embedded PDF viewer.",
         "Individual PDF downloads remain available from every submitted evidence preview, including OTJ and GLH entries.",
-        "Updated NVQ completion logic for the qualification’s guided-learning completion requirement without adding learner-facing threshold wording."
+        "Updated NVQ completion logic for the qualification\u2019s guided-learning completion requirement without adding learner-facing threshold wording."
       ]
     },
     {
@@ -654,7 +665,7 @@
       "features": [
         "Standardised the main section title cards across Apprentice+ for a cleaner, more consistent interface.",
         "Redesigned the Course heading as a green Apprentice+ logo-themed course identity tile.",
-        "OTJ and GLH progress now use the amount required by the learner’s current point in the course rather than the full-course target.",
+        "OTJ and GLH progress now use the amount required by the learner\u2019s current point in the course rather than the full-course target.",
         "The full OTJ or GLH requirement remains available internally while learner progress shows recorded hours against the requirement to date."
       ]
     },
@@ -864,7 +875,7 @@
         "Corrected misleading DrawingMate references including DPC, reinforced concrete, plasterboard, centre-line and UK socket-outlet graphics.",
         "Added UK hatch references for timber end section, plywood, sand, gravel, plaster/render and existing construction, plus common construction symbols such as DPM, spot levels, inspection chambers, RWP, gullies, switches, consumer units, fire doors, wall ties, cavity trays and lintels.",
         "ProjectMate's 440 mm square pier at 9 courses now uses a 51-brick minimum instead of the previous 88-brick quantity.",
-        "Generated ProjectMate customers now use £20, £25 or £30 hourly labour rates according to customer urgency, with labour prefilled and realistic material-led budgets and overheads.",
+        "Generated ProjectMate customers now use \u00a320, \u00a325 or \u00a330 hourly labour rates according to customer urgency, with labour prefilled and realistic material-led budgets and overheads.",
         "RemindMate reminders can now repeat daily, weekly, fortnightly or monthly.",
         "Completing a recurring reminder records the completion and moves it to the next correct future date without creating duplicate reminder cards.",
         "The notification centre now refreshes after app changes, every minute and whenever the app returns to the foreground, so counts and reminder states do not become stale.",
@@ -962,7 +973,7 @@
         "The page reproduces the app progress ring with completed KSB or Learning Outcome, collected evidence and time-elapsed rings.",
         "Assignments, KSBs or Learning Outcomes, Off-the-job, Time elapsed and EPA readiness use the same live calculations as the in-app progress panel.",
         "Added the same red, amber and green progress scales, today markers, supporting details and Review status shown in the app.",
-        "The progress values are captured when the monthly ZIP is generated, so the PDF reflects the learner’s current position."
+        "The progress values are captured when the monthly ZIP is generated, so the PDF reflects the learner\u2019s current position."
       ],
       "items": [
         "The V1.6.35 Academy Activity PDF and monthly snapshot logic remain included.",
@@ -994,7 +1005,7 @@
         "Replaced the previous square-pier geometry with the approved standalone demo renderer.",
         "Pier elevation bricks now retain their fixed 215 mm stretcher and 102.5 mm header face sizes.",
         "Pier Plan Course 1 and Plan Course 2 use the approved alternating perimeter layouts.",
-        "The approved pier rules scale from 1×1 through the existing adjustable pier sizes by adding complete fixed-size bricks.",
+        "The approved pier rules scale from 1\u00d71 through the existing adjustable pier sizes by adding complete fixed-size bricks.",
         "Removed S and H text labels from all pier bricks.",
         "Renamed the pier-only Rear Elevation to Right Elevation."
       ],
@@ -1065,7 +1076,7 @@
       "date": "2026-08-03",
       "changes": [
         "Renamed Material to Construction and added Brick Pier.",
-        "Added isolated simple 1½-brick square pier rendering without changing the existing wall engine.",
+        "Added isolated simple 1\u00bd-brick square pier rendering without changing the existing wall engine.",
         "Disabled returns and locked stretcher bond while Brick Pier is selected.",
         "Added Brick on Edge at 102.5 mm high and rendered Soldier Course on both front and rear elevations.",
         "Applied Bond Detail, Material Hatching and Outline Only consistently across pier front, rear, plan, section and sheet views."
@@ -1138,7 +1149,7 @@
       "changes": [
         "Witness testimony S and B scoring now activates immediately after the evidence tick is selected.",
         "Photographic Evidence selections now refresh immediately so photo controls appear without leaving the page.",
-        "Practical Assessment 1–5 marking remains locked until the related Skill or Behaviour tick is selected.",
+        "Practical Assessment 1\u20135 marking remains locked until the related Skill or Behaviour tick is selected.",
         "Professional Discussion now has separate Start recording and Stop recording controls with a live timer and no pause function."
       ],
       "features": []
@@ -1307,7 +1318,7 @@
         "Replaced the CADMate SVG download with Save PNG.",
         "Added a filename dialog before each drawing download.",
         "Automatically adds the .png file extension.",
-        "Exports the current CADMate preview as a 2400 × 1600 landscape PNG.",
+        "Exports the current CADMate preview as a 2400 \u00d7 1600 landscape PNG.",
         "Exports only the drawing canvas with a white background and no CADMate controls.",
         "Suggests a filename from the selected material, bond, wall length, returns and view."
       ],
@@ -1411,7 +1422,7 @@
       ],
       "items": [
         "Existing Practical Assessment drawings and assessment content remain unchanged.",
-        "Zoom is limited from Fit Page to 6×.",
+        "Zoom is limited from Fit Page to 6\u00d7.",
         "The drawing remains in memory while the viewer is open."
       ]
     },
@@ -1999,7 +2010,7 @@
     "features": [
       "Standardised the main section title cards across Apprentice+ for a cleaner, more consistent interface.",
       "Redesigned the Course heading as a green Apprentice+ logo-themed course identity tile.",
-      "OTJ and GLH progress now use the amount required by the learner’s current point in the course rather than the full-course target.",
+      "OTJ and GLH progress now use the amount required by the learner\u2019s current point in the course rather than the full-course target.",
       "The full OTJ or GLH requirement remains available internally while learner progress shows recorded hours against the requirement to date."
     ]
   }

@@ -248,7 +248,7 @@ function learnerPromptTitle(assignmentNumber,code,fallback){
  return LEARNER_PROMPTS[COURSE.id]?.[assignmentNumber]?.[code]||fallback;
 }
 
-const APP_VERSION='V2.68';
+const APP_VERSION='V2.69';
 function paintPdfPageBackground(ctx,W,H){ctx.fillStyle='#ffffff';ctx.fillRect(0,0,W,H);const r=Math.min(W,H)*0.58,g=ctx.createRadialGradient(0,0,0,0,0,r);g.addColorStop(0,'#DDF3D6');g.addColorStop(.42,'#EFF8EC');g.addColorStop(1,'#FFFFFF');ctx.fillStyle=g;ctx.fillRect(0,0,W,H)}
 
 const PORTFOLIO_UPLOAD_LIMIT_BYTES=1_000_000_000;
@@ -3498,7 +3498,7 @@ function nvqCriterionRowsForAssignment(a){
 }
 function nvqCriterionSourceGroups(type){
  return type==='theory'
-  ?[['statement','Write About It'],['professionalDiscussion','Talk About It']]
+  ?[['statement','Write About It'],['professionalDiscussion','Talk About It'],['supporting','Uploaded Theory / Question Pack']]
   :[['photos','Take Photos'],['discussion','Record a Video'],['supporting','Documents'],['witness','Witness / Employer'],['practical','Assessor Observation']];
 }
 function nvqCriterionEvidenceStatus(a,row){
@@ -3506,7 +3506,14 @@ function nvqCriterionEvidenceStatus(a,row){
  if(assignmentRPL(a.n)||criterionRPL(a.n,lo))return {count:required,required,complete:true,rpl:true,sources:['RPL']};
  const sources=[],add=label=>{if(!sources.includes(label))sources.push(label)};
  for(const [section,label] of nvqCriterionSourceGroups(row.type)){
-  sectionData(a.n,section).versions.forEach(v=>{if(evidenceCodesFromVersion(a,section,v).includes(lo))add(label)});
+  sectionData(a.n,section).versions.forEach(v=>{
+   if(section==='supporting'){
+    const purpose=v.nvqEvidenceMode||'practical';
+    if(row.type==='theory'&&purpose!=='theory')return;
+    if(row.type==='practical'&&purpose==='theory')return;
+   }
+   if(evidenceCodesFromVersion(a,section,v).includes(lo))add(label)
+  });
  }
  if(row.type==='practical'&&walkthroughComplete(a.n,lo))add('Record a Video');
  const count=Math.min(required,sources.length);
@@ -5598,25 +5605,29 @@ async function openEvidencePdfPreview(a,section,index,otjId=''){
   document.body.appendChild(modal);modal.onclick=e=>{if(e.target===modal)closeEvidencePdfPreview()};document.getElementById('closeEvidencePdfPreview').onclick=closeEvidencePdfPreview;document.getElementById('closeEvidencePdfPreviewBottom').onclick=closeEvidencePdfPreview;
  }catch(error){console.error('Individual evidence PDF preview failed',error);toast(`Unable to create PDF preview${error?.message?`: ${error.message}`:''}`)}
 }
+function nvqSupportingPurposeStatus(n,purpose){
+ const versions=sectionData(n,'supporting').versions.filter(v=>(v.nvqEvidenceMode||'practical')===purpose);
+ return versions.length?'complete':'none';
+}
 function nvqEvidenceModeStats(a,mode){
- const practicalSections=['photos','discussion','supporting','witness','practical'],theorySections=['statement','professionalDiscussion'];
+ const practicalSections=['photos','discussion','supporting','witness','practical'],theorySections=['statement','professionalDiscussion','supporting'];
  const sections=mode==='practical'?practicalSections:theorySections;
- const done=sections.filter(s=>sectionStatus(a.n,s)==='complete').length;
+ const done=sections.filter(s=>s==='supporting'?nvqSupportingPurposeStatus(a.n,mode)==='complete':sectionStatus(a.n,s)==='complete').length;
  return {done,total:sections.length,pct:sections.length?Math.round(done/sections.length*100):0};
 }
 function openNvqEvidenceMode(mode){state.nvqEvidenceMode=mode;state.view='nvq-evidence-mode';render();window.scrollTo(0,0)}
 function renderNvqEvidenceMode(){
  const a=assignment(state.assignment),mode=state.nvqEvidenceMode==='theory'?'theory':'practical',stats=nvqEvidenceModeStats(a,mode);
  const practical=[['photos','camera','Take Photos','Photograph naturally occurring workplace evidence.'],['discussion','video','Record a Video','Show the work being carried out and explain what is happening.'],['supporting','supporting','Upload Evidence','Add drawings, RAMS, job sheets and other workplace documents.'],['witness','witness','Employer Verification','Have workplace evidence verified by a suitable witness.'],['practical','observation','Assessor Observation','Direct workplace observation completed by the assessor.']];
- const theory=[['statement','statement','Write About It','Answer the knowledge requirements in writing.'],['professionalDiscussion','microphone','Talk About It','Answer the knowledge requirements by recorded voice discussion.']];
+ const theory=[['statement','statement','Write About It','Answer the knowledge requirements in writing.'],['professionalDiscussion','microphone','Talk About It','Answer the knowledge requirements by recorded voice discussion.'],['supporting','supporting','Upload Evidence','Upload completed question packs, workbooks or other existing theory evidence.']];
  const methods=mode==='practical'?practical:theory;
  app.innerHTML=shell(`<button class="back no-print" id="nvqModeBack">← EP${a.n}</button><div class="assignment-title"><div class="number">EP${a.n} · UNIT ${esc(a.unit||'')}</div><h2>${mode==='practical'?'Practical':'Theory'}</h2><p class="muted">${esc(a.title)}</p></div><section class="nvq-mode-summary"><strong>${stats.pct}% of ${mode} evidence methods completed</strong><p>${mode==='practical'?'Collect evidence from normal workplace performance. The detailed City & Guilds assessment criteria are mapped behind the scenes.':'Show the knowledge and understanding that supports the workplace evidence. Detailed assessment criteria remain mapped behind the scenes.'}</p></section><section class="nvq-mode-methods">${methods.map(([section,icon,title,desc])=>`<button type="button" class="nvq-mode-method" data-nvq-method="${section}"><span class="section-title-icon">${appIcon(icon)}</span><strong>${title}</strong><small>${desc}</small></button>`).join('')}</section><p class="nvq-hidden-map-note">Learner view is simplified to Practical and Theory. Unit, learning outcome and assessment-criterion references remain available for portfolio and quality-assurance mapping.</p>`);
  document.getElementById('nvqModeBack').onclick=()=>{state.view='assignment';render()};
- document.querySelectorAll('[data-nvq-method]').forEach(b=>b.onclick=()=>{const section=b.dataset.nvqMethod;if(section==='witness'){showVerifiedEvidenceChooser();return}state.section=section;if(section==='discussion'){state.view='section'}else state.view='section';render();window.scrollTo(0,0)});
+ document.querySelectorAll('[data-nvq-method]').forEach(b=>b.onclick=()=>{const section=b.dataset.nvqMethod;if(section==='witness'){showVerifiedEvidenceChooser();return}if(section==='supporting')state.nvqSupportingPurpose=mode;state.section=section;state.view='section';render();window.scrollTo(0,0)});
 }
 function renderAssignment(){
  const a=assignment(state.assignment);if(a?.selectOptional){renderOptionalUnitSelection();return}
- if(COURSE.nvqUnits){const lh=assignmentLearningHoursStats(a.n),ps=nvqEvidenceModeStats(a,'practical'),ts=nvqEvidenceModeStats(a,'theory');app.innerHTML=shell(`<button class="back no-print" id="back">← Course</button><div class="assignment-title"><div class="number">EP${a.n} · UNIT ${esc(a.unit||'')}</div><h2>${esc(a.title)}</h2><p class="muted">Complete the practical evidence, theory knowledge and GLH for this unit. Detailed assessment criteria remain mapped behind the scenes.</p></div><section class="nvq-path-grid"><button class="nvq-path-card" id="nvqPractical"><span class="section-title-icon">${appIcon('observation')}</span><h3>Practical</h3><p>Workplace photos, video, documents, witness evidence and assessor observation.</p><div class="muted" style="margin-top:10px">${ps.pct}% evidence methods completed</div></button><button class="nvq-path-card" id="nvqTheory"><span class="section-title-icon">${appIcon('statement')}</span><h3>Theory</h3><p>Written answers and recorded discussion covering knowledge and understanding.</p><div class="muted" style="margin-top:10px">${ts.pct}% evidence methods completed</div></button><button class="nvq-path-card glh-path" id="nvqGlh"><span class="section-title-icon">${appIcon('academy')}</span><div><h3>GLH · ${Math.round(lh.percent||0)}%</h3><p>${Number(lh.total||0).toFixed(1)} of ${Number(lh.required||0).toFixed(1)} hours recorded for this Evidence Pack.</p></div></button></section>${submittedEvidencePreviewHtml(a)}`);document.getElementById('back').onclick=()=>{state.view='course';render()};document.getElementById('nvqPractical').onclick=()=>openNvqEvidenceMode('practical');document.getElementById('nvqTheory').onclick=()=>openNvqEvidenceMode('theory');document.getElementById('nvqGlh').onclick=()=>{state.otjReturnAssignment=a.n;state.glhAssignment=a.n;state.editingOtjId=null;state.otjSelectedActivity=null;state.otjMateTab='entry';state.view='otjmate';render();window.scrollTo(0,0)};document.querySelectorAll('[data-evidence-preview]').forEach(button=>button.onclick=()=>openEvidencePdfPreview(a,button.dataset.evidencePreview,Number(button.dataset.evidenceIndex)||0,button.dataset.otjId||''));return;}
+ if(COURSE.nvqUnits){const lh=assignmentLearningHoursStats(a.n),ps=nvqEvidenceModeStats(a,'practical'),ts=nvqEvidenceModeStats(a,'theory');app.innerHTML=shell(`<button class="back no-print" id="back">← Course</button><div class="assignment-title"><div class="number">EP${a.n} · UNIT ${esc(a.unit||'')}</div><h2>${esc(a.title)}</h2><p class="muted">Complete the practical evidence, theory knowledge and GLH for this unit. Detailed assessment criteria remain mapped behind the scenes.</p></div><section class="nvq-path-grid"><button class="nvq-path-card" id="nvqPractical"><span class="section-title-icon">${appIcon('observation')}</span><h3>Practical</h3><p>Workplace photos, video, documents, witness evidence and assessor observation.</p><div class="muted" style="margin-top:10px">${ps.pct}% evidence methods completed</div></button><button class="nvq-path-card" id="nvqTheory"><span class="section-title-icon">${appIcon('statement')}</span><h3>Theory</h3><p>Written answers, recorded discussion or uploaded question packs covering knowledge and understanding.</p><div class="muted" style="margin-top:10px">${ts.pct}% evidence methods completed</div></button><button class="nvq-path-card glh-path" id="nvqGlh"><span class="section-title-icon">${appIcon('academy')}</span><div><h3>GLH · ${Math.round(lh.percent||0)}%</h3><p>${Number(lh.total||0).toFixed(1)} of ${Number(lh.required||0).toFixed(1)} hours recorded for this Evidence Pack.</p></div></button></section>${submittedEvidencePreviewHtml(a)}`);document.getElementById('back').onclick=()=>{state.view='course';render()};document.getElementById('nvqPractical').onclick=()=>openNvqEvidenceMode('practical');document.getElementById('nvqTheory').onclick=()=>openNvqEvidenceMode('theory');document.getElementById('nvqGlh').onclick=()=>{state.otjReturnAssignment=a.n;state.glhAssignment=a.n;state.editingOtjId=null;state.otjSelectedActivity=null;state.otjMateTab='entry';state.view='otjmate';render();window.scrollTo(0,0)};document.querySelectorAll('[data-evidence-preview]').forEach(button=>button.onclick=()=>openEvidencePdfPreview(a,button.dataset.evidencePreview,Number(button.dataset.evidenceIndex)||0,button.dataset.otjId||''));return;}
  const coverage=COURSE.nvqUnits?nvqCoverageSummary(a.n):ksbCoverageSummary(a.n);
  const videoSection='walkthrough';
  const tiles=[
@@ -5895,11 +5906,11 @@ function renderSection(){const a=assignment(state.assignment),s=state.section;if
  if(s==='witness')body=witnessPage(a,d,locked,sd);
  if(s==='discussion')body=professionalDiscussionPage(a,d,locked,sd);
  if(s==='professionalDiscussion')body=professionalDiscussionPage(a,d,locked,sd);
- if(s==='supporting')body=supportingPage(a,d,locked,sd);
+ if(s==='supporting'){if(COURSE.nvqUnits&&!locked)d.nvqEvidenceMode=state.nvqSupportingPurpose||d.nvqEvidenceMode||'practical';body=supportingPage(a,d,locked,sd)}
  app.innerHTML=shell(`<button class="back no-print" id="back">← EP${a.n}</button><div class="assignment-title"><div class="number">EP${a.n}</div><h2>${sectionTitle(s)}</h2><p class="muted">${esc(a.title)}</p></div>${body}`);
  document.getElementById('back').onclick=()=>{state.view='assignment';render()};bindSection(a,s,sd,d,locked);
 }
-function sectionTitle(s){const titles={practical:['observation','Assessor Observation'],photos:['camera','Take Photos'],statement:['statement','Write About It'],discussion:['video','Record a Video'],professionalDiscussion:['microphone','Talk About It'],witness:['witness','Employer Verification'],supporting:['supporting','Upload Evidence']};const [icon,label]=titles[s],cap=evidenceCapability(s);return `<span class="section-title-icon">${appIcon(icon)}</span>${cap?`<span class="section-title-capability">${cap}</span>`:''}<span class="section-title-label">${label}</span>`}
+function sectionTitle(s){const supportingLabel=COURSE.nvqUnits&&state.nvqSupportingPurpose==='theory'?'Upload Theory Evidence':'Upload Evidence';const titles={practical:['observation','Assessor Observation'],photos:['camera','Take Photos'],statement:['statement','Write About It'],discussion:['video','Record a Video'],professionalDiscussion:['microphone','Talk About It'],witness:['witness','Employer Verification'],supporting:['supporting',supportingLabel]};const [icon,label]=titles[s],cap=evidenceCapability(s);return `<span class="section-title-icon">${appIcon(icon)}</span>${cap?`<span class="section-title-capability">${cap}</span>`:''}<span class="section-title-label">${label}</span>`}
 function versionHistory(sd,s){if(!sd.versions.length)return'';const a=assignment(state.assignment);return `<section class="card panel versions"><h3>Saved attempts</h3>${sd.versions.slice().reverse().map((v,i)=>{const result=(!COURSE.nvqUnits&&(s==='supporting'&&v.tab!=='files'))?(()=>{const pct=percentageScore(a,v);return `<div class="muted">${pct}% — ${gradeForPercentage(pct)}</div>`})():'';return `<div class="version-item"><div><strong>Attempt ${sd.versions.length-i}</strong><div class="muted">Submitted ${esc(v.date||'')}</div>${result}</div><button class="btn secondary" data-view-version="${sd.versions.length-1-i}">Open</button></div>`}).join('')}</section>`}
 function createPracticalSpecificationId(assignmentNumber,difficulty){const courseCode=String(COURSE.standard||COURSE.id||'COURSE').replace(/[^a-z0-9]/gi,'').toUpperCase().slice(0,10),date=new Date(),stamp=`${date.getFullYear()}${String(date.getMonth()+1).padStart(2,'0')}${String(date.getDate()).padStart(2,'0')}`,rand=Math.random().toString(36).slice(2,6).toUpperCase();return `${courseCode}-PA${assignmentNumber}-${String(difficulty||'custom').slice(0,1).toUpperCase()}-${stamp}-${rand}`}
 function practicalSpecificationSections(activity){const text=String(activity||'').trim(),heads=['Task description','Required dimensions','Suggested materials','Completion requirements'];const title=(text.split(/\n/)[0]||'Practical task').trim();const meta={title,difficulty:'Custom task',duration:'Set by assessor',description:'',dimensions:'Refer to task description',materials:'Select suitable materials for the task',requirements:''};const diff=text.match(/Difficulty:\s*([^\n]+)/i),duration=text.match(/Estimated duration:\s*([^\n]+)/i);if(diff)meta.difficulty=diff[1].trim();if(duration)meta.duration=duration[1].trim();for(let i=0;i<heads.length;i++){const h=heads[i],start=text.indexOf(h);if(start<0)continue;const contentStart=start+h.length;let end=text.length;for(let j=i+1;j<heads.length;j++){const pos=text.indexOf(heads[j],contentStart);if(pos>=0){end=pos;break}}const value=text.slice(contentStart,end).trim();if(i===0)meta.description=value;if(i===1)meta.dimensions=value;if(i===2)meta.materials=value;if(i===3)meta.requirements=value}if(!meta.description)meta.description=text;return meta}
