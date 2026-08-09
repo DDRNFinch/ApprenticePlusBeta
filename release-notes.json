@@ -1,6 +1,62 @@
 {
-  "latest": "V2.62",
+  "latest": "V2.67",
   "releases": [
+    {
+      "version": "V2.67",
+      "date": "2026-08-09",
+      "title": "NVQ Practical + Theory workflow",
+      "notes": [
+        "NVQ Evidence Packs now open into Practical, Theory and GLH learner routes.",
+        "Practical groups workplace photos, video, documents, witness evidence and assessor observation.",
+        "Theory groups written evidence and Talk About It voice evidence.",
+        "The learner-facing Evidence Pack no longer presents Learning Outcomes as the main navigation structure; formal mapping remains behind the evidence workflow."
+      ]
+    },
+    {
+      "version": "V2.66",
+      "date": "2026-08-09",
+      "title": "Talk About It recordings restored",
+      "features": [
+        "Fixed Talk About It recordings saved through the shared learner recorder not appearing in Evidence Pack PDFs or portfolio downloads.",
+        "Existing voiceSubmissions are now automatically referenced in the Talk About It PDF section with their KSB/LO codes, filename, duration, date, file size and media format.",
+        "The actual Talk About It audio files are now included in the EP Discussions folder in both complete portfolio downloads and direct Evidence Pack downloads.",
+        "Confirmed KSBs/LOs from shared Talk About It recordings now contribute to the Evidence Pack and overall evidence matrices.",
+        "Future Talk About It recordings are saved with a stable descriptive filename."
+      ]
+    },
+    {
+      "version": "V2.65",
+      "date": "2026-08-09",
+      "title": "Complete evidence text in EP PDFs",
+      "features": [
+        "Written evidence is no longer truncated to fit fixed boxes; full text continues onto additional pages when required.",
+        "Assessor Observations now contain the complete assessor narrative, assessment summary, development points, comments and recording references, with optional photographs on a dedicated 3x3 continuation page.",
+        "Talk About It now clearly references each attached voice file by filename and includes all saved notes/transcript text; the playable audio remains alongside the EP PDF.",
+        "Every OTJ/GLH entry is printed in full, including what was done and what was learned, with automatic continuation pages and a running cumulative hours total.",
+        "The existing Complete EP portfolio structure, EP matrices, overall matrix and New Evidence Since Last Upload record are unchanged."
+      ]
+    },
+    {
+      "version": "V2.64",
+      "date": "2026-08-09",
+      "title": "Portfolio fillStyle crash fixed",
+      "features": [
+        "Fixed the exact PDF generator context error that caused portfolio downloads to fail with Cannot set properties of undefined (setting fillStyle).",
+        "The fault affected both the apprenticeship OTJ section and NVQ GLH section of complete Evidence Pack PDFs.",
+        "The V2.63 Complete EP portfolio structure and GLH/OTJ interface are otherwise unchanged."
+      ]
+    },
+    {
+      "version": "V2.63",
+      "date": "2026-08-09",
+      "title": "GLH matches OTJ design",
+      "features": [
+        "The GLH tab inside NVQ Evidence Packs now uses the same layout and workflow as the OTJ tab in apprenticeship Evidence Packs.",
+        "GLH opens with the same progress ring, suggested learning activities and compact saved-entry list.",
+        "Selecting an activity opens the same streamlined entry form design, with GLH terminology and optional Learning Outcome selection.",
+        "GLH keeps its NVQ-specific data and PDF handling while visually matching OTJ."
+      ]
+    },
     {
       "version": "V2.62",
       "date": "2026-08-09",

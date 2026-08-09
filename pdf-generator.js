@@ -78,7 +78,7 @@ async function generateEvidencePackPDF({course, assignment, profile, sections, b
   (sections.witness||[]).forEach((d,i)=>{const ref=`WT${i+1}`;addEvidence(ref,`Verified by Someone Else ${i+1}`,'Witness Testimony',d.date);selectedCodes(d).forEach(code=>addMatrix(code,ref))});
   (sections.photos||[]).forEach((d,i)=>{const ref=`PE${i+1}`;addEvidence(ref,`Take Photos ${i+1}`,'Photo Evidence',d.date);selectedCodes(d).forEach(code=>addMatrix(code,ref))});
   (sections.discussion||[]).forEach((d,i)=>{const ref=`VW${i+1}`;addEvidence(ref,`Record a Video ${i+1}`,'Video Walkthrough',d.date);selectedCodes(d).forEach(code=>addMatrix(code,ref))});
-  (sections.professionalDiscussion||[]).forEach((d,i)=>{const ref=`PD${i+1}`;addEvidence(ref,`Talk About It ${i+1}`,'Professional Discussion',d.date);Object.keys(d.recordings||{}).filter(code=>d.recordings?.[code]?.data).forEach(code=>addMatrix(code,ref))});
+  (sections.professionalDiscussion||[]).forEach((d,i)=>{const ref=`PD${i+1}`;addEvidence(ref,`Talk About It ${i+1}`,'Professional Discussion',d.date);Object.keys(d.recordings||{}).filter(code=>d.recordings?.[code]?.data).forEach(code=>addMatrix(code,ref));(d.voiceSubmissions||[]).forEach(rec=>(rec.confirmedCodes||rec.intendedCodes||[]).forEach(code=>addMatrix(code,ref))) });
   (sections.walkthrough||[]).forEach((d,i)=>{const ref=`VW${i+1}`;addEvidence(ref,`Record a Video ${i+1}`,'Video Walkthrough',d.date);if(d.code)addMatrix(d.code,ref)});
   (sections.supporting||[]).forEach((d,i)=>{const ref=`SE${i+1}`;addEvidence(ref,`Upload Evidence ${i+1}`,d.type||'Supporting Evidence',d.date);selectedCodes(d).forEach(code=>addMatrix(code,ref))});
   rplCodes.forEach(code=>addMatrix(code,'RPL'));
@@ -149,7 +149,8 @@ async function generateEvidencePackPDF({course, assignment, profile, sections, b
     const labels={1:'Training required',2:'Satisfactory',3:'Competent'};
     return Object.entries(d?.scores||{}).filter(([,score])=>Number(score)>0).map(([code,score])=>`${code}: ${score} / 3 - ${labels[Number(score)]||''}`.trim()).join('\n');
   }
-  function recordingDetails(d,mediaLabel){return Object.entries(d?.recordings||{}).filter(([,rec])=>rec?.data).map(([code,rec])=>`${code}: ${mediaLabel} included${rec.duration?` - ${rec.duration}`:''}${Number(rec.size)>0?` - ${Math.max(1,Math.round(Number(rec.size)/1024))} KB`:''}${rec.date?` - recorded ${rec.date}`:''}${rec.type?` - ${rec.type}`:''}${d.notes?.[code]?`\nNotes: ${d.notes[code]}`:''}`).join('\n\n')}
+  function talkAboutFileName(rec,index=0){const codes=rec?.confirmedCodes||rec?.intendedCodes||[],ext=mediaExtension(rec?.type,rec?.name||'','audio',rec?.data);return rec?.name||`Talk About It - ${codes.join('-')||`Discussion ${index+1}`} - ${rec?.id||index+1}${ext}`}
+  function recordingDetails(d,mediaLabel){const rows=Object.entries(d?.recordings||{}).filter(([,rec])=>rec?.data).map(([code,rec])=>{const file=rec.name||`${code} - Talk About It recording`;return `${code}: ${mediaLabel}\nAttached audio file: ${file}${rec.duration?`\nDuration: ${rec.duration}`:''}${Number(rec.size)>0?`\nFile size: ${Math.max(1,Math.round(Number(rec.size)/1024))} KB`:''}${rec.date?`\nRecorded: ${rec.date}`:''}${rec.type?`\nMedia format: ${rec.type}`:''}${d.notes?.[code]?`\nFull notes / transcript: ${d.notes[code]}`:''}`});(d?.voiceSubmissions||[]).forEach((rec,i)=>{if(!rec?.data)return;const codes=rec.confirmedCodes||rec.intendedCodes||[];rows.push(`${codes.join(', ')||'Talk About It'}: learner voice discussion\nAttached audio file: ${talkAboutFileName(rec,i)}${rec.duration?`\nDuration: ${rec.duration}`:''}${Number(rec.size)>0?`\nFile size: ${Math.max(1,Math.round(Number(rec.size)/1024))} KB`:''}${rec.date?`\nRecorded: ${rec.date}`:''}${rec.type?`\nMedia format: ${rec.type}`:''}`)});return rows.join('\n\n')}
   function observationRecordingDetails(d){return Object.entries(d?.observationRecordings||{}).map(([code,media])=>{const parts=[];if(media?.audio?.data)parts.push(`Professional discussion: ${media.audio.name||`${code}-discussion`}${media.audio.duration?` · ${media.audio.duration}`:''}${media.audio.type?` · ${media.audio.type}`:''}`);if(media?.video?.data)parts.push(`Video: ${media.video.name||`${code}-video`}${media.video.duration?` · ${media.video.duration}`:''}${media.video.type?` · ${media.video.type}`:''}`);return parts.length?`${code}: ${parts.join(' | ')}`:''}).filter(Boolean).join('\n')}
   function fileDetails(d){return (d?.files||[]).map((file,i)=>`${i+1}. ${file.evidenceName||file.name||'Evidence file'}${file.name&&file.evidenceName?` - original file: ${file.name}`:''}${file.type?` - ${file.type}`:''}${Number(file.size)>0?` - ${Math.round(Number(file.size)/1024)} KB`:''}`).join('\n')}
   function captionDetails(d){const rows=[];for(const [code,value] of Object.entries(d?.captions||{})){if(String(value||'').trim())rows.push(`${code}: ${value}`)}for(const [code,photo] of Object.entries(d?.outcomePhotos||{})){if(photo?.data)rows.push(`${code}: ${linkedPhotoFileName(code,0)}`)}for(const [code,photos] of Object.entries(d?.skillPhotos||{}))(photos||[]).forEach((photo,i)=>{if(photo?.data)rows.push(`${code} photo ${i+1}: ${linkedPhotoFileName(code,i)}`)});(d?.photos||[]).forEach((photo,i)=>{if(photo?.data)rows.push(`Photo ${i+1}: ${linkedRecordPhotoFileName(d,i)}`)});return rows.join('\n')}
@@ -163,17 +164,26 @@ async function generateEvidencePackPDF({course, assignment, profile, sections, b
     x.fillStyle=INK;x.font=`400 ${font}px Arial`;lines.forEach((line,i)=>x.fillText(line,px+12,py+51+i*lh));
   }
   async function addCompleteEvidenceRecord({title,version,date,type,newEvidenceType=type,fields,signatureTitle='Signature',signatureData=''}){
-    const blocks=(fields||[]).map(([labelText,content])=>[labelText,clean(content||'').trim()]).filter(([,content])=>content);
-    const p=meta(newPage(title,version),version,date,type,newEvidenceType),x=p.x,signatureTop=H-258;
-    let y=sectionHeading(x,'Evidence Details',p.y),bottom=signatureData?signatureTop-22:H-112;
-    const longRx=/response|statement|comments?|observation|discussion|notes?|summary|improvement|activity \/ description|video evidence|voice evidence/i;
-    let primaryIndex=blocks.findIndex(([heading])=>longRx.test(heading));if(primaryIndex<0&&blocks.length)primaryIndex=blocks.length-1;
-    const primary=primaryIndex>=0?blocks[primaryIndex]:['Evidence','-'],metaBlocks=blocks.filter((_,i)=>i!==primaryIndex);
-    const gap=10,cols=2,bw=(W-2*M-gap)/cols,metaH=76,rows=Math.ceil(metaBlocks.length/cols);
-    metaBlocks.forEach(([headingText,content],i)=>drawFixedTextBox(x,headingText,content,M+(i%2)*(bw+gap),y+Math.floor(i/2)*(metaH+gap),bw,metaH));
-    y+=rows?rows*(metaH+gap):0;
-    const primaryH=Math.max(118,bottom-y);drawFixedTextBox(x,primary[0],primary[1],M,y,W-2*M,primaryH);
-    if(signatureData){const sig=await loadImage(signatureData);signature(x,sig,signatureTop,signatureTitle,((fields||[]).find(([k,v])=>/learner|assessor|observer|witness|lead|name/i.test(String(k))&&String(v||'').trim())||[])[1]||'',date||'')}
+    const blocks=(fields||[]).map(([heading,content])=>[clean(heading||'Evidence'),clean(content||'').trim()]).filter(([,content])=>content);
+    let pageNo=0,p,x,y;
+    const startPage=continued=>{
+      pageNo++;p=meta(newPage(`${title}${continued?' - Continued':''}`,version),version,date,type,newEvidenceType);x=p.x;y=sectionHeading(x,continued?'Evidence Details (continued)':'Evidence Details',p.y);
+    };
+    const ensure=needed=>{if(y+needed>H-112)startPage(true)};
+    const drawBlock=(heading,content)=>{
+      ensure(58);x.fillStyle='#52605f';x.font='700 12px Arial';x.fillText(clean(heading).toUpperCase(),M,y);y+=25;
+      const lines=wrap(x,content,W-2*M-28,'400 17px Arial');x.fillStyle=INK;x.font='400 17px Arial';
+      for(const line of lines){if(y+24>H-112){startPage(true);x.fillStyle='#52605f';x.font='700 12px Arial';x.fillText(`${clean(heading).toUpperCase()} · CONTINUED`,M,y);y+=25;x.fillStyle=INK;x.font='400 17px Arial'}x.fillText(line,M+12,y);y+=23}
+      y+=17;x.strokeStyle='#E1E9E0';x.lineWidth=1;x.fillRect(M,y,W-2*M,1);y+=20;
+    };
+    startPage(false);
+    if(!blocks.length)drawBlock('Evidence','No additional written evidence was recorded.');
+    else blocks.forEach(([heading,content])=>drawBlock(heading,content));
+    if(signatureData){
+      if(y+190>H-112)startPage(true);
+      const sig=await loadImage(signatureData);
+      signature(x,sig,y,signatureTitle,((fields||[]).find(([k,v])=>/learner|assessor|observer|witness|lead|name/i.test(String(k))&&String(v||'').trim())||[])[1]||'',date||'');
+    }
   }
 
   function submittedPhotoItems(d){
@@ -278,10 +288,11 @@ async function generateEvidencePackPDF({course, assignment, profile, sections, b
 
   const scoreRows=(p,d,startY)=>{const x=p.x;let y=startY;assignment.ksbs.forEach(([code,summary])=>{if(y>H-230){p=meta(newPage(`${p.title||'Assessment'} - Scores Continued`,d._version),d._version,d.date,'Assessment');y=sectionHeading(p.x,'KSB Scores (continued)',p.y)}x=p.x;x.fillStyle=PALE;x.fillRect(M,y-29,W-2*M,45);x.fillStyle=TEAL;x.font='700 19px Arial';x.fillText(code,M+16,y);x.fillStyle=INK;x.font='400 16px Arial';x.fillText(clean(summary),M+105,y);x.textAlign='right';x.font='700 20px Arial';x.fillText(`${d.scores?.[code]||'-'} / 5`,W-M-18,y);x.textAlign='left';y+=52});return {p,y}};
 
-  // Assessor observation: one fixed page with a 3x3 photograph grid.
+  // Assessor observation: preserve the complete narrative and all comments. Photos follow on a dedicated 3x3 page.
   for(let i=0;i<(sections.practical||[]).length;i++){
     const d=sections.practical[i],v=i+1;d._version=v;
-    await addFixedPhotoEvidenceRecord(d,{title:`Verified by Someone Else · AO${v}`,version:`Attempt ${v}`,date:d.date,type:'Assessor Observation',signatureTitle:'Tutor / assessor signature',assessor:true,summaryFields:[['Observer',d.tutor],['Activity observed',d.activity],['KSBs met by this evidence',selectedKsbDetails(d)],['Observation record',d.feedback],['Assessor discussion / recordings',observationRecordingDetails(d)]]});
+    await addCompleteEvidenceRecord({title:`Verified by Someone Else · AO${v}`,version:`Attempt ${v}`,date:d.date,type:'Assessor Observation',fields:[['Observer / assessor',d.tutor||d.assessor],['Activity observed',d.activity],['KSBs met by this evidence',selectedKsbDetails(d)],['Full assessor observation',d.feedback||d.observation||d.observationText],['Assessment summary',d.feedbackSummary],['Areas for improvement',d.feedbackDevelopment],['Additional assessor comments',d.additionalComments],['Assessor discussion / recordings',observationRecordingDetails(d)]],signatureTitle:'Tutor / assessor signature',signatureData:d.signature});
+    if(submittedPhotoItems(d).some(item=>item?.photo?.data)){const photoOnly={...d,signature:''};await addFixedPhotoEvidenceRecord(photoOnly,{title:`Verified by Someone Else · AO${v} · Photographs`,version:`Attempt ${v}`,date:d.date,type:'Assessor Observation',assessor:true,summaryFields:[['KSBs met by this evidence',selectedKsbDetails(d)],['Photo evidence','Optional assessor observation photographs · 3 × 3 grid']]})}
   }
 
   // Photographic evidence: one fixed page with three landscape photographs side by side.
@@ -328,24 +339,14 @@ async function generateEvidencePackPDF({course, assignment, profile, sections, b
   }
 
   if(learningHours){
-    const p=newPage(`${learningHours.label||'Learning'} Evidence`,`${learningHours.longLabel||'Learning hours'}`),x=p.ctx;
-    let y=sectionHeading(x,`${learningHours.longLabel||'Learning hours'} · Evidence Pack requirement`,p.y);
-    x.fillStyle=PALE;x.fillRect(M,y,W-2*M,116);
-    x.fillStyle=INK;x.font='700 20px Arial';x.fillText(`Completed: ${Number(learningHours.total||0).toFixed(1)} hrs`,M+22,y+38);
-    x.fillText(`Required: ${Number(learningHours.target||0).toFixed(1)} hrs`,M+390,y+38);
-    x.fillStyle=learningHours.complete?GREEN:'#b45309';x.font='800 18px Arial';x.fillText(learningHours.complete?'Requirement complete':'Requirement not yet complete',M+22,y+78);
-    y+=148;
-    const rows=Array.isArray(learningHours.entries)?learningHours.entries:[];
-    if(!rows.length){x.fillStyle=MUTED;x.font='400 18px Arial';x.fillText(`No ${learningHours.label||''} entries have been recorded for this Evidence Pack.`,M,y);}
-    for(const e of rows){
-      if(y>H-190){break}
-      x.fillStyle='#ffffff';x.strokeStyle='#DCE7DA';x.lineWidth=1;x.fillRect(M,y,W-2*M,96);x.strokeRect(M+.5,y+.5,W-2*M-1,95);
-      x.fillStyle=TEAL;x.font='700 15px Arial';x.fillText(`${e.date||'-'} · ${Number(e.hours||0).toFixed(1)} hrs${e.activity?` · ${clean(e.activity)}`:''}`,M+16,y+27);
-      x.fillStyle=INK;x.font='400 14px Arial';
-      const detail=clean(e.learned||e.did||e.place||'');
-      wrap(x,detail,W-2*M-32,'400 14px Arial').slice(0,3).forEach((line,i)=>x.fillText(line,M+16,y+52+i*18));
-      y+=106;
-    }
+    const rows=Array.isArray(learningHours.entries)?learningHours.entries:[];let lp,lx,ly,running=0;
+    const startLearningPage=continued=>{lp=newPage(`${learningHours.label||'Learning'} Evidence${continued?' - Continued':''}`,`${learningHours.longLabel||'Learning hours'}`);lx=lp.x;ly=sectionHeading(lx,continued?`${learningHours.longLabel||'Learning hours'} · continued`:`${learningHours.longLabel||'Learning hours'} · Evidence Pack requirement`,lp.y)};
+    const ensureLearning=needed=>{if(ly+needed>H-112)startLearningPage(true)};
+    const learningField=(heading,text)=>{const lines=wrap(lx,clean(text||'-'),W-2*M-40,'400 15px Arial');ensureLearning(42);lx.fillStyle=MUTED;lx.font='700 11px Arial';lx.fillText(heading.toUpperCase(),M+16,ly);ly+=20;lx.fillStyle=INK;lx.font='400 15px Arial';for(const line of lines){if(ly+21>H-112){startLearningPage(true);lx.fillStyle=MUTED;lx.font='700 11px Arial';lx.fillText(`${heading.toUpperCase()} · CONTINUED`,M+16,ly);ly+=20;lx.fillStyle=INK;lx.font='400 15px Arial'}lx.fillText(line,M+16,ly);ly+=20}ly+=10};
+    startLearningPage(false);
+    lx.fillStyle=PALE;lx.fillRect(M,ly,W-2*M,116);lx.fillStyle=INK;lx.font='700 20px Arial';lx.fillText(`Completed: ${Number(learningHours.total||0).toFixed(1)} hrs`,M+22,ly+38);lx.fillText(`Required: ${Number(learningHours.target||0).toFixed(1)} hrs`,M+390,ly+38);lx.fillStyle=learningHours.complete?GREEN:'#b45309';lx.font='800 18px Arial';lx.fillText(learningHours.complete?'Requirement complete':'Requirement not yet complete',M+22,ly+78);ly+=148;
+    if(!rows.length){lx.fillStyle=MUTED;lx.font='400 18px Arial';lx.fillText(`No ${learningHours.label||''} entries have been recorded for this Evidence Pack.`,M,ly)}
+    for(const e of rows){running+=Number(e.hours||0);ensureLearning(90);lx.fillStyle='#FFFFFF';lx.strokeStyle='#DCE7DA';lx.fillRect(M,ly,W-2*M,68);lx.strokeRect(M+.5,ly+.5,W-2*M-1,67);lx.fillStyle=TEAL;lx.font='700 15px Arial';lx.fillText(`${e.date||'-'} · ${Number(e.hours||0).toFixed(1)} hrs · Running total ${running.toFixed(1)} hrs`,M+16,ly+25);lx.fillStyle=INK;lx.font='600 14px Arial';lx.fillText(clean(e.activity||e.place||'Learning activity'),M+16,ly+49);ly+=84;learningField('What did you do?',e.did||e.activity||e.place||'');learningField('What did you learn?',e.learned||'');lx.strokeStyle='#DCE7DA';lx.fillRect(M,ly,W-2*M,1);ly+=24}
   }
 
 
@@ -362,6 +363,7 @@ async function generateEvidencePackPDF({course, assignment, profile, sections, b
   for(let vi=0;vi<(sections.discussion||[]).length;vi++){const version=sections.discussion[vi];for(const [code,rec] of Object.entries(version.recordings||{}))if(rec?.data)walkthroughVideos.push({code,summary:(assignment.ksbs||[]).find(([ksb])=>ksb===code)?.[1],rec,attempt:vi+1,newType:'discussion'})}
   for(let vi=0;vi<(sections.walkthrough||[]).length;vi++){const rec=sections.walkthrough[vi];if(rec?.data)walkthroughVideos.push({code:rec.code||`KSB ${vi+1}`,summary:rec.summary,rec,attempt:vi+1,newType:'walkthrough'})}
   const audios=[];for(let vi=0;vi<(sections.professionalDiscussion||[]).length;vi++){const version=sections.professionalDiscussion[vi];for(const [code,rec] of Object.entries(version.recordings||{}))if(rec?.data)audios.push({code,rec,attempt:vi+1})}
+  for(let vi=0;vi<(sections.professionalDiscussion||[]).length;vi++){const version=sections.professionalDiscussion[vi];(version.voiceSubmissions||[]).forEach((rec,ri)=>{if(rec?.data)audios.push({code:(rec.confirmedCodes||rec.intendedCodes||[]).join('-')||`Discussion-${ri+1}`,rec:{...rec,name:talkAboutFileName(rec,ri)},attempt:vi+1})})}
   if(evidenceFiles.length||walkthroughVideos.length||audios.length){
     const entries=[{name:pdfName,data:pdf}],used=new Set();
     evidenceFiles.forEach(({file,codes,attempt,sectionName},i)=>{const original=String(file.name||''),dot=original.lastIndexOf('.'),mime=String(file.type||''),ext=dot>0?original.slice(dot):mime.startsWith('image/')?`.${mime.split('/')[1].replace('jpeg','jpg')}`:mime.startsWith('video/')?mediaExtension(mime,original,'video',file.data):mime.startsWith('audio/')?mediaExtension(mime,original,'audio',file.data):'.bin',newMark=isNewEvidence(sectionName,attempt)?'NEW EVIDENCE - ':'',prefix=(codes||[]).join('-'),base=safeZipName(`${newMark}${prefix?prefix+' - ':''}${file.evidenceName||file.name||`Evidence file ${i+1}`}`),name=uniqueMediaName(base,ext,used),folder=sectionName==='witness'?'Witness Evidence Files':'Supporting Evidence Files';entries.push({name:`${folder}/${name}`,data:dataUrlBytes(file.data)})});
@@ -421,7 +423,7 @@ async function generateNVQEvidencePackPDF({course, assignment, profile, sections
   (sections.statement||[]).forEach((d,i)=>selectedCodes(d).forEach(c=>add(c,`LS${i+1}`,'Learner Statement')));
   (sections.discussion||[]).forEach((d,i)=>selectedVideoCodes(d).forEach(c=>add(c,`VW${i+1}`,'Video Walkthrough')));
   (sections.walkthrough||[]).forEach((d,i)=>{if(d.code)add(d.code,`VW${i+1}`,'Video Walkthrough')});
-  (sections.professionalDiscussion||[]).forEach((d,i)=>selectedDiscussion(d).forEach(([c])=>add(c,`PD${i+1}`,'Professional Discussion')));
+  (sections.professionalDiscussion||[]).forEach((d,i)=>{selectedDiscussion(d).forEach(([c])=>add(c,`PD${i+1}`,'Professional Discussion'));(d.voiceSubmissions||[]).forEach(rec=>(rec.confirmedCodes||rec.intendedCodes||[]).forEach(c=>add(c,`PD${i+1}`,'Professional Discussion'))) });
   (sections.witness||[]).forEach((d,i)=>selectedCodes(d).forEach(c=>add(c,`WT${i+1}`,'Witness Testimony')));
   (sections.supporting||[]).forEach((d,i)=>selectedCodes(d).forEach(c=>add(c,`SE${i+1}`,'Supporting Evidence')));
   rplCodes.forEach(code=>add(code,'RPL','Recognition of Prior Learning'));
@@ -450,7 +452,8 @@ async function generateNVQEvidencePackPDF({course, assignment, profile, sections
   const selectedOutcomeDetails=d=>selectedScores(d).map(([code,text])=>`${code} - ${text}${assignment.criteria?.[code]?`\nCriteria: ${assignment.criteria[code]}`:''}`).join('\n');
   const selectedKsbDetails=d=>selectedCodes(d).map(code=>{const row=(assignment.ksbs||[]).find(([c])=>c===code);return `${code} - ${row?.[1]||''}`}).join('\n');
   const scoredOutcomeDetails=d=>Object.entries(d?.scores||{}).filter(([,score])=>Number(score)>0).map(([code,score])=>`${String(code).replace(/::/g,' practical mark ')}: ${score} / 5`).join('\n');
-  const recordingOutcomeDetails=(d,labelText)=>Object.entries(d?.recordings||{}).filter(([,rec])=>rec?.data).map(([code,rec])=>`${code}: ${labelText} included${rec.duration?` - ${rec.duration}`:''}${Number(rec.size)>0?` - ${Math.max(1,Math.round(Number(rec.size)/1024))} KB`:''}${rec.date?` - recorded ${rec.date}`:''}${rec.type?` - ${rec.type}`:''}${d.notes?.[code]?`\nNotes: ${d.notes[code]}`:''}`).join('\n\n');
+  const talkAboutOutcomeFileName=(rec,index=0)=>{const codes=rec?.confirmedCodes||rec?.intendedCodes||[],ext=mediaExtension(rec?.type,rec?.name||'','audio',rec?.data);return rec?.name||`Talk About It - ${codes.join('-')||`Discussion ${index+1}`} - ${rec?.id||index+1}${ext}`};
+  const recordingOutcomeDetails=(d,labelText)=>{const rows=Object.entries(d?.recordings||{}).filter(([,rec])=>rec?.data).map(([code,rec])=>{const file=rec.name||`${code} - Talk About It recording`;return `${code}: ${labelText}\nAttached audio file: ${file}${rec.duration?`\nDuration: ${rec.duration}`:''}${Number(rec.size)>0?`\nFile size: ${Math.max(1,Math.round(Number(rec.size)/1024))} KB`:''}${rec.date?`\nRecorded: ${rec.date}`:''}${rec.type?`\nMedia format: ${rec.type}`:''}${d.notes?.[code]?`\nFull notes / transcript: ${d.notes[code]}`:''}`});(d?.voiceSubmissions||[]).forEach((rec,i)=>{if(!rec?.data)return;const codes=rec.confirmedCodes||rec.intendedCodes||[];rows.push(`${codes.join(', ')||'Talk About It'}: learner voice discussion\nAttached audio file: ${talkAboutOutcomeFileName(rec,i)}${rec.duration?`\nDuration: ${rec.duration}`:''}${Number(rec.size)>0?`\nFile size: ${Math.max(1,Math.round(Number(rec.size)/1024))} KB`:''}${rec.date?`\nRecorded: ${rec.date}`:''}${rec.type?`\nMedia format: ${rec.type}`:''}`)});return rows.join('\n\n')};
   const observationRecordingOutcomeDetails=d=>Object.entries(d?.observationRecordings||{}).map(([code,media])=>{const parts=[];if(media?.audio?.data)parts.push(`Professional discussion: ${media.audio.name||`${code}-discussion`}${media.audio.duration?` · ${media.audio.duration}`:''}${media.audio.type?` · ${media.audio.type}`:''}`);if(media?.video?.data)parts.push(`Video: ${media.video.name||`${code}-video`}${media.video.duration?` · ${media.video.duration}`:''}${media.video.type?` · ${media.video.type}`:''}`);return parts.length?`${code}: ${parts.join(' | ')}`:''}).filter(Boolean).join('\n');
   const videoRecordingOutcomeDetails=d=>Object.entries(d?.recordings||{}).filter(([,rec])=>isVideoRecording(rec)).map(([code,rec])=>`${code}: Video recording included${rec.duration?` - ${rec.duration}`:''}${Number(rec.size)>0?` - ${Math.max(1,Math.round(Number(rec.size)/1024))} KB`:''}${rec.date?` - recorded ${rec.date}`:''}${rec.type?` - ${rec.type}`:''}`).join('\n\n');
   const fileOutcomeDetails=d=>(d?.files||[]).map((file,i)=>`${i+1}. ${file.evidenceName||file.name||'Evidence file'}${file.name&&file.evidenceName?` - original file: ${file.name}`:''}${file.type?` - ${file.type}`:''}${Number(file.size)>0?` - ${Math.round(Number(file.size)/1024)} KB`:''}`).join('\n');
@@ -458,16 +461,20 @@ async function generateNVQEvidencePackPDF({course, assignment, profile, sections
   const linkedNvqRecordPhotoFileName=(d,index=0)=>{const codes=selectedCodes(d);if(codes.length===1)return linkedOutcomePhotoFileName(codes[0],index);const details=codes.map(code=>{const item=(assignment.ksbs||[]).find(([itemCode])=>String(itemCode)===String(code));return `${code} - ${item?.[1]||'Evidence'}`}),suffix=` - Photo ${Number(index)+1}.jpg`,base=(details.length?details.join(' + '):`Unit ${assignment.unit||assignment.n} - ${assignment.title}`).replace(/[\\/:*?"<>|]/g,'-').replace(/\s+/g,' ').trim(),limit=Math.max(24,120-suffix.length);return `${base.slice(0,limit).replace(/[ .-]+$/,'')}${suffix}`};
   const photoOutcomeDetails=d=>{const rows=[];for(const [code,photo] of Object.entries(d?.outcomePhotos||{}))if(photo?.data)rows.push(`${code}: ${linkedOutcomePhotoFileName(code,0)}`);(d?.photos||[]).forEach((photo,i)=>{if(photo?.data)rows.push(`Photo ${i+1}: ${linkedNvqRecordPhotoFileName(d,i)}`)});for(const [code,value] of Object.entries(d?.captions||{}))if(String(value||'').trim())rows.push(`${code}: ${value}`);return rows.join('\n')};
   async function addCompleteNvqRecord({title,attempt,date,type,newEvidenceType=type,fields,signatureTitle='Signature',signatureData=''}){
-    const blocks=(fields||[]).map(([a,b])=>[a,clean(b||'').trim()]).filter(([,b])=>b),p=meta(newPage(title,`Attempt ${attempt}`),date,type,attempt,newEvidenceType),x=p.x,signatureTop=H-258;
-    let y=sectionHeading(x,'Evidence Details',p.y),bottom=signatureData?signatureTop-22:H-112;
-    const longRx=/response|statement|comments?|observation|discussion|notes?|summary|improvement|activity \/ description|recordings?/i;
-    let primaryIndex=blocks.findIndex(([heading])=>longRx.test(heading));if(primaryIndex<0&&blocks.length)primaryIndex=blocks.length-1;
-    const primary=primaryIndex>=0?blocks[primaryIndex]:['Evidence','-'],metaBlocks=blocks.filter((_,i)=>i!==primaryIndex);
-    const gap=10,bw=(W-2*M-gap)/2,metaH=74,rows=Math.ceil(metaBlocks.length/2);
-    metaBlocks.forEach(([a,b],i)=>drawFixedTextBox(x,a,b,M+(i%2)*(bw+gap),y+Math.floor(i/2)*(metaH+gap),bw,metaH));
-    y+=rows?rows*(metaH+gap):0;
-    drawFixedTextBox(x,primary[0],primary[1],M,y,W-2*M,Math.max(116,bottom-y));
-    if(signatureData){const sig=await loadImage(signatureData);signature(x,sig,signatureTop,signatureTitle,d.signatureName||d.tutor||d.assessor||d.personName||'',d.signatureDate||d.date||'')}
+    const blocks=(fields||[]).map(([heading,content])=>[clean(heading||'Evidence'),clean(content||'').trim()]).filter(([,content])=>content);
+    let p,x,y;
+    const startPage=continued=>{p=meta(newPage(`${title}${continued?' - Continued':''}`,`Attempt ${attempt}`),date,type,attempt,newEvidenceType);x=p.x;y=sectionHeading(x,continued?'Evidence Details (continued)':'Evidence Details',p.y)};
+    const ensure=needed=>{if(y+needed>H-112)startPage(true)};
+    const drawBlock=(heading,content)=>{
+      ensure(58);x.fillStyle=MUTED;x.font='700 12px Arial';x.fillText(clean(heading).toUpperCase(),M,y);y+=25;
+      const lines=wrap(x,content,W-2*M-28,'400 17px Arial');x.fillStyle=INK;x.font='400 17px Arial';
+      for(const line of lines){if(y+24>H-112){startPage(true);x.fillStyle=MUTED;x.font='700 12px Arial';x.fillText(`${clean(heading).toUpperCase()} · CONTINUED`,M,y);y+=25;x.fillStyle=INK;x.font='400 17px Arial'}x.fillText(line,M+12,y);y+=23}
+      y+=17;x.strokeStyle='#E1E9E0';x.fillRect(M,y,W-2*M,1);y+=20;
+    };
+    startPage(false);
+    if(!blocks.length)drawBlock('Evidence','No additional written evidence was recorded.');
+    else blocks.forEach(([heading,content])=>drawBlock(heading,content));
+    if(signatureData){if(y+175>H-112)startPage(true);const sig=await loadImage(signatureData);signature(x,sig,y,signatureTitle)}
   }
 
   async function addCompactNvqPhotoRecord(d,attempt){
@@ -497,8 +504,8 @@ async function generateNVQEvidencePackPDF({course, assignment, profile, sections
    for(const [code,text] of assignment.ksbs){const refs=evidenceMap[code]||[],refText=refs.length?refs.map(e=>e.ref).join('  '):'No evidence mapped';x.font='600 15px Arial';const desc=wrap(x,clean(text),W-2*M-390,'600 15px Arial');x.font='700 16px Arial';const refLines=wrap(x,refText,280,'700 16px Arial');const rowH=Math.max(58,Math.max(desc.length*20,refLines.length*21)+26);if(y+rowH>H-115){p=meta(newPage('Learning Outcome Evidence Matrix - Continued','Automatic mapping'),'-','Learning Outcome Matrix',1);x=p.x;y=sectionHeading(x,'Learning Outcome Mapping (continued)',p.y);header()}x.fillStyle=refs.length?PALE:'#fafafa';x.fillRect(M,y-25,W-2*M,rowH-6);x.fillStyle=TEAL;x.font='700 18px Arial';x.fillText(code,M+14,y);drawCriterionRpl(x,code,M+52,y,16);x.fillStyle=INK;x.font='600 15px Arial';desc.forEach((line,i)=>x.fillText(line,M+82,y+i*20));x.textAlign='right';x.fillStyle=refs.length?TEAL:MUTED;x.font='700 16px Arial';refLines.forEach((line,i)=>x.fillText(line,W-M-16,y+i*21));x.textAlign='left';y+=rowH}
    if(y+130>H-110){p=meta(newPage('Learning Outcome Evidence Key','Automatic mapping'),'-','Learning Outcome Matrix',1);x=p.x;y=sectionHeading(x,'Evidence Reference Key',p.y)}else y=sectionHeading(x,'Evidence Reference Key',y+12);const keys=['AO  Verified by Someone Else (Assessor)','LS  Write About It','WT  Verified by Someone Else (Witness)','VW  Record a Video','PD  Talk About It','PE  Take Photos'];keys.forEach((t,i)=>{x.fillStyle=INK;x.font='600 16px Arial';x.fillText(t,M+(i%2)*520,y+Math.floor(i/2)*32)})}
 
-  // One fixed page per submission. Assessor observations use a 3x3 photograph grid.
-  for(let i=0;i<(sections.practical||[]).length;i++){const d=sections.practical[i],attempt=i+1;await addCompactNvqAssessorRecord(d,attempt)}
+  // Assessor observations preserve the complete narrative; optional photographs follow on a dedicated 3x3 page.
+  for(let i=0;i<(sections.practical||[]).length;i++){const d=sections.practical[i],attempt=i+1;await addCompleteNvqRecord({title:'Verified by Someone Else',attempt,date:d.date,type:'Assessor Observation',fields:[['Assessor',d.tutor||d.assessor],['Activity observed',d.activity],['Learning Outcomes met by this evidence',selectedKsbDetails(d)],['Full assessor observation',d.feedback||d.observation||d.observationText],['Assessment summary',d.feedbackSummary],['Areas for improvement',d.feedbackDevelopment],['Additional assessor comments',d.additionalComments],['Assessor discussion / recordings',observationRecordingOutcomeDetails(d)]],signatureTitle:'Assessor signature',signatureData:d.signature});const hasPhotos=Object.values(d?.outcomePhotos||{}).some(photo=>photo?.data)||(d?.photos||[]).some(photo=>photo?.data);if(hasPhotos){await addCompactNvqAssessorRecord({...d,feedback:'',signature:''},attempt)}}
   for(let i=0;i<(sections.photos||[]).length;i++){const d=sections.photos[i],attempt=i+1;await addCompactNvqPhotoRecord(d,attempt)}
   for(let i=0;i<(sections.statement||[]).length;i++){const d=sections.statement[i],attempt=i+1;await addCompleteNvqRecord({title:'Write About It',attempt,date:d.date,type:'Learner Statement',fields:[['Learning Outcomes met by this evidence',selectedOutcomeDetails(d)],['Learner response',d.text||d.statement||d.learnerStatement]],signatureTitle:'Learner signature',signatureData:d.signature})}
   for(let i=0;i<(sections.discussion||[]).length;i++){const d=sections.discussion[i],attempt=i+1,codes=selectedVideoCodes(d);await addCompleteNvqRecord({title:'Record a Video',attempt,date:d.date,type:'Video Walkthrough',newEvidenceType:'discussion',fields:[['Learning Outcomes met by this evidence',codes.map(code=>{const row=(assignment.ksbs||[]).find(([itemCode])=>itemCode===code);return `${code} - ${row?.[1]||'Learning Outcome video'}`}).join('\n')],['Video recordings',videoRecordingOutcomeDetails(d)] ]})}
@@ -510,21 +517,14 @@ async function generateNVQEvidencePackPDF({course, assignment, profile, sections
 
 
   if(learningHours){
-    const p=newPage(`${learningHours.label||'GLH'} Evidence`,`Evidence Pack learning hours`),x=p.ctx;
-    let y=sectionHeading(x,`${learningHours.longLabel||'Guided Learning Hours'} · Evidence Pack requirement`,p.y);
-    x.fillStyle=PALE;x.fillRect(M,y,W-2*M,116);
-    x.fillStyle=INK;x.font='700 20px Arial';x.fillText(`Completed: ${Number(learningHours.total||0).toFixed(1)} hrs`,M+22,y+38);
-    x.fillText(`Required: ${Number(learningHours.target||0).toFixed(1)} hrs`,M+390,y+38);
-    x.fillStyle=learningHours.complete?GREEN:'#b45309';x.font='800 18px Arial';x.fillText(learningHours.complete?'Requirement complete':'Requirement not yet complete',M+22,y+78);
-    y+=148;
-    const rows=Array.isArray(learningHours.entries)?learningHours.entries:[];
-    if(!rows.length){x.fillStyle=MUTED;x.font='400 18px Arial';x.fillText('No GLH entries have been recorded for this Evidence Pack.',M,y);}
-    for(const e of rows){
-      if(y>H-190)break;
-      x.fillStyle='#ffffff';x.strokeStyle='#DCE7DA';x.lineWidth=1;x.fillRect(M,y,W-2*M,96);x.strokeRect(M+.5,y+.5,W-2*M-1,95);
-      x.fillStyle=TEAL;x.font='700 15px Arial';x.fillText(`${e.date||'-'} · ${Number(e.hours||0).toFixed(1)} hrs${e.activity?` · ${clean(e.activity)}`:''}`,M+16,y+27);
-      x.fillStyle=INK;x.font='400 14px Arial';const detail=clean(e.learned||e.did||e.place||'');wrap(x,detail,W-2*M-32,'400 14px Arial').slice(0,3).forEach((line,i)=>x.fillText(line,M+16,y+52+i*18));y+=106;
-    }
+    const rows=Array.isArray(learningHours.entries)?learningHours.entries:[];let lp,lx,ly,running=0;
+    const startLearningPage=continued=>{lp=newPage(`${learningHours.label||'GLH'} Evidence${continued?' - Continued':''}`,'Evidence Pack learning hours');lx=lp.x;ly=sectionHeading(lx,continued?`${learningHours.longLabel||'Guided Learning Hours'} · continued`:`${learningHours.longLabel||'Guided Learning Hours'} · Evidence Pack requirement`,lp.y)};
+    const ensureLearning=needed=>{if(ly+needed>H-112)startLearningPage(true)};
+    const learningField=(heading,text)=>{const lines=wrap(lx,clean(text||'-'),W-2*M-40,'400 15px Arial');ensureLearning(42);lx.fillStyle=MUTED;lx.font='700 11px Arial';lx.fillText(heading.toUpperCase(),M+16,ly);ly+=20;lx.fillStyle=INK;lx.font='400 15px Arial';for(const line of lines){if(ly+21>H-112){startLearningPage(true);lx.fillStyle=MUTED;lx.font='700 11px Arial';lx.fillText(`${heading.toUpperCase()} · CONTINUED`,M+16,ly);ly+=20;lx.fillStyle=INK;lx.font='400 15px Arial'}lx.fillText(line,M+16,ly);ly+=20}ly+=10};
+    startLearningPage(false);
+    lx.fillStyle=PALE;lx.fillRect(M,ly,W-2*M,116);lx.fillStyle=INK;lx.font='700 20px Arial';lx.fillText(`Completed: ${Number(learningHours.total||0).toFixed(1)} hrs`,M+22,ly+38);lx.fillText(`Required: ${Number(learningHours.target||0).toFixed(1)} hrs`,M+390,ly+38);lx.fillStyle=learningHours.complete?GREEN:'#b45309';lx.font='800 18px Arial';lx.fillText(learningHours.complete?'Requirement complete':'Requirement not yet complete',M+22,ly+78);ly+=148;
+    if(!rows.length){lx.fillStyle=MUTED;lx.font='400 18px Arial';lx.fillText('No GLH entries have been recorded for this Evidence Pack.',M,ly)}
+    for(const e of rows){running+=Number(e.hours||0);ensureLearning(90);lx.fillStyle='#FFFFFF';lx.strokeStyle='#DCE7DA';lx.fillRect(M,ly,W-2*M,68);lx.strokeRect(M+.5,ly+.5,W-2*M-1,67);lx.fillStyle=TEAL;lx.font='700 15px Arial';lx.fillText(`${e.date||'-'} · ${Number(e.hours||0).toFixed(1)} hrs · Running total ${running.toFixed(1)} hrs`,M+16,ly+25);lx.fillStyle=INK;lx.font='600 14px Arial';lx.fillText(clean(e.activity||e.place||'Guided learning activity'),M+16,ly+49);ly+=84;learningField('What happened?',e.did||e.activity||e.place||'');learningField('What did you learn?',e.learned||'');lx.strokeStyle='#DCE7DA';lx.fillRect(M,ly,W-2*M,1);ly+=24}
   }
 
   const total=pages.length;pages.forEach((p,i)=>{const x=p.ctx;x.fillStyle='#DCE7DA';x.fillRect(M,H-72,W-2*M,1);x.fillStyle=MUTED;x.font='500 13px Arial';x.fillText('Apprentice+ · NVQ Evidence Pack',M,H-34);x.textAlign='right';x.fillText(`${i+1} / ${total}`,W-M,H-34);x.textAlign='left'});
@@ -533,6 +533,7 @@ async function generateNVQEvidencePackPDF({course, assignment, profile, sections
   const walkthroughVideos=[];for(let vi=0;vi<(sections.discussion||[]).length;vi++){const version=sections.discussion[vi];for(const [code,rec] of Object.entries(version.recordings||{}))if(isVideoRecording(rec))walkthroughVideos.push({code,rec,attempt:vi+1,type:'video',newType:'discussion'})}
   for(let vi=0;vi<(sections.walkthrough||[]).length;vi++){const rec=sections.walkthrough[vi];if(rec?.data)walkthroughVideos.push({code:rec.code||`KSB ${vi+1}`,rec,attempt:vi+1,type:'video',newType:'walkthrough'})}
   for(let vi=0;vi<(sections.professionalDiscussion||[]).length;vi++){const version=sections.professionalDiscussion[vi];for(const [code,rec] of Object.entries(version.recordings||{}))if(rec?.data)walkthroughVideos.push({code,rec,attempt:vi+1,type:'audio',newType:'professionalDiscussion'})}
+  for(let vi=0;vi<(sections.professionalDiscussion||[]).length;vi++){const version=sections.professionalDiscussion[vi];(version.voiceSubmissions||[]).forEach((rec,ri)=>{if(rec?.data)walkthroughVideos.push({code:(rec.confirmedCodes||rec.intendedCodes||[]).join('-')||`Discussion-${ri+1}`,rec:{...rec,name:talkAboutOutcomeFileName(rec,ri)},attempt:vi+1,type:'audio',newType:'professionalDiscussion'})})}
   const evidenceFiles=[];for(const sectionName of ['witness','supporting'])for(let vi=0;vi<(sections[sectionName]||[]).length;vi++){const version=sections[sectionName][vi];for(const file of version.files||[])if(file?.data)evidenceFiles.push({file,attempt:vi+1,sectionName})}
   if(walkthroughVideos.length||evidenceFiles.length){
     const entries=[{name:pdfName,data:pdf}],used=new Set();
