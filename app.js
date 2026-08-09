@@ -248,7 +248,7 @@ function learnerPromptTitle(assignmentNumber,code,fallback){
  return LEARNER_PROMPTS[COURSE.id]?.[assignmentNumber]?.[code]||fallback;
 }
 
-const APP_VERSION='V2.77';
+const APP_VERSION='V2.76';
 function paintPdfPageBackground(ctx,W,H){ctx.fillStyle='#ffffff';ctx.fillRect(0,0,W,H);const r=Math.min(W,H)*0.58,g=ctx.createRadialGradient(0,0,0,0,0,r);g.addColorStop(0,'#DDF3D6');g.addColorStop(.42,'#EFF8EC');g.addColorStop(1,'#FFFFFF');ctx.fillStyle=g;ctx.fillRect(0,0,W,H)}
 
 const PORTFOLIO_UPLOAD_LIMIT_BYTES=1_000_000_000;
@@ -3506,40 +3506,22 @@ function nvqCriterionEvidenceStatus(a,row){
  if(assignmentRPL(a.n)||criterionRPL(a.n,lo))return {count:required,required,complete:true,rpl:true,sources:['RPL'],stamp:'RPL'};
  const sources=[],add=label=>{if(!sources.includes(label))sources.push(label)};
  let observed=false,verified=false;
-
- // Assessor Observation is direct assessor verification for BOTH Practical and Theory.
- // If the observation covers the LO containing this criterion, the criterion is fully verified.
- sectionData(a.n,'practical').versions.forEach(v=>{
-   if(evidenceCodesFromVersion(a,'practical',v).includes(lo)){
-     observed=true;
-     add('Assessor Observation');
-   }
- });
-
- // Witness Testimony is direct verification for Practical criteria only.
- if(row.type==='practical'){
-   sectionData(a.n,'witness').versions.forEach(v=>{
-     if(evidenceCodesFromVersion(a,'witness',v).includes(lo)){
-       verified=true;
-       add('Witness / Employer');
-     }
-   });
- }
-
- // Count the remaining normal evidence routes without double-counting direct verification.
  for(const [section,label] of nvqCriterionSourceGroups(row.type)){
-  if(section==='practical'||section==='witness')continue;
   sectionData(a.n,section).versions.forEach(v=>{
    if(section==='supporting'){
     const purpose=v.nvqEvidenceMode||'practical';
     if(row.type==='theory'&&purpose!=='theory')return;
     if(row.type==='practical'&&purpose==='theory')return;
    }
-   if(evidenceCodesFromVersion(a,section,v).includes(lo))add(label);
+   if(evidenceCodesFromVersion(a,section,v).includes(lo)){
+    add(label);
+    if(row.type==='practical'&&section==='practical')observed=true;
+    if(row.type==='practical'&&section==='witness')verified=true;
+   }
   });
  }
  if(row.type==='practical'&&walkthroughComplete(a.n,lo))add('Record a Video');
- const direct=observed||(row.type==='practical'&&verified),count=direct?required:Math.min(required,sources.length);
+ const direct=observed||verified,count=direct?required:Math.min(required,sources.length);
  return {count,required,complete:direct||count>=required,rpl:false,sources,stamp:direct?'Verified':''};
 }
 function nvqLiveCriterionMatrix(){
@@ -3571,7 +3553,7 @@ function renderNvqEvidenceMatrix(){
  app.innerHTML=shell(`<section class="nvq-matrix-head"><div><div class="number">NVQ EVIDENCE MATRIX</div><h2>Assessment criteria</h2><p>Live evidence coverage before portfolio upload. Practical and Theory evidence is mapped back to the official unit criteria.</p></div><div class="nvq-matrix-progress"><strong>${pct}%</strong><span>${complete} of ${total} complete</span></div></section>
  <section class="nvq-matrix-stats"><button data-matrix-filter="complete"><strong>${complete}</strong><span>Complete</span></button><button data-matrix-filter="progress"><strong>${inProgress}</strong><span>In progress</span></button><button data-matrix-filter="outstanding"><strong>${outstanding}</strong><span>Outstanding</span></button><div><strong>${total}</strong><span>Total criteria</span></div></section>
  <section class="nvq-matrix-controls"><div class="nvq-matrix-filters">${[['all','All'],['outstanding','Outstanding'],['progress','In progress'],['complete','Complete'],['practical','Practical'],['theory','Theory']].map(([id,label])=>`<button class="${filter===id?'active':''}" data-matrix-filter="${id}">${label}</button>`).join('')}</div><input class="input" id="nvqMatrixSearch" value="${esc(state.nvqMatrixSearch||'')}" placeholder="Search criterion, unit or Evidence Pack"></section>
- <section class="nvq-matrix-key"><span><i class="complete"></i>Complete</span><span><i class="progress"></i>Part evidenced</span><span><i class="empty"></i>Outstanding</span><small>Practical normally requires 2 evidence forms. Assessor Observation fully verifies covered Practical and Theory criteria. Witness Testimony fully verifies covered Practical criteria only. Theory otherwise requires 1 evidence form.</small></section>
+ <section class="nvq-matrix-key"><span><i class="complete"></i>Complete</span><span><i class="progress"></i>Part evidenced</span><span><i class="empty"></i>Outstanding</span><small>Practical normally requires 2 evidence forms. Any criterion covered by an Assessor Observation or Witness Testimony is fully evidenced and marked VERIFIED. Theory requires 1 evidence form.</small></section>
  <section class="nvq-matrix-units">${unitGroups||'<div class="card panel"><div class="panel-body"><h3>No matching criteria</h3><p class="muted">Change the filter or search.</p></div></div>'}</section>`);
  document.querySelectorAll('[data-matrix-filter]').forEach(b=>b.onclick=()=>{state.nvqMatrixFilter=b.dataset.matrixFilter;renderNvqEvidenceMatrix();window.scrollTo(0,0)});
  const search=document.getElementById('nvqMatrixSearch');if(search)search.oninput=()=>{state.nvqMatrixSearch=search.value;clearTimeout(state.nvqMatrixSearchTimer);state.nvqMatrixSearchTimer=setTimeout(()=>renderNvqEvidenceMatrix(),180)};
