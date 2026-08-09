@@ -1,6 +1,17 @@
 {
-  "latest": "V2.76",
+  "latest": "V2.77",
   "releases": [
+    {
+      "version": "V2.77",
+      "date": "2026-08-09",
+      "title": "Observation verifies Theory criteria",
+      "features": [
+        "NVQ Assessor Observation now fully verifies every covered Practical and Theory criterion in the Evidence Matrix.",
+        "Covered criteria show the round green VERIFIED stamp.",
+        "Witness Testimony continues to fully verify covered Practical criteria only and does not automatically verify Theory criteria.",
+        "Theory criteria not covered by an Assessor Observation still require one normal Theory evidence form."
+      ]
+    },
     {
       "version": "V2.76",
       "date": "2026-08-09",
