@@ -248,7 +248,7 @@ function learnerPromptTitle(assignmentNumber,code,fallback){
  return LEARNER_PROMPTS[COURSE.id]?.[assignmentNumber]?.[code]||fallback;
 }
 
-const APP_VERSION='V2.77';
+const APP_VERSION='V2.78';
 function paintPdfPageBackground(ctx,W,H){ctx.fillStyle='#ffffff';ctx.fillRect(0,0,W,H);const r=Math.min(W,H)*0.58,g=ctx.createRadialGradient(0,0,0,0,0,r);g.addColorStop(0,'#DDF3D6');g.addColorStop(.42,'#EFF8EC');g.addColorStop(1,'#FFFFFF');ctx.fillStyle=g;ctx.fillRect(0,0,W,H)}
 
 const PORTFOLIO_UPLOAD_LIMIT_BYTES=1_000_000_000;
@@ -6785,7 +6785,7 @@ function monthlyEvidenceCode(name){const m=String(name||'').match(/(?:^|[^A-Z0-9
 function monthlyFileExtension(name,fallback='.bin'){const m=String(name||'').match(/(\.[a-z0-9]{2,5})$/i);return m?m[1].toLowerCase():fallback}
 function monthlyAssignmentFolder(n){
  const a=assignment(Number(n)),title=safeZipName(a?.title||`Evidence Pack ${n}`).replace(/^[- .]+|[- .]+$/g,'');
- return `EP-${title||String(n)}`;
+ return `EP${Number(n)}-${title||String(n)}`;
 }
 function monthlyEvidenceFile(entry,assignmentNumber,counters){
  const original=String(entry.name||''),lower=original.toLowerCase(),code=monthlyEvidenceCode(original),codePart=code?` - ${code}`:'';
@@ -7009,13 +7009,83 @@ function portfolioMatrixRecordsFromExports(exported=[]){
  return rows;
 }
 function portfolioAddSourceFiles(a,sections,packageEntries,items,existingPaths,exports){
- const folder=monthlyAssignmentFolder(a.n),add=(sub,name,data,label,codes=[])=>{if(!data)return;const path=`${folder}/${sub}/${name}`;if(existingPaths.has(path.toLowerCase()))return;let bytes;try{bytes=data instanceof Uint8Array?data:dataUrlBytes(data)}catch{return}packageEntries.push({name:path,data:bytes});items.push({folder,filename:name,path,label,assignment:a.n,data:bytes});existingPaths.add(path.toLowerCase());exports.push({assignment:a.n,section:sub,codes:[...new Set(codes||[])],path,label})};
- (sections.walkthrough||[]).forEach((rec,i)=>{if(rec?.data){const codes=rec.codes||rec.confirmedCodes||(rec.code?[rec.code]:[]),name=`${safeZipName(codes.join('-')||`Video ${i+1}`)} - Video${monthlyFileExtension(rec.name,'.webm')}`;add('Video Evidence',name,rec.data,'Video evidence',codes)}});
- for(const section of ['discussion','professionalDiscussion','practical'])for(let vi=0;vi<(sections[section]||[]).length;vi++){const v=sections[section][vi],baseCodes=selectedCodesForEvidence(a,v,section);for(const [code,rec] of Object.entries(v.recordings||{})){if(rec?.data){const kind=String(rec.type||'').startsWith('video/')?'Video':'Discussion',sub=kind==='Video'?'Video Evidence':'Discussions';add(sub,`${safeZipName(code)} - ${kind} ${vi+1}${monthlyFileExtension(rec.name,'.webm')}`,rec.data,kind,[code])}}
-   if(section==='professionalDiscussion'){(v.voiceSubmissions||[]).forEach((rec,ri)=>{if(!rec?.data)return;const codes=rec.confirmedCodes||rec.intendedCodes||[],ext=monthlyFileExtension(rec.name,'.webm'),base=rec.name?safeZipName(rec.name.replace(/\.[^.]+$/,'')):`Talk About It - ${safeZipName(codes.join('-')||`Discussion ${ri+1}`)} - ${safeZipName(rec.id||String(ri+1))}`;add('Discussions',`${base}${ext}`,rec.data,'Talk About It recording',codes)})}
-   for(const [code,media] of Object.entries(v.observationRecordings||{})){if(media?.video?.data)add('Observation Media',`${safeZipName(code)} - Observation Video ${vi+1}${monthlyFileExtension(media.video.name,'.webm')}`,media.video.data,'Observation video',[code]);if(media?.audio?.data)add('Observation Media',`${safeZipName(code)} - Assessor Discussion ${vi+1}${monthlyFileExtension(media.audio.name,'.webm')}`,media.audio.data,'Assessor discussion',[code])}
-   (v.files||[]).forEach((file,fi)=>{if(file?.data){const ext=monthlyFileExtension(file.name,'.bin'),base=safeZipName(file.name||`Source File ${fi+1}`),name=base.toLowerCase().endsWith(ext.toLowerCase())?base:base+ext;add('Source Files',name,file.data,'Source attachment',baseCodes)}})}
- const rpl=rplDraft(a.n);(rpl.entries||[]).forEach((entry,ri)=>(entry.files||[]).forEach((file,fi)=>{if(file?.data){const ext=monthlyFileExtension(file.name,'.bin'),base=safeZipName(file.name||`RPL Evidence ${fi+1}`),name=base.toLowerCase().endsWith(ext.toLowerCase())?base:base+ext;add('RPL Source Files',`${String(ri+1).padStart(2,'0')} - ${name}`,file.data,'RPL source evidence',entry.codes||[])}}));
+ const folder=monthlyAssignmentFolder(a.n),subCounters={};
+ const numbered=(sub,name)=>{subCounters[sub]=(subCounters[sub]||0)+1;return `${String(subCounters[sub]).padStart(2,'0')} - ${name}`};
+ const add=(sub,name,data,label,codes=[])=>{
+   if(!data)return;
+   const numberedName=numbered(sub,name),path=`${folder}/${sub}/${numberedName}`;
+   if(existingPaths.has(path.toLowerCase()))return;
+   let bytes;try{bytes=data instanceof Uint8Array?data:dataUrlBytes(data)}catch{return}
+   packageEntries.push({name:path,data:bytes});
+   items.push({folder,filename:numberedName,path,label,assignment:a.n,data:bytes});
+   existingPaths.add(path.toLowerCase());
+   exports.push({assignment:a.n,section:sub,codes:[...new Set(codes||[])],path,label});
+ };
+ (sections.walkthrough||[]).forEach((rec,i)=>{
+   if(rec?.data){
+     const codes=rec.codes||rec.confirmedCodes||(rec.code?[rec.code]:[]),
+     name=`${safeZipName(codes.join('-')||`Video ${i+1}`)} - Video${monthlyFileExtension(rec.name,'.webm')}`;
+     add('04 - Video Evidence',name,rec.data,'Video evidence',codes);
+   }
+ });
+ for(const section of ['discussion','professionalDiscussion','practical']){
+   for(let vi=0;vi<(sections[section]||[]).length;vi++){
+     const v=sections[section][vi],baseCodes=selectedCodesForEvidence(a,v,section);
+     for(const [code,rec] of Object.entries(v.recordings||{})){
+       if(rec?.data){
+         const kind=String(rec.type||'').startsWith('video/')?'Video':'Discussion',
+         sub=kind==='Video'?'04 - Video Evidence':'05 - Discussions';
+         add(sub,`${safeZipName(code)} - ${kind} ${vi+1}${monthlyFileExtension(rec.name,'.webm')}`,rec.data,kind,[code]);
+       }
+     }
+     if(section==='professionalDiscussion'){
+       (v.voiceSubmissions||[]).forEach((rec,ri)=>{
+         if(!rec?.data)return;
+         const codes=rec.confirmedCodes||rec.intendedCodes||[],
+         ext=monthlyFileExtension(rec.name,'.webm'),
+         base=rec.name?safeZipName(rec.name.replace(/\.[^.]+$/,'')):`Talk About It - ${safeZipName(codes.join('-')||`Discussion ${ri+1}`)} - ${safeZipName(rec.id||String(ri+1))}`;
+         add('05 - Discussions',`${base}${ext}`,rec.data,'Talk About It recording',codes);
+       });
+     }
+     for(const [code,media] of Object.entries(v.observationRecordings||{})){
+       if(media?.video?.data)add('06 - Observation Media',`${safeZipName(code)} - Observation Video ${vi+1}${monthlyFileExtension(media.video.name,'.webm')}`,media.video.data,'Observation video',[code]);
+       if(media?.audio?.data)add('06 - Observation Media',`${safeZipName(code)} - Assessor Discussion ${vi+1}${monthlyFileExtension(media.audio.name,'.webm')}`,media.audio.data,'Assessor discussion',[code]);
+     }
+     (v.files||[]).forEach((file,fi)=>{
+       if(file?.data){
+         const ext=monthlyFileExtension(file.name,'.bin'),
+         base=safeZipName(file.name||`Source File ${fi+1}`),
+         name=base.toLowerCase().endsWith(ext.toLowerCase())?base:base+ext;
+         add('07 - Source Files',name,file.data,'Source attachment',baseCodes);
+       }
+     });
+   }
+ }
+
+ // Every file submitted through Upload Evidence is copied into the complete portfolio.
+ // Theory uploads retain their theory mapping; practical uploads retain their practical mapping.
+ for(let vi=0;vi<(sections.supporting||[]).length;vi++){
+   const v=sections.supporting[vi],
+   codes=selectedCodesForEvidence(a,v,'supporting'),
+   purpose=v.nvqEvidenceMode==='theory'?'Theory':'Practical';
+   (v.files||[]).forEach((file,fi)=>{
+     if(!file?.data)return;
+     const ext=monthlyFileExtension(file.name,'.bin'),
+     base=safeZipName(file.name||`Uploaded Evidence ${vi+1}-${fi+1}`),
+     name=base.toLowerCase().endsWith(ext.toLowerCase())?base:base+ext;
+     add('03 - Uploaded Evidence',`${purpose} - ${name}`,file.data,`${purpose} uploaded evidence`,codes);
+   });
+ }
+
+ const rpl=rplDraft(a.n);
+ (rpl.entries||[]).forEach((entry,ri)=>(entry.files||[]).forEach((file,fi)=>{
+   if(file?.data){
+     const ext=monthlyFileExtension(file.name,'.bin'),
+     base=safeZipName(file.name||`RPL Evidence ${fi+1}`),
+     name=base.toLowerCase().endsWith(ext.toLowerCase())?base:base+ext;
+     add('08 - RPL Source Files',`${String(ri+1).padStart(2,'0')} - ${name}`,file.data,'RPL source evidence',entry.codes||[]);
+   }
+ }));
 }
 async function storedEvidencePackPdfBytes(n){
  try{
@@ -7035,7 +7105,7 @@ async function downloadEntirePortfolio(){
   for(let index=0;index<assignments.length;index++){
    const a=assignments[index],folder=monthlyAssignmentFolder(a.n),sections={};PORTFOLIO_SECTIONS.forEach(section=>sections[section]=sectionData(a.n,section).versions.map(version=>structuredClone(version)));sections.walkthrough=await collectWalkthroughEvidence(a.n,a);
    const complete=await buildCompleteEpPortfolio(a,sections),items=[],existingPaths=new Set();
-   for(const pdf of [complete.matrix,complete.pdf]){const path=`${folder}/${pdf.filename}`;packageEntries.push({name:path,data:pdf.bytes});items.push({folder,filename:pdf.filename,path,label:pdf.label,assignment:a.n,data:pdf.bytes});existingPaths.add(path.toLowerCase());exportedRefs.push({assignment:a.n,section:pdf.section,codes:pdf.codes||[],path,label:pdf.label})}
+   for(const [pdfIndex,pdf] of [complete.matrix,complete.pdf].entries()){const numberedName=`${String(pdfIndex+1).padStart(2,'0')} - ${pdf.filename}`,path=`${folder}/${numberedName}`;packageEntries.push({name:path,data:pdf.bytes});items.push({folder,filename:numberedName,path,label:pdf.label,assignment:a.n,data:pdf.bytes});existingPaths.add(path.toLowerCase());exportedRefs.push({assignment:a.n,section:pdf.section,codes:pdf.codes||[],path,label:pdf.label})}
    // Only files that must remain playable/original sit beside the complete EP PDF.
    portfolioAddSourceFiles(a,sections,packageEntries,items,existingPaths,exportedRefs);
    assignmentGroups.push({folder,title:a.title,items});toast(`Prepared ${assignmentCardCode(a)} · ${index+1}/${assignments.length}`);
