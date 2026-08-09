@@ -214,7 +214,11 @@ async function generateEvidencePackPDF({course, assignment, profile, sections, b
     const summary=summaryFields.filter(([,v])=>clean(v||'').trim());
     if(summary.length){const cols=Math.min(2,summary.length),rows=Math.ceil(summary.length/cols),gap=10,bh=rows>1?72:84,bw=(W-2*M-gap*(cols-1))/cols;summary.forEach(([a,b],i)=>drawFixedTextBox(x,a,b,M+(i%cols)*(bw+gap),y+Math.floor(i/cols)*(bh+gap),bw,bh));y+=rows*(bh+gap)+10}
     if(assessor){await drawFixedPhotoGrid(x,items.slice(0,9),{py:y,cols:3,rows:3,gap:12,captionH:24})}
-    else {await drawFixedPhotoGrid(x,items.slice(0,3),{py:y,cols:3,rows:1,gap:14,captionH:38})}
+    else {
+      await drawFixedPhotoGrid(x,items.slice(0,3),{py:y,cols:3,rows:1,gap:14,captionH:38});
+    if(items.length>3){const extra=meta(newPage(`${title} · Additional Photographs`,`Attempt ${attempt}`),date,type,attempt,newEvidenceType),ex=extra.x,ey=sectionHeading(ex,'Additional Photographs',extra.y);await drawFixedPhotoGrid(ex,items.slice(3,9),{py:ey,cols:3,rows:2,gap:14,captionH:34})}
+      if(items.length>3){const extra=meta(newPage(`${title} · Additional Photographs`,version),version,date,type,newEvidenceType),ex=extra.x,ey=sectionHeading(ex,'Additional Photographs',extra.y);await drawFixedPhotoGrid(ex,items.slice(3,9),{py:ey,cols:3,rows:2,gap:14,captionH:34})}
+    }
     if(d.signature){const sig=await loadImage(d.signature);signature(x,sig,signatureTop,signatureTitle,d.signatureName||d.tutor||d.assessor||d.personName||profile?.name||'',d.signatureDate||d.date||date||'')}
   }
   async function addSubmittedPhotoPages(d,title,version,date,type){
