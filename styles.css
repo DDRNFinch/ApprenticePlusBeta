@@ -6066,3 +6066,20 @@ body.app-dark-mode .notification-bell-item.unread .notification-bell-item-conten
 .practical-photo-grid.shared-photo-grid{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:9px!important}
 .practical-photo-grid.shared-photo-grid .practical-photo-slot{width:100%!important;min-width:0!important;aspect-ratio:16/9}
 @media(max-width:440px){.practical-photo-grid.shared-photo-grid{gap:6px!important}}
+
+/* V2.74 — direct competence stamps in NVQ evidence matrix */
+.nvq-matrix-row.direct-evidence{position:relative;padding-right:92px}
+.nvq-direct-stamp{
+ position:absolute;right:15px;top:50%;transform:translateY(-50%) rotate(-7deg);
+ width:62px;height:62px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+ text-align:center;padding:4px;box-sizing:border-box;border:3px double #4baa32;
+ color:#328327;background:rgba(237,249,232,.94);font-size:.56rem;font-weight:900;
+ letter-spacing:.055em;text-transform:uppercase;line-height:1.05;
+ box-shadow:inset 0 0 0 3px rgba(75,170,50,.12)
+}
+.nvq-direct-stamp.verified{border-color:#54a63e;color:#367e2d}
+.nvq-direct-stamp.rpl{border-color:#3b8d36;color:#2e722a}
+@media(max-width:620px){
+ .nvq-matrix-row.direct-evidence{padding-right:78px}
+ .nvq-direct-stamp{right:10px;width:54px;height:54px;font-size:.49rem}
+}

@@ -248,7 +248,7 @@ function learnerPromptTitle(assignmentNumber,code,fallback){
  return LEARNER_PROMPTS[COURSE.id]?.[assignmentNumber]?.[code]||fallback;
 }
 
-const APP_VERSION='V2.73';
+const APP_VERSION='V2.74';
 function paintPdfPageBackground(ctx,W,H){ctx.fillStyle='#ffffff';ctx.fillRect(0,0,W,H);const r=Math.min(W,H)*0.58,g=ctx.createRadialGradient(0,0,0,0,0,r);g.addColorStop(0,'#DDF3D6');g.addColorStop(.42,'#EFF8EC');g.addColorStop(1,'#FFFFFF');ctx.fillStyle=g;ctx.fillRect(0,0,W,H)}
 
 const PORTFOLIO_UPLOAD_LIMIT_BYTES=1_000_000_000;
@@ -3503,8 +3503,9 @@ function nvqCriterionSourceGroups(type){
 }
 function nvqCriterionEvidenceStatus(a,row){
  const required=row.type==='theory'?1:2,lo=row.lo;
- if(assignmentRPL(a.n)||criterionRPL(a.n,lo))return {count:required,required,complete:true,rpl:true,sources:['RPL']};
+ if(assignmentRPL(a.n)||criterionRPL(a.n,lo))return {count:required,required,complete:true,rpl:true,sources:['RPL'],stamp:'RPL'};
  const sources=[],add=label=>{if(!sources.includes(label))sources.push(label)};
+ let observed=false,verified=false;
  for(const [section,label] of nvqCriterionSourceGroups(row.type)){
   sectionData(a.n,section).versions.forEach(v=>{
    if(section==='supporting'){
@@ -3512,12 +3513,16 @@ function nvqCriterionEvidenceStatus(a,row){
     if(row.type==='theory'&&purpose!=='theory')return;
     if(row.type==='practical'&&purpose==='theory')return;
    }
-   if(evidenceCodesFromVersion(a,section,v).includes(lo))add(label)
+   if(evidenceCodesFromVersion(a,section,v).includes(lo)){
+    add(label);
+    if(row.type==='practical'&&section==='practical')observed=true;
+    if(row.type==='practical'&&section==='witness')verified=true;
+   }
   });
  }
  if(row.type==='practical'&&walkthroughComplete(a.n,lo))add('Record a Video');
- const count=Math.min(required,sources.length);
- return {count,required,complete:count>=required,rpl:false,sources};
+ const direct=observed||verified,count=direct?required:Math.min(required,sources.length);
+ return {count,required,complete:direct||count>=required,rpl:false,sources,stamp:observed?'Observed':verified?'Verified':''};
 }
 function nvqLiveCriterionMatrix(){
  const rows=[];
@@ -3542,13 +3547,13 @@ function renderNvqEvidenceMatrix(){
   if(!rows.length)return '';
   return `<details class="nvq-matrix-unit" ${query||filter!=='all'||done<allUnit.length?'open':''}><summary><span><small>UNIT ${esc(a.unit||'')} · ${assignmentCardCode(a)}</small><strong>${esc(a.title)}</strong></span><span class="nvq-matrix-unit-score ${done===allUnit.length?'complete':''}">${done}/${allUnit.length}</span></summary><div class="nvq-matrix-criteria">${rows.map(row=>{
    const cls=row.complete?'complete':row.count?'progress':'empty',sources=row.sources.length?row.sources.map(s=>`<span>${esc(s)}</span>`).join(''):'<span class="none">No evidence yet</span>';
-   return `<article class="nvq-matrix-row ${cls}"><div class="nvq-matrix-row-main"><div class="nvq-matrix-code"><strong>${esc(row.code)}</strong><span class="nvq-type-pill ${row.type}">${row.type==='theory'?'Theory':'Practical'}</span></div><p>${esc(row.text)}</p></div><div class="nvq-matrix-evidence"><strong>${row.rpl?'RPL':`${row.count}/${row.required}`}</strong><small>${row.complete?'Complete':row.count?'In progress':'Outstanding'}</small><div class="nvq-matrix-sources">${sources}</div></div></article>`;
+   return `<article class="nvq-matrix-row ${cls} ${row.stamp?'direct-evidence':''}"><div class="nvq-matrix-row-main"><div class="nvq-matrix-code"><strong>${esc(row.code)}</strong><span class="nvq-type-pill ${row.type}">${row.type==='theory'?'Theory':'Practical'}</span></div><p>${esc(row.text)}</p></div><div class="nvq-matrix-evidence"><strong>${row.rpl?'RPL':`${row.count}/${row.required}`}</strong><small>${row.complete?'Complete':row.count?'In progress':'Outstanding'}</small><div class="nvq-matrix-sources">${sources}</div></div>${row.stamp?`<span class="nvq-direct-stamp ${row.stamp.toLowerCase()}">${esc(row.stamp)}</span>`:''}</article>`;
   }).join('')}</div></details>`;
  }).join('');
  app.innerHTML=shell(`<section class="nvq-matrix-head"><div><div class="number">NVQ EVIDENCE MATRIX</div><h2>Assessment criteria</h2><p>Live evidence coverage before portfolio upload. Practical and Theory evidence is mapped back to the official unit criteria.</p></div><div class="nvq-matrix-progress"><strong>${pct}%</strong><span>${complete} of ${total} complete</span></div></section>
  <section class="nvq-matrix-stats"><button data-matrix-filter="complete"><strong>${complete}</strong><span>Complete</span></button><button data-matrix-filter="progress"><strong>${inProgress}</strong><span>In progress</span></button><button data-matrix-filter="outstanding"><strong>${outstanding}</strong><span>Outstanding</span></button><div><strong>${total}</strong><span>Total criteria</span></div></section>
  <section class="nvq-matrix-controls"><div class="nvq-matrix-filters">${[['all','All'],['outstanding','Outstanding'],['progress','In progress'],['complete','Complete'],['practical','Practical'],['theory','Theory']].map(([id,label])=>`<button class="${filter===id?'active':''}" data-matrix-filter="${id}">${label}</button>`).join('')}</div><input class="input" id="nvqMatrixSearch" value="${esc(state.nvqMatrixSearch||'')}" placeholder="Search criterion, unit or Evidence Pack"></section>
- <section class="nvq-matrix-key"><span><i class="complete"></i>Complete</span><span><i class="progress"></i>Part evidenced</span><span><i class="empty"></i>Outstanding</span><small>Practical criteria require 2 distinct evidence forms. Theory criteria require 1 evidence form unless completed through RPL.</small></section>
+ <section class="nvq-matrix-key"><span><i class="complete"></i>Complete</span><span><i class="progress"></i>Part evidenced</span><span><i class="empty"></i>Outstanding</span><small>Practical normally requires 2 evidence forms. A signed Assessor Observation or Witness Testimony directly covering the criterion fully evidences it. Theory requires 1 evidence form.</small></section>
  <section class="nvq-matrix-units">${unitGroups||'<div class="card panel"><div class="panel-body"><h3>No matching criteria</h3><p class="muted">Change the filter or search.</p></div></div>'}</section>`);
  document.querySelectorAll('[data-matrix-filter]').forEach(b=>b.onclick=()=>{state.nvqMatrixFilter=b.dataset.matrixFilter;renderNvqEvidenceMatrix();window.scrollTo(0,0)});
  const search=document.getElementById('nvqMatrixSearch');if(search)search.oninput=()=>{state.nvqMatrixSearch=search.value;clearTimeout(state.nvqMatrixSearchTimer);state.nvqMatrixSearchTimer=setTimeout(()=>renderNvqEvidenceMatrix(),180)};
