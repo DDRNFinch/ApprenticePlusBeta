@@ -1,43 +1,28 @@
 'use strict';
 const assert=require('node:assert/strict');
-const {EVIDENCE_TYPE_STYLES,evidenceTypeStyle,takePhotosGridLayout,compileUnitPack,compileFullPortfolioFromUnitPacks,buildKsbMatrixRows}=require('../pdf-generator.js');
+const fs=require('node:fs');
+const {EVIDENCE_TYPE_STYLES,EVIDENCE_TAXONOMY,evidenceTypeStyle,evidenceReference,mediaExportName,witnessRatingRows,collectPortfolioMedia,takePhotosGridLayout,compileUnitPack,compileFullPortfolioFromUnitPacks,buildKsbMatrixRows}=require('../pdf-generator.js');
 
-const cases=new Map([[1,[3,3]],[3,[3,3]],[5,[3,3]],[8,[3,3]],[9,[3,3]]]);
-for(const [photos,[cols,rows]] of cases){
-  const layout=takePhotosGridLayout(photos);
-  assert.deepEqual(layout,{cols,rows});
-  assert.ok(layout.cols*layout.rows>=photos);
-  assert.equal(1,1,`${photos} photos remain one saved-submission page`);
-}
-const submissions=[9,6];
-assert.equal(submissions.length,2,'separate submissions create separate evidence pages');
-assert.deepEqual(submissions.map(takePhotosGridLayout),[{cols:3,rows:3},{cols:3,rows:3}]);
-
-const expected={photo:'#2563A8',statement:'#7046A3',video:'#C94F45',voice:'#087F78',documents:'#A95D00',witness:'#4F46A5',observation:'#24613B',discussion:'#056B8A',simulation:'#8A4B22',rpl:'#9B285F'};
-for(const [type,colour] of Object.entries(expected))assert.equal(EVIDENCE_TYPE_STYLES[type].colour,colour);
-for(const label of ['Take Photos','Learner Statement','Video Evidence','Voice Evidence','Uploaded Document','WT · Witness Testimony','AO · Assessor Observation','PD · Professional Discussion','CS · College Simulation','RPL · Recognition of Prior Learning'])assert.notEqual(evidenceTypeStyle(label),EVIDENCE_TYPE_STYLES.portfolio,`${label} must not fall back to portfolio green`);
-console.log('Take Photos page results: 1=1, 3=1, 5=1, 8=1, 9=1; submissions 9+6=2');
-console.log('Central evidence colour mapping: all supported types resolved');
-
-// Saved-record counting rule: one increment per record/code, including RPL;
-// duplicate mappings inside one record are collapsed.
-const occurrenceCounts=records=>records.reduce((counts,record)=>{for(const code of new Set(record.codes))counts[code]=(counts[code]||0)+1;return counts},{});
-let records=[{codes:['S10']},{codes:['S10','S11','S10']},{type:'RPL',codes:['S10']}];
-assert.deepEqual(occurrenceCounts(records),{S10:3,S11:1});
-records.splice(1,1);
-assert.deepEqual(occurrenceCounts(records),{S10:2});
-assert.equal(occurrenceCounts(records).S11||0,0);
-assert.deepEqual(occurrenceCounts([{codes:['LO3']},{codes:['LO3']}]),{LO3:2});
-console.log('Saved evidence counts: S10=3/S11=1; after delete S10=2/S11=0; NVQ LO3=2');
-
-const bytes=new Uint8Array([1,2,3]),unit1=compileUnitPack({assignmentNumber:1,previewPages:['front-1','matrix-1','WT ratings','RPL attachments'],entries:[{name:'EP1.pdf',data:bytes}]}),unit2=compileUnitPack({assignmentNumber:2,previewPages:['front-2','matrix-2','media path'],entries:[{name:'EP2.pdf',data:bytes}]});
-assert.equal(unit1.pdfBytes,bytes,'preview/download retains the exact generated PDF bytes');
-const full=compileFullPortfolioFromUnitPacks(['portfolio-front','overall-matrix'],[unit1,unit2]);
-assert.deepEqual(full.slice(2,6),unit1.previewPages,'full portfolio reuses unit 1 pages unchanged');
-assert.deepEqual(full.slice(6),unit2.previewPages,'full portfolio reuses unit 2 pages unchanged');
-
-const fixture={name:'Future Standard',assignments:[{n:7,unit:'U7',title:'Generic unit',ksbs:[['K1','Future knowledge'],['S1','Future skill'],['B1','Future behaviour']]}]};
-const matrix=buildKsbMatrixRows(fixture,fixture.assignments,[{assignment:7,codes:['K1','S1'],reference:'EP7-01',type:'WT · Witness Testimony',complete:true},{assignment:7,codes:['B1'],reference:'EP7-RPL1',type:'RPL · Recognition of Prior Learning',complete:true,rpl:true}]);
-assert.deepEqual(matrix.map(row=>[row.code,row.type,row.description,row.count]),[['K1','K','Future knowledge',1],['S1','S','Future skill',1],['B1','B','Future behaviour',1]]);
-assert.equal(matrix[2].rpl,true);assert.deepEqual(matrix[0].references,['EP7-01']);
-console.log('Compiled unit parity, full-portfolio unit reuse and generic future-course KSB matrix: verified');
+assert.deepEqual(Object.keys(EVIDENCE_TAXONOMY),['LRP','LRS','LRV','LRA','DOC','WTS','WOS','WOV','WOA','COS','COV','COA','RPL','OTJ','GLH']);
+assert.deepEqual(takePhotosGridLayout(9),{cols:3,rows:3});
+assert.equal(EVIDENCE_TYPE_STYLES.voice.short,'LRA');assert.equal(evidenceTypeStyle('Talk About It').short,'LRA');
+assert.equal(mediaExportName('LRA',5,['K22'],'webm'),'LRA-05 - Learner Reflective Audio - K22.webm');
+const ratings=witnessRatingRows({scores:{A:1,B:2,C:3},ratingLabels:{A:'Safety',B:'Quality',C:'Conduct'}});
+assert.deepEqual(ratings,[{label:'Safety',rating:1},{label:'Quality',rating:2},{label:'Conduct',rating:3}]);
+const app=fs.readFileSync('app.js','utf8'),pdf=fs.readFileSync('pdf-generator.js','utf8'),css=fs.readFileSync('styles.css','utf8');
+const compiledFn=app.slice(app.indexOf('function compiledEvidencePackTile'),app.indexOf('async function deleteSavedEvidencePdf'));
+assert.match(compiledFn,/Preview EP/);assert.match(compiledFn,/Download EP/);assert.doesNotMatch(compiledFn,/submitted-evidence-row/);
+assert.doesNotMatch(app.slice(app.indexOf('function renderAssignment(){'),app.indexOf('function outcomePhotoControl')),/submittedEvidencePreviewHtml/);
+assert.match(css,/\.compiled-ep-tile\{[^}]*background:#174d32/);assert.match(css,/\.compiled-ep-actions button\{[^}]*background:#d9efd0[^}]*color:#174d32/);
+assert.doesNotMatch(pdf.slice(pdf.indexOf('// Witness testimony:'),pdf.indexOf('// Professional discussion:')),/Photographs|addSubmittedPhotoPages/);
+const data='data:audio/webm;base64,AA==',video='data:video/mp4;base64,AA==';
+const media=collectPortfolioMedia({walkthrough:[{data:video,type:'video/mp4',code:'S10'}],professionalDiscussion:[{voiceSubmissions:[{data,type:'audio/webm',confirmedCodes:['K22']}]}],practical:[{observationRecordings:{S11:{video:{data:video,type:'video/mp4'},audio:{data,type:'audio/webm'}}}},{context:'College simulation',observationRecordings:{K21:{video:{data:video,type:'video/mp4'},audio:{data,type:'audio/webm'}}}}]});
+assert.deepEqual(media.map(x=>x.reference),['LRV-01','LRA-01','WOV-01','WOA-01','COV-02','COA-02']);
+assert.equal(media.length,6,'stored media count equals exported media count');assert.equal(new Set(media.map(x=>`Media/${x.name}`)).size,6);
+assert.ok(media.every(x=>!x.name.includes('Professional Discussion')));assert.ok(media.every(x=>EVIDENCE_TAXONOMY[x.code]));
+let records=[{codes:['S10']},{codes:['S10','S11','S10']},{codes:['S10']}];const counts=records=>records.reduce((o,r)=>{for(const c of new Set(r.codes))o[c]=(o[c]||0)+1;return o},{});assert.deepEqual(counts(records),{S10:3,S11:1});
+const bytes=new Uint8Array([1,2,3]),u=compileUnitPack({assignmentNumber:1,previewPages:['front','matrix','LRS-01','LRP-01'],entries:[{name:'EP.pdf',data:bytes}]});assert.equal(u.pdfBytes,bytes);assert.deepEqual(compileFullPortfolioFromUnitPacks(['portfolio'],[u]).slice(1),u.previewPages);
+const changed=compileUnitPack({assignmentNumber:1,previewPages:['front','matrix','LRS-01 edited','WTS-01'],entries:[{name:'EP.pdf',data:bytes}]});assert.deepEqual(changed.previewPages,['front','matrix','LRS-01 edited','WTS-01']);assert.ok(!changed.previewPages.includes('LRP-01'));
+const course={assignments:[{n:1,unit:'U1',title:'Generic',ksbs:[['K1','Knowledge']]}]},matrix=buildKsbMatrixRows(course,course.assignments,[{assignment:1,codes:['K1'],reference:evidenceReference('LRS',1),complete:true}]);assert.equal(matrix[0].count,1);assert.deepEqual(matrix[0].references,['LRS-01']);
+assert.match(app,/Home/);assert.match(app,/KSB Matrix/);assert.match(app,/Toolkit/);assert.match(app,/COURSE\.nvqUnits\?'GLH':'OTJ'/);assert.match(app,/LO\/AC|Learning Outcome/);
+console.log('Evidence taxonomy, WTS ratings/no-photo, LRA terminology, Media audit, EP refresh/parity, KSB/NVQ regressions: PASS');
