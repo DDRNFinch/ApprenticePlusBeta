@@ -248,7 +248,7 @@ function learnerPromptTitle(assignmentNumber,code,fallback){
  return LEARNER_PROMPTS[COURSE.id]?.[assignmentNumber]?.[code]||fallback;
 }
 
-const APP_VERSION='V2.87';
+const APP_VERSION='V2.89';
 function paintPdfPageBackground(ctx,W,H){ctx.fillStyle='#ffffff';ctx.fillRect(0,0,W,H);const r=Math.min(W,H)*0.58,g=ctx.createRadialGradient(0,0,0,0,0,r);g.addColorStop(0,'#DDF3D6');g.addColorStop(.42,'#EFF8EC');g.addColorStop(1,'#FFFFFF');ctx.fillStyle=g;ctx.fillRect(0,0,W,H)}
 
 const PORTFOLIO_UPLOAD_LIMIT_BYTES=1_000_000_000;
@@ -848,6 +848,22 @@ function completedKsbStats(){
   percentage:clampPct(completed/total*100),
   evidencePercentage:clampPct(evidenceSlots/requirementsTotal*100)
  };
+}
+function completedKsbTypeStats(){
+ if(COURSE.nvqUnits)return {knowledge:null,skills:null,behaviours:null};
+ const required=Number(COURSE.evidenceRequirement||2),records=new Map();
+ courseAssignments().filter(a=>!a.selectOptional).forEach(a=>{
+  const coverage=ksbEvidenceCoverage(a.n);
+  (a.ksbs||[]).forEach(([code])=>{
+   const key=String(code||'').toUpperCase();if(!/^[KSB]\d+/.test(key))return;
+   if(!records.has(key))records.set(key,{sources:new Set(),rpl:false});
+   const item=records.get(key);
+   if(assignmentRPL(a.n)||criterionRPL(a.n,code))item.rpl=true;
+   (coverage?.[code]?.sources||[]).forEach(source=>item.sources.add(source));
+  });
+ });
+ const pct=prefix=>{const rows=[...records.entries()].filter(([code])=>code.startsWith(prefix)).map(([,item])=>item);if(!rows.length)return 0;const complete=rows.filter(item=>item.rpl||item.sources.size>=required).length;return clampPct(complete/rows.length*100)};
+ return {knowledge:pct('K'),skills:pct('S'),behaviours:pct('B')};
 }
 function courseProgressStats(){
  const total=courseAssignments().length||1;
@@ -4263,7 +4279,7 @@ function buildReviewsTargets(){
  return chosen.slice(0,5);
 }
 function scheduleReviewsTargets(targets,reviewDate){return (targets||[]).map((target,index)=>({...target,sequence:index+1,dueDate:reviewAddWeeks(reviewDate,index+1)}))}
-function reviewMateSnapshot(){const progress=courseProgressStats(),otj=otjProgressStats(),evidence=reviewEvidenceStatistics(),epa=COURSE.nvqUnits?null:epaReadinessStats(),academy=monthlyAcademySnapshot();return {capturedAt:new Date().toISOString(),progress:{green:progress.green,yellow:progress.yellow,red:progress.red,completed:progress.completed,total:progress.total,ksbCompleted:progress.ksbCompleted,ksbTotal:progress.ksbTotal,label:progress.label},otj:{total:otj.total,expected:otj.expected},epa:epa?{overall:epa.overall,knowledge:epa.knowledge,discussion:epa.discussion,practical:epa.practical}:null,evidence,academy:{tests:academy.tests.length,knowledgeSlides:academy.slides.length},portfolio:{uploadedAt:monthlyPortfolioState().uploadedAt||''}}}
+function reviewMateSnapshot(){const progress=courseProgressStats(),otj=otjProgressStats(),evidence=reviewEvidenceStatistics(),epa=COURSE.nvqUnits?null:epaReadinessStats(),academy=monthlyAcademySnapshot(),types=completedKsbTypeStats(),actualHoursPercent=otj.fullExpected?Math.min(100,Math.round(otj.total/otj.fullExpected*100)):(otj.expected?Math.min(100,Math.round(otj.total/otj.expected*100)):0);return {capturedAt:new Date().toISOString(),progress:{green:progress.green,yellow:progress.yellow,red:progress.red,completed:progress.completed,total:progress.total,ksbCompleted:progress.ksbCompleted,ksbTotal:progress.ksbTotal,label:progress.label,knowledge:types.knowledge,skills:types.skills,behaviours:types.behaviours},otj:{total:otj.total,expected:otj.expected,fullExpected:otj.fullExpected,percent:actualHoursPercent},epa:epa?{overall:epa.overall,knowledge:epa.knowledge,discussion:epa.discussion,practical:epa.practical}:null,evidence,academy:{tests:academy.tests.length,knowledgeSlides:academy.slides.length},portfolio:{uploadedAt:monthlyPortfolioState().uploadedAt||''}}}
 function reviewTargetAutoComplete(target){
  if(target.category==='criterion')return (reviewCriterionRecords().find(record=>record.key===target.criterionKey)?.count||0)>=(COURSE.nvqUnits?3:2);
  if(target.category==='assignment')return assignmentComplete(Number(target.assignment));
