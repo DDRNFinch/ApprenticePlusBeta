@@ -6083,3 +6083,6 @@ body.app-dark-mode .notification-bell-item.unread .notification-bell-item-conten
  .nvq-matrix-row.direct-evidence{padding-right:78px}
  .nvq-direct-stamp{right:10px;width:54px;height:54px;font-size:.49rem}
 }
+
+/* Informational saved-evidence occurrence count shown beside selectable criteria. */
+.evidence-occurrence-note{background:#eef2f0!important;color:#365047!important;border:1px solid #cfdbd5!important;font-size:11px!important;padding:2px 7px!important;white-space:nowrap}
