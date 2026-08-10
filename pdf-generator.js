@@ -35,8 +35,23 @@ function evidenceTypeStyle(value){
   if(/specification/.test(t))return EVIDENCE_TYPE_STYLES.specification;
   return EVIDENCE_TYPE_STYLES.portfolio;
 }
-function takePhotosGridLayout(photoCount){const count=Math.max(1,Math.min(9,Number(photoCount)||0));return count===1?{cols:1,rows:1}:count===2?{cols:2,rows:1}:count===3?{cols:3,rows:1}:count===4?{cols:2,rows:2}:count<=6?{cols:3,rows:2}:{cols:3,rows:3}}
-if(typeof window!=='undefined'){window.EVIDENCE_TYPE_STYLES=EVIDENCE_TYPE_STYLES;window.evidenceTypeStyle=evidenceTypeStyle}
+function takePhotosGridLayout(){return {cols:3,rows:3}}
+function compileUnitPack({assignmentNumber,previewPages=[],entries=[],pdfName='',evidenceReferences=[]}={}){
+  const pdfEntry=entries.find(entry=>String(entry?.name||'').toLowerCase().endsWith('.pdf'));
+  if(!pdfEntry?.data)throw new Error('A compiled unit pack requires its generated PDF');
+  return Object.freeze({assignmentNumber,pdfName:pdfName||pdfEntry.name,previewPages:Object.freeze([...previewPages]),entries:Object.freeze([...entries]),pdfBytes:pdfEntry.data,evidenceReferences:Object.freeze([...evidenceReferences])});
+}
+function compileFullPortfolioFromUnitPacks(frontPages,unitPacks){
+  return [...(frontPages||[]),...(unitPacks||[]).flatMap(pack=>pack.previewPages)];
+}
+function buildKsbMatrixRows(course,assignments,evidence=[]){
+  const records=Array.isArray(evidence)?evidence:[];
+  return (assignments||[]).flatMap(a=>(a.ksbs||[]).map(([code,description])=>{
+    const supporting=records.filter(record=>Number(record.assignment)===Number(a.n)&&new Set(record.codes||[]).has(code));
+    return {code,type:String(code).charAt(0).toUpperCase(),description,assignment:a.n,unit:a.unit||'',assignmentTitle:a.title||'',count:supporting.length,complete:supporting.some(item=>item.complete)||false,references:supporting.map(item=>item.reference).filter(Boolean),evidenceTypes:[...new Set(supporting.map(item=>item.type).filter(Boolean))],rpl:supporting.some(item=>item.rpl)};
+  }));
+}
+if(typeof window!=='undefined'){window.EVIDENCE_TYPE_STYLES=EVIDENCE_TYPE_STYLES;window.evidenceTypeStyle=evidenceTypeStyle;window.compileUnitPack=compileUnitPack;window.compileFullPortfolioFromUnitPacks=compileFullPortfolioFromUnitPacks;window.buildKsbMatrixRows=buildKsbMatrixRows}
 
 function apprenticePdfBackground(ctx,W,H){ctx.fillStyle='#FFFFFF';ctx.fillRect(0,0,W,H);const r=Math.min(W,H)*0.58,g=ctx.createRadialGradient(0,0,0,0,0,r);g.addColorStop(0,'#DDF3D6');g.addColorStop(.42,'#EFF8EC');g.addColorStop(1,'#FFFFFF');ctx.fillStyle=g;ctx.fillRect(0,0,W,H)}
 
@@ -665,4 +680,4 @@ function makeImagePDF(images,width,height,links=[]){
   const xref=pos;add(`xref\n0 ${count+1}\n0000000000 65535 f \n`);for(let i=1;i<=count;i++)add(`${String(offsets[i]).padStart(10,'0')} 00000 n \n`);add(`trailer\n<< /Size ${count+1} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF`);const total=parts.reduce((s,p)=>s+p.length,0),out=new Uint8Array(total);let at=0;parts.forEach(p=>{out.set(p,at);at+=p.length});return out;
 }
 
-if(typeof module!=='undefined'&&module.exports)module.exports={EVIDENCE_TYPE_STYLES,evidenceTypeStyle,takePhotosGridLayout};
+if(typeof module!=='undefined'&&module.exports)module.exports={EVIDENCE_TYPE_STYLES,evidenceTypeStyle,takePhotosGridLayout,compileUnitPack,compileFullPortfolioFromUnitPacks,buildKsbMatrixRows};
