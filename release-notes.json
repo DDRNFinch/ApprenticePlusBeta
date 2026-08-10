@@ -1,6 +1,16 @@
 {
-  "latest": "V2.86",
+  "latest": "V2.87",
   "releases": [
+    {
+      "version": "V2.87",
+      "date": "2026-08-10",
+      "title": "Reviews route wiring repair",
+      "features": [
+        "Wired the Reviews navigation route directly to the simple learner Reviews screen.",
+        "Ensured installed apps refresh the active Reviews renderer and transfer controls.",
+        "Kept received review history and the latest five assessor targets persisted on Home."
+      ]
+    },
     {
       "version": "V2.86",
       "date": "2026-08-10",
