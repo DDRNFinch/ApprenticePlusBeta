@@ -6947,6 +6947,9 @@ function createPortfolioFallbackPdf(title,lines=[]){
  x.fillStyle='#58B51F';x.fillRect(0,H-58,W,58);x.fillStyle='#F3F8F2';x.font='600 14px Arial';x.fillText(`Apprentice+ ${APP_VERSION}`,M,H-23);
  return makeImagePDF([dataUrlBytes(c.toDataURL('image/jpeg',.92))],W,H);
 }
+function createCompletePortfolioFrontPage(){
+ const W=1240,H=1754,M=88,c=document.createElement('canvas'),x=c.getContext('2d');c.width=W;c.height=H;paintPdfPageBackground(x,W,H);x.fillStyle='#58B51F';x.fillRect(0,0,W,22);x.fillStyle='#18231E';x.font='800 52px Arial';x.fillText('Complete Evidence Portfolio',M,170);x.fillStyle='#68756D';x.font='600 19px Arial';x.fillText('APPRENTICE+ · PROFESSIONAL EVIDENCE RECORD',M,105);x.fillStyle='#58B51F';x.fillRect(M,205,54,4);let y=290;const rows=[['Learner',state.profile?.fullName],['Course / qualification',COURSE.name],['Qualification / standard code',COURSE.standard],['Level',COURSE.level],['Start date',state.profile?.startDate],['Expected end date',state.profile?.endDate||state.profile?.expectedEndDate],['Generated',new Date().toLocaleDateString('en-GB')],['Application version',APP_VERSION]];for(const [label,value] of rows){if(!String(value||'').trim())continue;x.fillStyle='#68756D';x.font='700 13px Arial';x.fillText(label.toUpperCase(),M,y);x.fillStyle='#18231E';x.font='600 22px Arial';x.fillText(String(value),M,y+34);x.fillStyle='#DCE7DA';x.fillRect(M,y+54,W-2*M,1);y+=86}x.fillStyle='#18231E';x.font='700 21px Arial';x.fillText('PERSONS INVOLVED / SIGNATORIES',M,y+28);y+=72;const people=[['Learner',state.profile?.fullName],['Assessor / tutor',state.profile?.mentor],['Employer',state.profile?.employer]].filter(([,name])=>String(name||'').trim());for(const [role,name] of people){x.fillStyle='#F3F8F2';x.fillRect(M,y,W-2*M,54);x.fillStyle='#18231E';x.font='700 16px Arial';x.fillText(String(name),M+16,y+33);x.fillStyle='#68756D';x.textAlign='right';x.fillText(role,W-M-16,y+33);x.textAlign='left';y+=62}x.fillStyle='#58B51F';x.fillRect(0,H-58,W,58);x.fillStyle='#fff';x.font='600 14px Arial';x.fillText('Apprentice+ · Complete Portfolio',M,H-23);return c.toDataURL('image/jpeg',.92)
+}
 function createEpEvidenceMatrixPdf(a,sections,completePdfName){
  const W=1240,H=1754,M=72,pages=[];let c,x,y;
  const required=Math.max(1,Number(COURSE.evidenceRequirement||2)),label=COURSE.nvqUnits?'LO':'KSB',coverage=COURSE.nvqUnits?nvqOutcomeCoverage(a.n):ksbEvidenceCoverage(a.n);
@@ -6967,7 +6970,7 @@ function createEpEvidenceMatrixPdf(a,sections,completePdfName){
  return makeImagePDF(pages.map(canvas=>dataUrlBytes(canvas.toDataURL('image/jpeg',.92))),W,H);
 }
 async function buildCompleteEpPortfolio(a,sections){
- const generated=await generateEvidencePackPDF({course:COURSE,assignment:a,profile:state.profile,sections,branding:state.branding,returnPackage:true,newEvidence:{},assignmentRpl:assignmentRPL(a.n),rplKsbCodes:assignmentIndividualRplCodes(a.n),learningHours:assignmentLearningHoursPdfPayload(a.n)});
+ const generated=await generateEvidencePackPDF({course:COURSE,assignment:a,profile:state.profile,sections,branding:state.branding,returnPackage:true,newEvidence:{},assignmentRpl:assignmentRPL(a.n),rplKsbCodes:assignmentIndividualRplCodes(a.n),rplEvidence:rplDraft(a.n),learningHours:assignmentLearningHoursPdfPayload(a.n)});
  const pdfEntry=(generated?.entries||[]).find(entry=>String(entry.name||'').toLowerCase().endsWith('.pdf'));
  if(!pdfEntry?.data)throw new Error(`${assignmentCardCode(a)} complete Evidence Pack PDF was not generated`);
  const completeName=`${assignmentCardCode(a)} - ${safeZipName(a.title)} - Complete Evidence Pack.pdf`;
@@ -7101,16 +7104,16 @@ async function downloadEntirePortfolio(){
  if(!window.makeZipBlob)return toast('Portfolio generator unavailable');
  const button=document.getElementById('downloadEntirePortfolio');if(button){button.disabled=true;button.textContent='Preparing portfolio...'}
  try{
-  const packageEntries=[],assignmentGroups=[],exportedRefs=[];toast(`Preparing ${assignments.length} Evidence Pack${assignments.length===1?'':'s'}...`);
+  const packageEntries=[],assignmentGroups=[],exportedRefs=[],completePortfolioPages=[createCompletePortfolioFrontPage()];toast(`Preparing ${assignments.length} Evidence Pack${assignments.length===1?'':'s'}...`);
   for(let index=0;index<assignments.length;index++){
    const a=assignments[index],folder=monthlyAssignmentFolder(a.n),sections={};PORTFOLIO_SECTIONS.forEach(section=>sections[section]=sectionData(a.n,section).versions.map(version=>structuredClone(version)));sections.walkthrough=await collectWalkthroughEvidence(a.n,a);
-   const complete=await buildCompleteEpPortfolio(a,sections),items=[],existingPaths=new Set();
+   const complete=await buildCompleteEpPortfolio(a,sections),items=[],existingPaths=new Set();completePortfolioPages.push(...(complete.generated?.previewPages||[]));
    for(const [pdfIndex,pdf] of [complete.matrix,complete.pdf].entries()){const numberedName=`${String(pdfIndex+1).padStart(2,'0')} - ${pdf.filename}`,path=`${folder}/${numberedName}`;packageEntries.push({name:path,data:pdf.bytes});items.push({folder,filename:numberedName,path,label:pdf.label,assignment:a.n,data:pdf.bytes});existingPaths.add(path.toLowerCase());exportedRefs.push({assignment:a.n,section:pdf.section,codes:pdf.codes||[],path,label:pdf.label})}
    // Only files that must remain playable/original sit beside the complete EP PDF.
    portfolioAddSourceFiles(a,sections,packageEntries,items,existingPaths,exportedRefs);
    assignmentGroups.push({folder,title:a.title,items});toast(`Prepared ${assignmentCardCode(a)} · ${index+1}/${assignments.length}`);
   }
-  const matrixRecords=portfolioMatrixRecordsFromExports(exportedRefs);
+  const matrixRecords=portfolioMatrixRecordsFromExports(exportedRefs);packageEntries.unshift({name:'Portfolio/Complete-Portfolio.pdf',data:makeImagePDF(completePortfolioPages.map(dataUrlBytes),1240,1754)});
   packageEntries.unshift({name:'02 - Academy Activity.pdf',data:createMonthlyAcademyPdf(delta)});
   packageEntries.unshift({name:'01 - New Evidence Since Last Upload.pdf',data:createMonthlySummaryPdf(delta,assignmentGroups)});
   packageEntries.unshift({name:'00 - Overall Evidence Matrix.pdf',data:createPortfolioEvidenceMatrixPdf(matrixRecords)});
@@ -7146,7 +7149,7 @@ async function refreshLatestEvidencePackPdf(n){
  const sections={};
  ['practical','photos','statement','discussion','professionalDiscussion','witness','supporting'].forEach(s=>sections[s]=sectionData(n,s).versions.map(v=>structuredClone(v)));
  sections.walkthrough=await collectWalkthroughEvidence(n,a);
- const result=await generateEvidencePackPDF({course:COURSE,assignment:a,profile:state.profile,sections,branding:state.branding,assignmentRpl:assignmentRPL(n),rplKsbCodes:assignmentIndividualRplCodes(n),learningHours:assignmentLearningHoursPdfPayload(n),returnPackage:true});
+ const result=await generateEvidencePackPDF({course:COURSE,assignment:a,profile:state.profile,sections,branding:state.branding,assignmentRpl:assignmentRPL(n),rplKsbCodes:assignmentIndividualRplCodes(n),rplEvidence:rplDraft(n),learningHours:assignmentLearningHoursPdfPayload(n),returnPackage:true});
  const pdfEntry=(result?.entries||[]).find(entry=>String(entry.name||'').toLowerCase().endsWith('.pdf'));
  if(pdfEntry?.data)await putStore(`latestEvidencePackPdf:${COURSE.id}:${n}`,{name:result.pdfName||pdfEntry.name,bytes:Array.from(pdfEntry.data),updatedAt:new Date().toISOString(),learningHours:assignmentLearningHoursPdfPayload(n)});
  return result;
@@ -7159,7 +7162,7 @@ async function downloadPack(n){
  sections.walkthrough=await collectWalkthroughEvidence(n,a);
  try{
   toast('Creating complete evidence package...');
-  const result=await generateEvidencePackPDF({course:COURSE,assignment:a,profile:state.profile,sections,branding:state.branding,assignmentRpl:assignmentRPL(n),rplKsbCodes:assignmentIndividualRplCodes(n),learningHours:assignmentLearningHoursPdfPayload(n)});
+  const result=await generateEvidencePackPDF({course:COURSE,assignment:a,profile:state.profile,sections,branding:state.branding,assignmentRpl:assignmentRPL(n),rplKsbCodes:assignmentIndividualRplCodes(n),rplEvidence:rplDraft(n),learningHours:assignmentLearningHoursPdfPayload(n)});
   state.data[packStatusKey(n)]={downloaded:true,uploaded:false,downloadedAt:new Date().toISOString()};
   
   await saveData();render();toast('Evidence package download started — check your Downloads folder');
