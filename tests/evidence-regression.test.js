@@ -1,8 +1,8 @@
 'use strict';
 const assert=require('node:assert/strict');
-const {EVIDENCE_TYPE_STYLES,evidenceTypeStyle,takePhotosGridLayout}=require('../pdf-generator.js');
+const {EVIDENCE_TYPE_STYLES,evidenceTypeStyle,takePhotosGridLayout,compileUnitPack,compileFullPortfolioFromUnitPacks,buildKsbMatrixRows}=require('../pdf-generator.js');
 
-const cases=new Map([[1,[1,1]],[3,[3,1]],[5,[3,2]],[8,[3,3]],[9,[3,3]]]);
+const cases=new Map([[1,[3,3]],[3,[3,3]],[5,[3,3]],[8,[3,3]],[9,[3,3]]]);
 for(const [photos,[cols,rows]] of cases){
   const layout=takePhotosGridLayout(photos);
   assert.deepEqual(layout,{cols,rows});
@@ -11,7 +11,7 @@ for(const [photos,[cols,rows]] of cases){
 }
 const submissions=[9,6];
 assert.equal(submissions.length,2,'separate submissions create separate evidence pages');
-assert.deepEqual(submissions.map(takePhotosGridLayout),[{cols:3,rows:3},{cols:3,rows:2}]);
+assert.deepEqual(submissions.map(takePhotosGridLayout),[{cols:3,rows:3},{cols:3,rows:3}]);
 
 const expected={photo:'#2563A8',statement:'#7046A3',video:'#C94F45',voice:'#087F78',documents:'#A95D00',witness:'#4F46A5',observation:'#24613B',discussion:'#056B8A',simulation:'#8A4B22',rpl:'#9B285F'};
 for(const [type,colour] of Object.entries(expected))assert.equal(EVIDENCE_TYPE_STYLES[type].colour,colour);
@@ -29,3 +29,15 @@ assert.deepEqual(occurrenceCounts(records),{S10:2});
 assert.equal(occurrenceCounts(records).S11||0,0);
 assert.deepEqual(occurrenceCounts([{codes:['LO3']},{codes:['LO3']}]),{LO3:2});
 console.log('Saved evidence counts: S10=3/S11=1; after delete S10=2/S11=0; NVQ LO3=2');
+
+const bytes=new Uint8Array([1,2,3]),unit1=compileUnitPack({assignmentNumber:1,previewPages:['front-1','matrix-1','WT ratings','RPL attachments'],entries:[{name:'EP1.pdf',data:bytes}]}),unit2=compileUnitPack({assignmentNumber:2,previewPages:['front-2','matrix-2','media path'],entries:[{name:'EP2.pdf',data:bytes}]});
+assert.equal(unit1.pdfBytes,bytes,'preview/download retains the exact generated PDF bytes');
+const full=compileFullPortfolioFromUnitPacks(['portfolio-front','overall-matrix'],[unit1,unit2]);
+assert.deepEqual(full.slice(2,6),unit1.previewPages,'full portfolio reuses unit 1 pages unchanged');
+assert.deepEqual(full.slice(6),unit2.previewPages,'full portfolio reuses unit 2 pages unchanged');
+
+const fixture={name:'Future Standard',assignments:[{n:7,unit:'U7',title:'Generic unit',ksbs:[['K1','Future knowledge'],['S1','Future skill'],['B1','Future behaviour']]}]};
+const matrix=buildKsbMatrixRows(fixture,fixture.assignments,[{assignment:7,codes:['K1','S1'],reference:'EP7-01',type:'WT · Witness Testimony',complete:true},{assignment:7,codes:['B1'],reference:'EP7-RPL1',type:'RPL · Recognition of Prior Learning',complete:true,rpl:true}]);
+assert.deepEqual(matrix.map(row=>[row.code,row.type,row.description,row.count]),[['K1','K','Future knowledge',1],['S1','S','Future skill',1],['B1','B','Future behaviour',1]]);
+assert.equal(matrix[2].rpl,true);assert.deepEqual(matrix[0].references,['EP7-01']);
+console.log('Compiled unit parity, full-portfolio unit reuse and generic future-course KSB matrix: verified');
