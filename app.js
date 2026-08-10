@@ -248,7 +248,7 @@ function learnerPromptTitle(assignmentNumber,code,fallback){
  return LEARNER_PROMPTS[COURSE.id]?.[assignmentNumber]?.[code]||fallback;
 }
 
-const APP_VERSION='V2.78';
+const APP_VERSION='V2.79';
 function paintPdfPageBackground(ctx,W,H){ctx.fillStyle='#ffffff';ctx.fillRect(0,0,W,H);const r=Math.min(W,H)*0.58,g=ctx.createRadialGradient(0,0,0,0,0,r);g.addColorStop(0,'#DDF3D6');g.addColorStop(.42,'#EFF8EC');g.addColorStop(1,'#FFFFFF');ctx.fillStyle=g;ctx.fillRect(0,0,W,H)}
 
 const PORTFOLIO_UPLOAD_LIMIT_BYTES=1_000_000_000;
@@ -782,7 +782,17 @@ function ksbEvidenceCoverage(n){
 function ksbCoverageComplete(n){const required=Number(COURSE.evidenceRequirement||2),values=Object.values(ksbEvidenceCoverage(n));return values.length>0&&values.every(item=>item.count>=required)}
 function ksbCoverageSummary(n){const required=Number(COURSE.evidenceRequirement||2),coverage=ksbEvidenceCoverage(n),items=Object.entries(coverage);return {coverage,total:items.length,met:items.filter(([,v])=>v.count>=required).length,requirementsMet:items.reduce((sum,[,v])=>sum+Math.min(required,v.count),0),requirementsTotal:items.length*required,missing:items.filter(([,v])=>v.count<required).map(([code,v])=>`${code} ${v.count}/${required}`)}}
 function evidenceCoverageCount(n,code){const coverage=COURSE.nvqUnits?nvqOutcomeCoverage(n):ksbEvidenceCoverage(n);return Number(coverage?.[code]?.count||0)}
-function evidenceCoverageBadge(n,code){if(criterionRPL(n,code))return '<span class="evidence-status-pill evidence-rpl-note" title="Completed through Recognition of Prior Learning">RPL</span>';const count=evidenceCoverageCount(n,code),required=Number(COURSE.evidenceRequirement||2);return count>=required?`<span class="evidence-status-pill evidence-complete-note" title="${required}/${required} evidence requirement completed">✓ Completed</span>`:count>0?`<span class="evidence-status-pill evidence-progress-note" title="${count}/${required} distinct evidence types collected">${count}/${required}</span>`:''}
+function savedEvidenceOccurrenceCounts(n){
+ const a=assignment(n),counts={};if(!a)return counts;(a.ksbs||[]).forEach(([code])=>counts[code]=0);
+ const addCodes=codes=>new Set(codes||[]).forEach(code=>{if(Object.prototype.hasOwnProperty.call(counts,code))counts[code]++});
+ for(const section of ['photos','statement','discussion','professionalDiscussion','witness','practical','supporting'])sectionData(n,section).versions.forEach(version=>addCodes(evidenceCodesFromVersion(a,section,version)));
+ walkthroughAllSubmissions(n).forEach(record=>addCodes(record.confirmedCodes||record.intendedCodes||(record.code?[record.code]:[])));
+ const entries=rplDraft(n).entries||[],entryCodes=new Set();entries.forEach(entry=>{const codes=entry.codes||entry.selected||[];codes.forEach(code=>entryCodes.add(code));addCodes(codes)});
+ (a.ksbs||[]).forEach(([code])=>{if(criterionRPL(n,code)&&!entryCodes.has(code))counts[code]++});
+ return counts;
+}
+function evidenceOccurrenceCount(n,code){return Number(savedEvidenceOccurrenceCounts(n)[code]||0)}
+function evidenceCoverageBadge(n,code){const count=evidenceOccurrenceCount(n,code),label=`Met ${count} time${count===1?'':'s'}`;return `<span class="evidence-status-pill evidence-occurrence-note${criterionRPL(n,code)?' evidence-rpl-note':''}" title="${label} from saved evidence records">${count}×</span>`}
 
 function assignmentLearningHoursStats(n){
  const entries=otjEntries().filter(e=>Number(e.assignment)===Number(n));
@@ -5462,7 +5472,7 @@ function rplFileCard(f,i){const image=String(f.type||'').startsWith('image/');re
 function renderRplSection(a){
  const d=rplDraft(a.n),already=new Set(assignmentIndividualRplCodes(a.n)),selected=new Set(d.selected||[]);
  const label=COURSE.nvqUnits?'Learning Outcomes':'KSBs';
- const criteria=(a.ksbs||[]).map(([code,text])=>`<label class="walkthrough-review-row ${already.has(code)?'evidence-type-used':''}"><input type="checkbox" data-rpl-select="${esc(code)}" ${selected.has(code)?'checked':''} ${already.has(code)?'disabled':''}><span><strong>${esc(code)} · ${esc(learnerPromptTitle(a.n,code,text))}</strong><small>${esc(text)}</small>${already.has(code)?'<em class="evidence-type-used-note">Already completed through RPL</em>':''}</span></label>`).join('');
+ const criteria=(a.ksbs||[]).map(([code,text])=>`<label class="walkthrough-review-row ${already.has(code)?'evidence-type-used':''}"><input type="checkbox" data-rpl-select="${esc(code)}" ${selected.has(code)?'checked':''} ${already.has(code)?'disabled':''}><span><strong>${esc(code)} ${evidenceCoverageBadge(a.n,code)} · ${esc(learnerPromptTitle(a.n,code,text))}</strong><small>${esc(text)}</small>${already.has(code)?'<em class="evidence-type-used-note">Already completed through RPL</em>':''}</span></label>`).join('');
  const history=(d.entries||[]).length?`<section class="card panel versions"><h3>Saved RPL evidence</h3>${d.entries.slice().reverse().map((e,i)=>`<div class="version-item"><div><strong>${esc((e.codes||[]).join(', '))}</strong><div class="muted">${esc(e.date||'')} · ${(e.files||[]).length} file${(e.files||[]).length===1?'':'s'}</div></div></div>`).join('')}</section>`:'';
  app.innerHTML=shell(`<button class="back no-print" id="back">← EP${a.n}</button><div class="assignment-title"><div class="number">VERIFIED · RPL</div><h2>Recognition of Prior Learning</h2><p class="muted">Add certificates or files that prove prior learning, then select the ${label} they fully cover. Saving RPL marks those selected criteria as completed.</p></div><section class="card panel assessor-only-panel"><span class="submitted-ribbon rpl-ribbon page-ribbon">RPL</span><div class="panel-body"><div class="field"><label>${label} completed by this RPL evidence</label><p class="help">Select only criteria that are fully supported by the certificate or file. The selected criteria will be ticked off as RPL when saved.</p><div class="walkthrough-review-list">${criteria}</div></div><div class="upload-box"><h3>Certificates and files</h3><p class="muted">Add certificates, qualification records, training records or other suitable prior-learning evidence.</p><div class="btn-row" style="justify-content:center"><label class="btn secondary icon-btn">${appIcon('file','button-icon')}Add files<input class="hide" id="rplFileInput" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,image/*" multiple></label></div></div><div class="file-list">${(d.files||[]).map(rplFileCard).join('')}</div></div><div class="btn-row"><button class="btn" id="saveRplEvidence" ${(d.selected||[]).length&&(d.files||[]).length?'':'disabled'}>Save RPL and complete selected ${label}</button></div></section>${history}`);
  document.getElementById('back').onclick=()=>{state.view='assignment';state.section=null;render()};
@@ -5481,11 +5491,12 @@ function showVerifiedEvidenceChooser(){
  overlay.querySelectorAll('[data-verified-section]').forEach(button=>button.onclick=()=>{state.section=button.dataset.verifiedSection;state.view='section';close();render()});
  overlay.querySelector('[data-verified-section]')?.focus();
 }
+function savedEvidenceTypeLabel(item,section){const saved=String(item?.evidenceSubtype||item?.subtype||'').trim();if(saved&&/^(RPL|WT|AO|PD|CS)(?:\b|\s*·)/i.test(saved))return saved;return ({witness:'WT · Witness Testimony',practical:'AO · Assessor Observation',professionalDiscussion:'PD · Professional Discussion',rpl:'RPL · Recognition of Prior Learning'}[section]||friendlyEvidenceSection(section))}
 function submittedEvidenceRows(a){
- const rows=[],sectionLabels={photos:'Take Photos',statement:'Write About It',discussion:'Record a Video',professionalDiscussion:'Talk About It',witness:'Verified by Someone Else',practical:'Verified by Someone Else',supporting:COURSE.nvqUnits?'Documents':'Upload Evidence'};
+ const rows=[],sectionLabels={photos:'Take Photos',statement:'Write About It',discussion:'Record a Video',professionalDiscussion:'PD · Professional Discussion',witness:'WT · Witness Testimony',practical:'AO · Assessor Observation',supporting:COURSE.nvqUnits?'Documents':'Upload Evidence'};
  for(const section of ['photos','statement','discussion','professionalDiscussion','witness','practical','supporting']){
   const versions=sectionData(a.n,section).versions||[];
-  versions.forEach((item,index)=>rows.push({section,index,label:sectionLabels[section],date:item.date||'',detail:`Submitted evidence · Attempt ${index+1}`}));
+  versions.forEach((item,index)=>{const saved=String(item.evidenceSubtype||item.subtype||'').trim(),label=saved&&/^(RPL|WT|AO|PD|CS)(?:\b|\s*·)/i.test(saved)?saved:sectionLabels[section];rows.push({section,index,label,date:item.date||'',detail:`Submitted evidence · Attempt ${index+1}`})});
  }
  walkthroughAllSubmissions(a.n).forEach((item,index)=>rows.push({section:'walkthrough',index,evidenceId:item.id||'',label:'Record a Video',date:item.date||'',detail:`Submitted video · ${(item.confirmedCodes||[]).join(', ')||'KSB evidence'}`}));
  return rows.sort((x,y)=>String(y.date||'').localeCompare(String(x.date||''))||x.label.localeCompare(y.label));
@@ -5567,8 +5578,8 @@ async function buildDirectEvidencePreviewPages(a,section,item,index=0){
  const clean=value=>String(value??'').replace(/\s+/g,' ').trim(),pages=[];
  const load=src=>new Promise(resolve=>{if(!src)return resolve(null);const img=new Image();img.onload=()=>resolve(img);img.onerror=()=>resolve(null);img.src=src});
  const wrap=(x,text,maxW,font)=>{x.font=font;const out=[];for(const para of String(text||'—').split(/\n+/)){const words=para.trim().split(/\s+/).filter(Boolean);let line='';for(const word of words){const test=line?`${line} ${word}`:word;if(x.measureText(test).width>maxW&&line){out.push(line);line=word}else line=test}if(line)out.push(line)}return out.length?out:['—']};
- const title=friendlyEvidenceSection(section),codes=selectedCodesForEvidence(a,item,section),date=item?.date||'';
- const c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d');paintPdfPageBackground(x,W,H);x.fillStyle='#FFFFFF';x.beginPath();x.roundRect(M-18,28,W-2*M+36,126,26);x.fill();x.fillStyle='#58B51F';x.fillRect(M,48,7,44);x.fillStyle='#68756D';x.font='700 12px Arial';x.fillText(`APPRENTICE+ · ${COURSE.nvqUnits?'NVQ':'APPRENTICESHIP'} EVIDENCE`,M+22,62);x.fillStyle='#18231E';x.font='700 30px Arial';x.fillText(title,M+22,96);x.fillStyle='#68756D';x.font='500 14px Arial';x.fillText(`${state.profile?.fullName||'Learner'} · ${assignmentCardCode(a)} · ${a.title}`,M+22,126);
+ const title=savedEvidenceTypeLabel(item,section),codes=selectedCodesForEvidence(a,item,section),date=item?.date||'',accent=window.evidenceTypeStyle?.(title)?.colour||'#58B51F';
+ const c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d');paintPdfPageBackground(x,W,H);x.fillStyle='#FFFFFF';x.beginPath();x.roundRect(M-18,28,W-2*M+36,126,26);x.fill();x.fillStyle=accent;x.fillRect(M,48,7,44);x.fillStyle='#68756D';x.font='700 12px Arial';x.fillText(`APPRENTICE+ · ${COURSE.nvqUnits?'NVQ':'APPRENTICESHIP'} EVIDENCE`,M+22,62);x.fillStyle='#18231E';x.font='700 30px Arial';x.fillText(title,M+22,96);x.fillStyle='#68756D';x.font='500 14px Arial';x.fillText(`${state.profile?.fullName||'Learner'} · ${assignmentCardCode(a)} · ${a.title}`,M+22,126);
  let y=178;
  const meta=[['Learner',state.profile?.fullName||'Learner'],['Date',date?formatShortDate(date):'—'],['Evidence',title],['Attempt',String(index+1)],[COURSE.nvqUnits?'Learning Outcomes':'KSBs',codes.join(', ')||'—']];
  x.fillStyle='#FFFFFF';x.beginPath();x.roundRect(M,y,W-2*M,100,20);x.fill();const col=(W-2*M)/3;meta.forEach(([k,v],i)=>{const px=M+16+(i%3)*col,py=y+22+Math.floor(i/3)*42;x.fillStyle='#657273';x.font='700 10px Arial';x.fillText(k.toUpperCase(),px,py);x.fillStyle='#172426';x.font='700 14px Arial';const value=clean(v||'—');x.fillText(value.length>42?value.slice(0,39)+'…':value,px,py+18)});y+=124;
@@ -5594,10 +5605,10 @@ async function buildDirectEvidencePreviewPages(a,section,item,index=0){
  const maxTextBottom=imageObjs.length?contentBottom-photoArea-10:contentBottom;
  for(const [heading,value] of blocks){if(y>maxTextBottom-34)break;x.fillStyle='#52605f';x.font=`700 ${headingFont}px Arial`;x.fillText(clean(heading).toUpperCase(),M,y);y+=headingGap;x.fillStyle='#172426';x.font=`400 ${bodyFont}px Arial`;const lines=wrap(x,value,W-2*M,`400 ${bodyFont}px Arial`);for(const line of lines){if(y+lineH>maxTextBottom)break;x.fillText(line,M,y);y+=lineH}y+=7}
  if(imageObjs.length){
-  const drawCover=(img,px,py,bw,bh)=>{x.fillStyle='#FFFFFF';x.beginPath();x.roundRect(px,py,bw,bh,18);x.fill();x.strokeStyle='#E1E9E0';x.lineWidth=1;x.stroke();if(!img)return;const scale=Math.max(bw/img.width,bh/img.height),iw=img.width*scale,ih=img.height*scale;x.save();x.beginPath();x.rect(px,py,bw,bh);x.clip();x.drawImage(img,px+(bw-iw)/2,py+(bh-ih)/2,iw,ih);x.restore()};
+  const drawCover=(img,px,py,bw,bh)=>{x.fillStyle='#FFFFFF';x.beginPath();x.roundRect(px,py,bw,bh,18);x.fill();x.strokeStyle='#E1E9E0';x.lineWidth=1;x.stroke();if(!img)return;const scale=Math.min(bw/img.width,bh/img.height),iw=img.width*scale,ih=img.height*scale;x.drawImage(img,px+(bw-iw)/2,py+(bh-ih)/2,iw,ih)};
   if(section==='photos'){
-   const top=Math.max(y+8,maxTextBottom+8),gap=14,cols=3,cellW=(W-2*M-gap*2)/3,imgH=cellW*9/16;
-   for(let i=0;i<3;i++){const item=imageObjs[i],px=M+i*(cellW+gap);drawCover(item?.img||null,px,top,cellW,imgH);x.fillStyle='#52605f';x.font='600 10px Arial';x.fillText(`Photo ${i+1}`,px,top+imgH+17)}
+   const top=Math.max(y+8,maxTextBottom+8),gap=12,layout=takePhotosGridLayout(imageObjs.length),cols=layout.cols,rows=layout.rows,available=Math.max(180,contentBottom-top),cellW=(W-2*M-gap*(cols-1))/cols,cellH=(available-gap*(rows-1))/rows,captionH=20,imgH=Math.min(cellW*9/16,cellH-captionH);
+   for(let i=0;i<imageObjs.length&&i<9;i++){const item=imageObjs[i],colIdx=i%cols,rowIdx=Math.floor(i/cols),px=M+colIdx*(cellW+gap),py=top+rowIdx*(cellH+gap);drawCover(item.img,px,py,cellW,imgH);x.fillStyle='#52605f';x.font='600 10px Arial';x.fillText(`Photo ${i+1}`,px,py+imgH+15)}
   }else if(section==='practical'){
    const top=Math.max(y+8,maxTextBottom+8),gap=10,cols=3,cellW=(W-2*M-gap*2)/3,imgH=cellW*9/16,rowStep=imgH+28;
    for(let i=0;i<9;i++){const item=imageObjs[i],colIdx=i%3,rowIdx=Math.floor(i/3),px=M+colIdx*(cellW+gap),py=top+rowIdx*rowStep;drawCover(item?.img||null,px,py,cellW,imgH);x.fillStyle='#52605f';x.font='600 10px Arial';x.fillText(`Photo ${i+1}`,px,py+imgH+17)}
@@ -6812,7 +6823,7 @@ function createPortfolioEvidenceMatrixPages(matrixRecords=[]){
   x.font='700 13px Arial';const refLines=[];refs.forEach(ref=>refLines.push(...wrapPdfText(x,ref,W-470,'13px Arial')));
   x.font='13px Arial';const summaryLines=wrapPdfText(x,row.summary||'',W-520,'13px Arial');
   const h=Math.max(62,32+Math.max(refLines.length,summaryLines.length+1)*18);ensure(h);
-  x.fillStyle=row.count>=required?'#F0F8EC':row.count>0?'#FFF9E7':'#FFFFFF';x.fillRect(M,y,W-2*M,h-4);x.strokeStyle='#DDE7DD';x.lineWidth=1;x.strokeRect(M,y,W-2*M,h-4);
+  x.fillStyle=row.count>=required?'#F0F8EC':row.count>0?'#FFF9E7':'#FFFFFF';x.fillRect(M,y,W-2*M,h-4);x.strokeStyle='#DDE7DD';x.lineWidth=1;x.strokeRect(M,y,W-2*M,h-4);const marker=refs.find(ref=>ref!=='No submitted evidence PDF');if(marker){x.fillStyle=window.evidenceTypeStyle?.(marker)?.colour||'#58B51F';x.fillRect(M,y,5,h-5)}
   x.fillStyle='#1F3228';x.font='800 16px Arial';x.fillText(row.code,M+12,y+24);
   x.fillStyle=row.count>=required?'#287A2D':row.count>0?'#8A6500':'#7C8780';x.font='800 16px Arial';x.fillText(`${Math.min(required,row.count)}/${required}`,M+128,y+24);
   x.fillStyle='#617068';x.font='12px Arial';summaryLines.slice(0,3).forEach((line,i)=>x.fillText(line,M+12,y+45+i*16));
@@ -6962,7 +6973,7 @@ function createEpEvidenceMatrixPdf(a,sections,completePdfName){
    const item=coverage?.[code]||{count:0,sources:[]},rpl=criterionRPL(a.n,code)||assignmentRPL(a.n),count=rpl?required:Math.min(required,Number(item.count||0)),sources=[...new Set((item.sources||[]).map(sourceLabel))];if(rpl&&!sources.includes('RPL'))sources.unshift('RPL');
    const refs=sources.length?sources.map(s=>`${completePdfName} · ${s}`):['No evidence recorded'];
    x.font='14px Arial';const refLines=refs.flatMap(ref=>wrapPdfText(x,ref,W-520,'14px Arial')),descLines=wrapPdfText(x,summary||'',W-620,'13px Arial'),h=Math.max(66,28+Math.max(refLines.length,descLines.length+1)*19);ensure(h);
-   x.fillStyle=count>=required?'#F0F8EC':'#FFFFFF';x.fillRect(M,y,W-2*M,h-5);x.strokeStyle='#DDE7DD';x.strokeRect(M+.5,y+.5,W-2*M-1,h-6);
+   x.fillStyle=count>=required?'#F0F8EC':'#FFFFFF';x.fillRect(M,y,W-2*M,h-5);x.strokeStyle='#DDE7DD';x.strokeRect(M+.5,y+.5,W-2*M-1,h-6);const marker=sources[0];if(marker){x.fillStyle=window.evidenceTypeStyle?.(marker)?.colour||'#58B51F';x.fillRect(M,y,5,h-6)}
    x.fillStyle='#1F3228';x.font='800 16px Arial';x.fillText(code,M+12,y+24);x.fillStyle=count>=required?'#287A2D':'#9A6B00';x.fillText(`${count}/${required}`,M+125,y+24);
    x.fillStyle='#53635A';x.font='13px Arial';descLines.slice(0,3).forEach((line,i)=>x.fillText(line,M+12,y+45+i*17));x.fillStyle='#30473A';x.font='14px Arial';refLines.forEach((line,i)=>x.fillText(line,M+210,y+24+i*19));y+=h;
  }
