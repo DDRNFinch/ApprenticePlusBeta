@@ -17,7 +17,7 @@ test('only latest authoritative V2 review drives Home targets while history stay
  const {api,values}=freshStore({'apprenticePlus:receivedReviewOutcomes:v1':JSON.stringify([{reviewId:'legacy',reviewDate:'2026-01-01',targets:Array.from({length:5},(_,i)=>({text:`Old ${i}`}))}])});
  assert.equal(api.latest(),null);
  api.importSummary(summary(),{learnerLinkId:'link-1'});
- const newer=summary({reviewId:'review-2',reviewDate:'2026-08-20',targets:Array.from({length:5},(_,i)=>({targetId:`new${i}`,title:`New ${i+1}`,destination:'HOMEWORK'}))});newer.transferId='tx-2';api.importSummary(newer,{learnerLinkId:'link-1'});
+ const newer=summary({reviewId:'review-2',reviewDate:'2026-08-05',targets:Array.from({length:5},(_,i)=>({targetId:`new${i}`,title:`New ${i+1}`,destination:'HOMEWORK'}))});newer.transferId='tx-2';api.importSummary(newer,{learnerLinkId:'link-1'});
  assert.equal(api.history().length,3);
  assert.equal(api.latest().reviewId,'review-2');
  assert.deepEqual(api.latest().targets.map(x=>x.title),['New 1','New 2','New 3','New 4','New 5']);
