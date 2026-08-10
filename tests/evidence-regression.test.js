@@ -1,7 +1,7 @@
 'use strict';
 const assert=require('node:assert/strict');
 const fs=require('node:fs');
-const {EVIDENCE_TYPE_STYLES,EVIDENCE_TAXONOMY,evidenceTypeStyle,evidenceReference,mediaExportName,witnessRatingRows,collectPortfolioMedia,takePhotosGridLayout,compileUnitPack,compileFullPortfolioFromUnitPacks,buildKsbMatrixRows}=require('../pdf-generator.js');
+const {EVIDENCE_TYPE_STYLES,EVIDENCE_TAXONOMY,evidenceTypeStyle,evidenceReference,observationContext,observationEvidenceCodes,nvqEvidenceCodes,mediaExportName,witnessRatingRows,collectPortfolioMedia,takePhotosGridLayout,compileUnitPack,compileFullPortfolioFromUnitPacks,buildKsbMatrixRows}=require('../pdf-generator.js');
 
 assert.deepEqual(Object.keys(EVIDENCE_TAXONOMY),['LRP','LRS','LRV','LRA','DOC','WTS','WOS','WOV','WOA','COS','COV','COA','RPL','OTJ','GLH']);
 assert.deepEqual(takePhotosGridLayout(9),{cols:3,rows:3});
@@ -16,13 +16,25 @@ assert.doesNotMatch(app.slice(app.indexOf('function renderAssignment(){'),app.in
 assert.match(css,/\.compiled-ep-tile\{[^}]*background:#174d32/);assert.match(css,/\.compiled-ep-actions button\{[^}]*background:#d9efd0[^}]*color:#174d32/);
 assert.doesNotMatch(pdf.slice(pdf.indexOf('// Witness testimony:'),pdf.indexOf('// Professional discussion:')),/Photographs|addSubmittedPhotoPages/);
 const data='data:audio/webm;base64,AA==',video='data:video/mp4;base64,AA==';
-const media=collectPortfolioMedia({walkthrough:[{data:video,type:'video/mp4',code:'S10'}],professionalDiscussion:[{voiceSubmissions:[{data,type:'audio/webm',confirmedCodes:['K22']}]}],practical:[{observationRecordings:{S11:{video:{data:video,type:'video/mp4'},audio:{data,type:'audio/webm'}}}},{context:'College simulation',observationRecordings:{K21:{video:{data:video,type:'video/mp4'},audio:{data,type:'audio/webm'}}}}]});
+const assessor={observerRole:'Assessor',observationRecordings:{LO3:{video:{data:video,type:'video/mp4'},audio:{data,type:'audio/webm'}}}},tutor={observerRole:'Tutor',observationRecordings:{LO5:{video:{data:video,type:'video/mp4'},audio:{data,type:'audio/webm'}}}};
+assert.equal(observationContext(assessor),'workplace');assert.deepEqual(observationEvidenceCodes(assessor),{statement:'WOS',video:'WOV',audio:'WOA'});
+assert.equal(observationContext(tutor),'college');assert.deepEqual(observationEvidenceCodes(tutor),{statement:'COS',video:'COV',audio:'COA'});
+assert.deepEqual([observationEvidenceCodes(assessor).statement,...collectPortfolioMedia({practical:[assessor]}).map(x=>x.code)],['WOS','WOV','WOA']);
+assert.deepEqual([observationEvidenceCodes(tutor).statement,...collectPortfolioMedia({practical:[tutor]}).map(x=>x.code)],['COS','COV','COA']);
+const media=collectPortfolioMedia({walkthrough:[{data:video,type:'video/mp4',code:'S10'}],professionalDiscussion:[{voiceSubmissions:[{data,type:'audio/webm',confirmedCodes:['K22']}]}],practical:[assessor,tutor]});
 assert.deepEqual(media.map(x=>x.reference),['LRV-01','LRA-01','WOV-01','WOA-01','COV-02','COA-02']);
 assert.equal(media.length,6,'stored media count equals exported media count');assert.equal(new Set(media.map(x=>`Media/${x.name}`)).size,6);
 assert.ok(media.every(x=>!x.name.includes('Professional Discussion')));assert.ok(media.every(x=>EVIDENCE_TAXONOMY[x.code]));
+assert.deepEqual(['photos','statement','video','audio','document','witness','rpl','glh'].map(nvqEvidenceCodes),['LRP','LRS','LRV','LRA','DOC','WTS','RPL','GLH']);
+assert.deepEqual(nvqEvidenceCodes('observation',assessor),{statement:'WOS',video:'WOV',audio:'WOA'});assert.deepEqual(nvqEvidenceCodes('observation',tutor),{statement:'COS',video:'COV',audio:'COA'});
+assert.equal(evidenceTypeStyle('College Observation Video').short,'COS');assert.equal(evidenceTypeStyle('Workplace Observation Audio').short,'WOS');
 let records=[{codes:['S10']},{codes:['S10','S11','S10']},{codes:['S10']}];const counts=records=>records.reduce((o,r)=>{for(const c of new Set(r.codes))o[c]=(o[c]||0)+1;return o},{});assert.deepEqual(counts(records),{S10:3,S11:1});
 const bytes=new Uint8Array([1,2,3]),u=compileUnitPack({assignmentNumber:1,previewPages:['front','matrix','LRS-01','LRP-01'],entries:[{name:'EP.pdf',data:bytes}]});assert.equal(u.pdfBytes,bytes);assert.deepEqual(compileFullPortfolioFromUnitPacks(['portfolio'],[u]).slice(1),u.previewPages);
 const changed=compileUnitPack({assignmentNumber:1,previewPages:['front','matrix','LRS-01 edited','WTS-01'],entries:[{name:'EP.pdf',data:bytes}]});assert.deepEqual(changed.previewPages,['front','matrix','LRS-01 edited','WTS-01']);assert.ok(!changed.previewPages.includes('LRP-01'));
 const course={assignments:[{n:1,unit:'U1',title:'Generic',ksbs:[['K1','Knowledge']]}]},matrix=buildKsbMatrixRows(course,course.assignments,[{assignment:1,codes:['K1'],reference:evidenceReference('LRS',1),complete:true}]);assert.equal(matrix[0].count,1);assert.deepEqual(matrix[0].references,['LRS-01']);
+const naturalCodes=['K20','S20','B11','K1','S1','B1','K10','S10','B10','K2','S2','B2','K11','S11','K9','S9','B9'];
+const naturalCourse={assignments:[{n:1,ksbs:naturalCodes.map(code=>[code,code])}]};assert.deepEqual(buildKsbMatrixRows(naturalCourse,naturalCourse.assignments).map(row=>row.code),['K1','K2','K9','K10','K11','K20','S1','S2','S9','S10','S11','S20','B1','B2','B9','B10','B11']);
+const nvqPdf=pdf.slice(pdf.indexOf('async function generateNVQEvidencePackPDF'));
+assert.doesNotMatch(nvqPdf,/`AO\$\{|`LS\$\{|`PE\$\{|`VW\$\{|`PD\$\{|`WT\$\{|`SE\$\{/);assert.match(nvqPdf,/Learning Outcome Evidence Matrix/);assert.match(nvqPdf,/Guided Learning Hours/);assert.doesNotMatch(nvqPdf,/K\/S\/B category/);
 assert.match(app,/Home/);assert.match(app,/KSB Matrix/);assert.match(app,/Toolkit/);assert.match(app,/COURSE\.nvqUnits\?'GLH':'OTJ'/);assert.match(app,/LO\/AC|Learning Outcome/);
 console.log('Evidence taxonomy, WTS ratings/no-photo, LRA terminology, Media audit, EP refresh/parity, KSB/NVQ regressions: PASS');
