@@ -12,3 +12,21 @@ test('safe destination routing protects NVQ terminology and no-EPA courses',()=>
 test('baseline blocks old activity and OTJ, GLH, EPA, KSB and activity rules complete on new work',()=>{const {api}=freshStore(),base={capturedAt:'2026-08-10T00:00:00Z',completedIds:['K1']};for(const kind of ['OTJ','GLH']){const t={id:kind,destination:kind,quantity:6,baseline:base,status:'in-progress'};assert.equal(api.evaluateTarget(t,{[kind]:[{id:'old',createdAt:'2026-08-09',hours:9}]}).status,'in-progress');assert.equal(api.evaluateTarget(t,{[kind]:[{id:'new',createdAt:'2026-08-11',hours:6.5}]}).status,'completed')};for(const kind of ['EPA_MCQ','EPA_PRACTICE','KNOWLEDGE_SLIDES','HOMEWORK','CERTIFICATE','LRP','LRS','LRV','LRA'])assert.equal(api.evaluateTarget({destination:kind,quantity:1,baseline:base,status:'in-progress'},{[kind]:[{id:'new',createdAt:'2026-08-11',score:84}]}).status,'completed');assert.equal(api.evaluateTarget({destination:'KSB_COUNT',quantity:2,baseline:base,status:'in-progress'},{completedCriteria:[{id:'K1'},{id:'S2'},{id:'B3'}]}).status,'completed')});
 test('next-review marker calculation is timeline-based and clamps',()=>{const {api}=freshStore();assert.equal(api.expectedAtReview('2026-01-01','2026-11-01','2026-06-01'),50);assert.equal(api.expectedAtReview('2026-01-01','2026-11-01','2027-01-01'),100);assert.equal(api.expectedAtReview('','',''),null)});
 test('legacy ReviewMate outcome data is preserved and exposed under Reviews',()=>{const legacy=JSON.stringify([{reviewId:'old',reviewDate:'2025-01-01',tutorSummary:'Legacy',targets:[{text:'Old target'}]}]);const {api}=freshStore({'apprenticePlus:receivedReviewOutcomes:v1':legacy});assert.equal(api.history()[0].legacy,true);assert.equal(api.history()[0].learnerSummary,'Legacy')});
+
+test('only latest authoritative V2 review drives Home targets while history stays additive',()=>{
+ const {api,values}=freshStore({'apprenticePlus:receivedReviewOutcomes:v1':JSON.stringify([{reviewId:'legacy',reviewDate:'2026-01-01',targets:Array.from({length:5},(_,i)=>({text:`Old ${i}`}))}])});
+ assert.equal(api.latest(),null);
+ api.importSummary(summary(),{learnerLinkId:'link-1'});
+ const newer=summary({reviewId:'review-2',reviewDate:'2026-08-20',targets:Array.from({length:5},(_,i)=>({targetId:`new${i}`,title:`New ${i+1}`,destination:'HOMEWORK'}))});newer.transferId='tx-2';api.importSummary(newer,{learnerLinkId:'link-1'});
+ assert.equal(api.history().length,3);
+ assert.equal(api.latest().reviewId,'review-2');
+ assert.deepEqual(api.latest().targets.map(x=>x.title),['New 1','New 2','New 3','New 4','New 5']);
+ assert.ok(values.get(api.HISTORY_KEY));
+});
+
+test('learner-facing errors remain enforceable for duplicate, learner and expiry rules',()=>{
+ const {api}=freshStore();api.importSummary(summary(),{learnerLinkId:'link-1'});
+ assert.throws(()=>api.importSummary(summary(),{learnerLinkId:'link-1'}),/already/i);
+ assert.throws(()=>api.importSummary(summary({reviewId:'other'}),{learnerLinkId:'link-2'}),/different learner/i);
+ assert.throws(()=>api.importSummary(summary({reviewId:'expired'}),{learnerLinkId:'link-1',now:Date.parse('2026-08-12')}),/expired/i);
+});
