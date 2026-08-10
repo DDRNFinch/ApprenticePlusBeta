@@ -4,8 +4,8 @@
 function apprenticePdfBackground(ctx,W,H){ctx.fillStyle='#FFFFFF';ctx.fillRect(0,0,W,H);const r=Math.min(W,H)*0.58,g=ctx.createRadialGradient(0,0,0,0,0,r);g.addColorStop(0,'#DDF3D6');g.addColorStop(.42,'#EFF8EC');g.addColorStop(1,'#FFFFFF');ctx.fillStyle=g;ctx.fillRect(0,0,W,H)}
 
 /* Apprentice+ offline PDF generator. Evidence stays in the browser; no data is uploaded. */
-async function generateEvidencePackPDF({course, assignment, profile, sections, branding, returnPackage=false, newEvidence={}, assignmentRpl=false, rplKsbCodes=[], learningHours=null}) {
-  if(course && course.nvqUnits) return generateNVQEvidencePackPDF({course, assignment, profile, sections, branding, returnPackage, newEvidence, assignmentRpl, rplKsbCodes, learningHours});
+async function generateEvidencePackPDF({course, assignment, profile, sections, branding, returnPackage=false, newEvidence={}, assignmentRpl=false, rplKsbCodes=[], rplEvidence=null, learningHours=null}) {
+  if(course && course.nvqUnits) return generateNVQEvidencePackPDF({course, assignment, profile, sections, branding, returnPackage, newEvidence, assignmentRpl, rplKsbCodes, rplEvidence, learningHours});
   const W=1240,H=1754,M=88,TEAL='#58B51F',GREEN='#58B51F',LIGHT_GREEN='#EAF7E4',SOFT_GREEN='#D9EFD0',INK='#18231E',MUTED='#68756D',PALE='#F3F8F2',WHITE='#ffffff';
   const pages=[];
   const rplCodes=new Set((rplKsbCodes||[]).map(code=>String(code)));
@@ -208,21 +208,20 @@ async function generateEvidencePackPDF({course, assignment, profile, sections, b
     return py+rows*(cellH+captionH+gap)-gap;
   }
   async function addFixedPhotoEvidenceRecord(d,{title,version,date,type,signatureTitle='Learner signature',assessor=false,summaryFields=[]}){
-    const items=submittedPhotoItems(d).map(item=>({...item,caption:String(d?.captions?.[item.code]||item.photo?.caption||'')})).slice(0,9);
-    const p=meta(newPage(title,version),version,date,type),x=p.x,signatureTop=H-238;
-    let y=sectionHeading(x,assessor?'Assessor Observation':'Photographic Evidence',p.y);
-    const summary=summaryFields.filter(([,v])=>clean(v||'').trim());
-    if(summary.length){
-      const cols=Math.min(2,summary.length),rows=Math.ceil(summary.length/cols),gap=8,bh=rows>1?60:70,bw=(W-2*M-gap*(cols-1))/cols;
-      summary.forEach(([a,b],i)=>drawFixedTextBox(x,a,b,M+(i%cols)*(bw+gap),y+Math.floor(i/cols)*(bh+gap),bw,bh));
-      y+=rows*(bh+gap)+8;
-    }
-    // Take Photos and Assessor Observation both use nine fixed landscape boxes.
-    // Empty boxes remain visible so every submitted PDF has the same 3 x 3 evidence layout.
-    await drawFixedPhotoGrid(x,items,{py:y,cols:3,rows:3,gap:10,captionH:18});
-    if(d.signature){
-      const sig=await loadImage(d.signature);
-      signature(x,sig,signatureTop,signatureTitle,d.signatureName||d.tutor||d.assessor||d.personName||profile?.name||'',d.signatureDate||d.date||date||'');
+    const items=submittedPhotoItems(d).map(item=>({...item,caption:String(d?.captions?.[item.code]||item.photo?.caption||'')}));
+    const pageCapacity=assessor?9:3,totalPages=Math.max(1,Math.ceil(items.length/pageCapacity));
+    for(let pageIndex=0;pageIndex<totalPages;pageIndex++){
+      const continued=pageIndex?` · Continued ${pageIndex+1}/${totalPages}`:'',p=meta(newPage(`${title}${continued}`,version),version,date,type),x=p.x,signatureTop=H-238;
+      let y=sectionHeading(x,`${assessor?'Assessor Observation':'Photographic Evidence'}${continued}`,p.y);
+      const summary=summaryFields.filter(([,v])=>clean(v||'').trim());
+      if(summary.length){
+        const cols=Math.min(2,summary.length),rows=Math.ceil(summary.length/cols),gap=8,bh=rows>1?60:70,bw=(W-2*M-gap*(cols-1))/cols;
+        summary.forEach(([a,b],i)=>drawFixedTextBox(x,a,b,M+(i%cols)*(bw+gap),y+Math.floor(i/cols)*(bh+gap),bw,bh));
+        y+=rows*(bh+gap)+8;
+      }
+      const batch=items.slice(pageIndex*pageCapacity,(pageIndex+1)*pageCapacity);
+      await drawFixedPhotoGrid(x,batch,{py:y,cols:3,rows:assessor?3:1,gap:10,captionH:18});
+      if(d.signature&&pageIndex===totalPages-1){const sig=await loadImage(d.signature);signature(x,sig,signatureTop,signatureTitle,d.signatureName||d.tutor||d.assessor||d.personName||profile?.name||'',d.signatureDate||d.date||date||'')}
     }
   }
   async function addSubmittedPhotoPages(d,title,version,date,type){
@@ -346,6 +345,14 @@ async function generateEvidencePackPDF({course, assignment, profile, sections, b
     await addCompleteEvidenceRecord({title:`Record a Video · VW${v}`,version:v,date:f.date,type:'Video Walkthrough',newEvidenceType:'walkthrough',fields:[['KSB met by this evidence',[f.code,f.summary].filter(Boolean).join(' - ')],['Video filename',ksbMediaFileName(f)],['Original filename',f.name],['Recorded date',f.date],['Duration',f.duration],['Media format',f.type],['File size',Number(f.size)>0?`${Math.round(Number(f.size)/1024)} KB`:'']]});
   }
 
+  // RPL is a saved evidence record, not merely a completion flag. Render every
+  // historical record, mapping and attachment reference in the same unit PDF.
+  for(let i=0;i<(rplEvidence?.entries||[]).length;i++){
+    const d=rplEvidence.entries[i],codes=d.codes||d.selected||[],files=d.files||[];
+    await addCompleteEvidenceRecord({title:`RPL · Recognition of Prior Learning · RPL${i+1}`,version:`Record ${i+1}`,date:d.date||d.savedAt,type:'Recognition of Prior Learning',fields:[['Evidence reference',`RPL${i+1}`],['KSBs met by this evidence',codes.map(code=>{const row=(assignment.ksbs||[]).find(([c])=>c===code);return `${code}${row?.[1]?` - ${row[1]}`:''}`}).join('\n')],['Description / supporting statement',d.description||d.statement||d.notes],['Outcome / status',d.outcome||d.status],['Verification',d.verification||d.verifiedBy||d.assessor],['Attached RPL source files',files.map((file,index)=>`${index+1}. ${file.evidenceName||file.name||'RPL source file'}${file.type?` - ${file.type}`:''}`).join('\n')]],signatureTitle:'RPL verifier signature',signatureData:d.signature});
+    await addFilePreviewPages({files},`RPL · Recognition of Prior Learning · RPL${i+1}`,`Record ${i+1}`,d.date||d.savedAt,'Recognition of Prior Learning');
+  }
+
   if(learningHours){
     const rows=Array.isArray(learningHours.entries)?learningHours.entries:[];let lp,lx,ly,running=0;
     const startLearningPage=continued=>{lp=newPage(`${learningHours.label||'Learning'} Evidence${continued?' - Continued':''}`,`${learningHours.longLabel||'Learning hours'}`);lx=lp.x;ly=sectionHeading(lx,continued?`${learningHours.longLabel||'Learning hours'} · continued`:`${learningHours.longLabel||'Learning hours'} · Evidence Pack requirement`,lp.y)};
@@ -367,6 +374,7 @@ async function generateEvidencePackPDF({course, assignment, profile, sections, b
   const pdfName=`${safe||'Learner'}-EP-${assignment.n}-Evidence-Pack.pdf`;
   const evidenceFiles=[];
   for(const sectionName of ['witness','supporting'])for(let sectionIndex=0;sectionIndex<(sections[sectionName]||[]).length;sectionIndex++){const version=sections[sectionName][sectionIndex],codes=selectedKsbCodesForMedia(assignment,version);for(const file of version.files||[])if(file?.data)evidenceFiles.push({file,codes,attempt:sectionIndex+1,sectionName})}
+  for(let recordIndex=0;recordIndex<(rplEvidence?.entries||[]).length;recordIndex++){const record=rplEvidence.entries[recordIndex];for(const file of record.files||[])if(file?.data)evidenceFiles.push({file,codes:record.codes||[],attempt:recordIndex+1,sectionName:'rpl'})}
   const walkthroughVideos=[];
   for(let vi=0;vi<(sections.discussion||[]).length;vi++){const version=sections.discussion[vi];for(const [code,rec] of Object.entries(version.recordings||{}))if(rec?.data)walkthroughVideos.push({code,summary:(assignment.ksbs||[]).find(([ksb])=>ksb===code)?.[1],rec,attempt:vi+1,newType:'discussion'})}
   for(let vi=0;vi<(sections.walkthrough||[]).length;vi++){const rec=sections.walkthrough[vi];if(rec?.data)walkthroughVideos.push({code:rec.code||`KSB ${vi+1}`,summary:rec.summary,rec,attempt:vi+1,newType:'walkthrough'})}
@@ -374,7 +382,7 @@ async function generateEvidencePackPDF({course, assignment, profile, sections, b
   for(let vi=0;vi<(sections.professionalDiscussion||[]).length;vi++){const version=sections.professionalDiscussion[vi];(version.voiceSubmissions||[]).forEach((rec,ri)=>{if(rec?.data)audios.push({code:(rec.confirmedCodes||rec.intendedCodes||[]).join('-')||`Discussion-${ri+1}`,rec:{...rec,name:talkAboutFileName(rec,ri)},attempt:vi+1})})}
   if(evidenceFiles.length||walkthroughVideos.length||audios.length){
     const entries=[{name:pdfName,data:pdf}],used=new Set();
-    evidenceFiles.forEach(({file,codes,attempt,sectionName},i)=>{const original=String(file.name||''),dot=original.lastIndexOf('.'),mime=String(file.type||''),ext=dot>0?original.slice(dot):mime.startsWith('image/')?`.${mime.split('/')[1].replace('jpeg','jpg')}`:mime.startsWith('video/')?mediaExtension(mime,original,'video',file.data):mime.startsWith('audio/')?mediaExtension(mime,original,'audio',file.data):'.bin',newMark=isNewEvidence(sectionName,attempt)?'NEW EVIDENCE - ':'',prefix=(codes||[]).join('-'),base=safeZipName(`${newMark}${prefix?prefix+' - ':''}${file.evidenceName||file.name||`Evidence file ${i+1}`}`),name=uniqueMediaName(base,ext,used),folder=sectionName==='witness'?'Witness Evidence Files':'Supporting Evidence Files';entries.push({name:`${folder}/${name}`,data:dataUrlBytes(file.data)})});
+    evidenceFiles.forEach(({file,codes,attempt,sectionName},i)=>{const original=String(file.name||''),dot=original.lastIndexOf('.'),mime=String(file.type||''),ext=dot>0?original.slice(dot):mime.startsWith('image/')?`.${mime.split('/')[1].replace('jpeg','jpg')}`:mime.startsWith('video/')?mediaExtension(mime,original,'video',file.data):mime.startsWith('audio/')?mediaExtension(mime,original,'audio',file.data):'.bin',newMark=isNewEvidence(sectionName,attempt)?'NEW EVIDENCE - ':'',prefix=(codes||[]).join('-'),base=safeZipName(`${newMark}${prefix?prefix+' - ':''}${file.evidenceName||file.name||`Evidence file ${i+1}`}`),name=uniqueMediaName(base,ext,used),folder=sectionName==='rpl'?'RPL Source Files':sectionName==='witness'?'Witness Evidence Files':'Supporting Evidence Files';entries.push({name:`${folder}/${name}`,data:dataUrlBytes(file.data)})});
     walkthroughVideos.forEach(({code,summary,rec,attempt,newType})=>{const ext=mediaExtension(rec.type,rec.name,'video',rec.data),newMark=isNewEvidence(newType,attempt)?'NEW EVIDENCE - ':'',base=safeZipName(`${newMark}${code} - ${summary||'Video evidence'}`),name=uniqueMediaName(base,ext,used);entries.push({name:`KSB Video Evidence/${name}`,data:dataUrlBytes(rec.data)})});
     audios.forEach(({code,rec,attempt},i)=>{const ext=mediaExtension(rec.type,'','audio',rec.data),newMark=isNewEvidence('professionalDiscussion',attempt)?'NEW EVIDENCE - ':'',base=safeZipName(`${newMark}${code} - Professional Discussion - Attempt ${attempt}`),name=uniqueMediaName(base,ext,used);entries.push({name:`KSB Voice Notes/${name}`,data:dataUrlBytes(rec.data)})});
     const packageName=`${safe||'Learner'}-Assignment-${assignment.n}-Complete-Evidence-Package.zip`;
@@ -404,7 +412,7 @@ function ksbMediaFileName(f){return `${safeZipName(`${f.code||'KSB'} - ${f.summa
 /* NVQ-only portfolio PDF. This branch is intentionally isolated so the original
    Bricklaying, Site Carpentry, Architectural Joiner and Property Maintenance
    PDF layouts and grading logic remain unchanged. */
-async function generateNVQEvidencePackPDF({course, assignment, profile, sections, branding, returnPackage=false, newEvidence={}, assignmentRpl=false, rplKsbCodes=[], learningHours=null}) {
+async function generateNVQEvidencePackPDF({course, assignment, profile, sections, branding, returnPackage=false, newEvidence={}, assignmentRpl=false, rplKsbCodes=[], rplEvidence=null, learningHours=null}) {
   const W=1240,H=1754,M=88,TEAL='#58B51F',GREEN='#58B51F',YELLOW='#F7D75C',GREY='#EEF5EE',INK='#18231E',MUTED='#68756D',PALE='#F3F8F2',WHITE='#ffffff';
   const pages=[];
   const newEvidenceAliases={practical:'practical',practicalassessment:'practical',assessorobservation:'practical',photos:'photos',photoevidence:'photos',photographicevidence:'photos',statement:'statement',learnerstatement:'statement',discussion:'discussion',videowalkthrough:'walkthrough',professionaldiscussion:'professionalDiscussion',witness:'witness',witnesstestimony:'witness',supporting:'supporting',supportingevidence:'supporting',walkthrough:'walkthrough'};
@@ -487,13 +495,7 @@ async function generateNVQEvidencePackPDF({course, assignment, profile, sections
 
   async function addCompactNvqPhotoRecord(d,attempt){
     const items=[];for(const [code,photo] of Object.entries(d?.outcomePhotos||{}))if(photo?.data)items.push({code,photo,caption:String(d?.captions?.[code]||'')});(d?.photos||[]).forEach((photo,index)=>{if(photo?.data)items.push({code:`Photo ${index+1}`,photo,caption:String(photo.caption||'')})});
-    const p=meta(newPage('Take Photos',`Attempt ${attempt}`),d.date,'Photographic Evidence',attempt),x=p.x,signatureTop=H-238;
-    let y=sectionHeading(x,'Photographic Evidence',p.y),codes=selectedCodes(d),summary=codes.map(code=>{const row=(assignment.ksbs||[]).find(([c])=>c===code);return `${code} - ${row?.[1]||''}`}).join(' | ');
-    drawFixedTextBox(x,'Learning outcomes evidenced',summary||'-',M,y,W-2*M,68);y+=78;
-    if(clean(d?.activity||'').trim()){drawFixedTextBox(x,'Photo notes',d.activity,M,y,W-2*M,58);y+=68}
-    // Always render all nine landscape boxes, including empty placeholders.
-    await drawFixedPhotoGrid(x,items.slice(0,9),{py:y,cols:3,rows:3,gap:10,captionH:18});
-    if(d.signature){const sig=await loadImage(d.signature);signature(x,sig,signatureTop,'Learner signature',d.signatureName||profile?.name||'',d.signatureDate||d.date||'')}
+    const total=Math.max(1,Math.ceil(items.length/3));for(let pageIndex=0;pageIndex<total;pageIndex++){const suffix=pageIndex?` - Continued ${pageIndex+1}/${total}`:'',p=meta(newPage(`Take Photos${suffix}`,`Attempt ${attempt}`),d.date,'Photographic Evidence',attempt),x=p.x,signatureTop=H-238;let y=sectionHeading(x,`Photographic Evidence${suffix}`,p.y),codes=selectedCodes(d),summary=codes.map(code=>{const row=(assignment.ksbs||[]).find(([c])=>c===code);return `${code} - ${row?.[1]||''}`}).join(' | ');drawFixedTextBox(x,'Learning outcomes evidenced',summary||'-',M,y,W-2*M,68);y+=78;if(clean(d?.activity||'').trim()){drawFixedTextBox(x,'Photo notes',d.activity,M,y,W-2*M,58);y+=68}await drawFixedPhotoGrid(x,items.slice(pageIndex*3,pageIndex*3+3),{py:y,cols:3,rows:1,gap:10,captionH:18});if(d.signature&&pageIndex===total-1){const sig=await loadImage(d.signature);signature(x,sig,signatureTop,'Learner signature',d.signatureName||profile?.name||'',d.signatureDate||d.date||'')}}
   }
   async function addCompactNvqAssessorRecord(d,attempt){
     const items=[];for(const [code,photo] of Object.entries(d?.outcomePhotos||{}))if(photo?.data)items.push({code,photo,caption:String(d?.captions?.[code]||'')});(d?.photos||[]).forEach((photo,index)=>{if(photo?.data)items.push({code:`Photo ${index+1}`,photo,caption:String(photo.caption||'')})});
@@ -502,6 +504,7 @@ async function generateNVQEvidencePackPDF({course, assignment, profile, sections
     drawFixedTextBox(x,'KSBs met by this evidence',selectedKsbDetails(d)||'-',M,y,bw,78);drawFixedTextBox(x,'Observation / comments',d.feedback||'-',M+bw+gap,y,bw,78);y+=90;
     const discussion=observationRecordingOutcomeDetails(d);if(discussion){drawFixedTextBox(x,'Assessor discussion / recordings',discussion,M,y,W-2*M,58);y+=68}
     await drawFixedPhotoGrid(x,items.slice(0,9),{py:y,cols:3,rows:3,gap:10,captionH:18});
+    for(let start=9;start<items.length;start+=9){const cp=meta(newPage(`Verified by Someone Else - Photographs Continued ${Math.floor(start/9)+1}`,`Attempt ${attempt}`),d.date,'Assessor Observation',attempt),cx=cp.x;let cy=sectionHeading(cx,'Assessor Observation Photographs (continued)',cp.y);drawFixedTextBox(cx,'Learning outcomes evidenced',selectedKsbDetails(d)||'-',M,cy,W-2*M,78);cy+=90;await drawFixedPhotoGrid(cx,items.slice(start,start+9),{py:cy,cols:3,rows:3,gap:10,captionH:18})}
     if(d.signature){const sig=await loadImage(d.signature);signature(x,sig,signatureTop,'Assessor signature',d.signatureName||d.tutor||d.assessor||'',d.signatureDate||d.date||'')}
   }
   function drawOutcomeRows(x,outcomes,y,showCriteria=true){for(const [code,text] of outcomes){if(y>H-160)break;x.fillStyle=PALE;x.fillRect(M,y-28,W-2*M,64);x.fillStyle=TEAL;x.font='700 19px Arial';x.fillText(code,M+16,y);drawCriterionRpl(x,code,M+58,y,17);x.fillStyle=INK;x.font='600 17px Arial';fitText(x,clean(text),M+100,y,W-2*M-125,17);if(showCriteria&&assignment.criteria?.[code]){x.fillStyle=MUTED;x.font='400 13px Arial';fitText(x,`Criteria: ${clean(assignment.criteria[code])}`,M+100,y+23,W-2*M-125,13)}y+=76}return y}
@@ -526,6 +529,8 @@ async function generateNVQEvidencePackPDF({course, assignment, profile, sections
 
   for(let i=0;i<(sections.walkthrough||[]).length;i++){const rec=sections.walkthrough[i],attempt=i+1;await addCompleteNvqRecord({title:'Record a Video',attempt,date:rec.date,type:'Video Walkthrough',newEvidenceType:'walkthrough',fields:[['Learning Outcome met by this evidence',[rec.code,rec.summary].filter(Boolean).join(' - ')],['Video filename',ksbMediaFileName(rec)],['Original filename',rec.name],['Recorded date',rec.date],['Duration',rec.duration],['Media format',rec.type],['File size',Number(rec.size)>0?`${Math.round(Number(rec.size)/1024)} KB`:'']]})}
 
+  for(let i=0;i<(rplEvidence?.entries||[]).length;i++){const d=rplEvidence.entries[i],codes=d.codes||d.selected||[],files=d.files||[];await addCompleteNvqRecord({title:`RPL · Recognition of Prior Learning · RPL${i+1}`,attempt:i+1,date:d.date||d.savedAt,type:'Recognition of Prior Learning',fields:[['Evidence reference',`RPL${i+1}`],['Learning Outcomes / requirements met',codes.map(code=>{const row=(assignment.ksbs||[]).find(([c])=>c===code);return `${code}${row?.[1]?` - ${row[1]}`:''}`}).join('\n')],['Description / supporting statement',d.description||d.statement||d.notes],['Outcome / status',d.outcome||d.status],['Verification',d.verification||d.verifiedBy||d.assessor],['Attached RPL source files',files.map((file,index)=>`${index+1}. ${file.evidenceName||file.name||'RPL source file'}${file.type?` - ${file.type}`:''}`).join('\n')]],signatureTitle:'RPL verifier signature',signatureData:d.signature})}
+
 
   if(learningHours){
     const rows=Array.isArray(learningHours.entries)?learningHours.entries:[];let lp,lx,ly,running=0;
@@ -545,11 +550,11 @@ async function generateNVQEvidencePackPDF({course, assignment, profile, sections
   for(let vi=0;vi<(sections.walkthrough||[]).length;vi++){const rec=sections.walkthrough[vi];if(rec?.data)walkthroughVideos.push({code:rec.code||`KSB ${vi+1}`,rec,attempt:vi+1,type:'video',newType:'walkthrough'})}
   for(let vi=0;vi<(sections.professionalDiscussion||[]).length;vi++){const version=sections.professionalDiscussion[vi];for(const [code,rec] of Object.entries(version.recordings||{}))if(rec?.data)walkthroughVideos.push({code,rec,attempt:vi+1,type:'audio',newType:'professionalDiscussion'})}
   for(let vi=0;vi<(sections.professionalDiscussion||[]).length;vi++){const version=sections.professionalDiscussion[vi];(version.voiceSubmissions||[]).forEach((rec,ri)=>{if(rec?.data)walkthroughVideos.push({code:(rec.confirmedCodes||rec.intendedCodes||[]).join('-')||`Discussion-${ri+1}`,rec:{...rec,name:talkAboutOutcomeFileName(rec,ri)},attempt:vi+1,type:'audio',newType:'professionalDiscussion'})})}
-  const evidenceFiles=[];for(const sectionName of ['witness','supporting'])for(let vi=0;vi<(sections[sectionName]||[]).length;vi++){const version=sections[sectionName][vi];for(const file of version.files||[])if(file?.data)evidenceFiles.push({file,attempt:vi+1,sectionName})}
+  const evidenceFiles=[];for(const sectionName of ['witness','supporting'])for(let vi=0;vi<(sections[sectionName]||[]).length;vi++){const version=sections[sectionName][vi];for(const file of version.files||[])if(file?.data)evidenceFiles.push({file,attempt:vi+1,sectionName})}for(let ri=0;ri<(rplEvidence?.entries||[]).length;ri++)for(const file of rplEvidence.entries[ri].files||[])if(file?.data)evidenceFiles.push({file,attempt:ri+1,sectionName:'rpl'});
   if(walkthroughVideos.length||evidenceFiles.length){
     const entries=[{name:pdfName,data:pdf}],used=new Set();
     walkthroughVideos.forEach(({code,rec,attempt,type,newType},i)=>{const mime=String(rec.type||'video/webm'),ext=mime.includes('mp4')?'.mp4':mime.includes('ogg')?'.ogg':mime.startsWith('audio/')?(mime.includes('mp4')?'.m4a':'.webm'):'.webm',label=type==='audio'?'Professional Discussion':'Video Walkthrough',newMark=isNewEvidence(newType,attempt)?'NEW EVIDENCE - ':'',base=safeZipName(`${newMark}Attempt ${attempt} - ${code} ${label}`);let name=`${base}${ext}`;if(used.has(name.toLowerCase()))name=`${base}-${i+1}${ext}`;used.add(name.toLowerCase());entries.push({name:`${label} Recordings/${name}`,data:dataUrlBytes(rec.data)})});
-    evidenceFiles.forEach(({file,attempt,sectionName},i)=>{const original=String(file.name||''),dot=original.lastIndexOf('.'),ext=dot>0?original.slice(dot):String(file.type||'').startsWith('image/')?'.jpg':'.bin',newMark=isNewEvidence(sectionName,attempt)?'NEW EVIDENCE - ':'',base=safeZipName(`${newMark}${file.evidenceName||file.name||`Evidence file ${i+1}`}`);let name=`${base}${ext}`;if(used.has(name.toLowerCase()))name=`${base}-${i+1}${ext}`;used.add(name.toLowerCase());entries.push({name:`${sectionName==='witness'?'Witness':'Supporting'} Evidence Files/${name}`,data:dataUrlBytes(file.data)})});
+    evidenceFiles.forEach(({file,attempt,sectionName},i)=>{const original=String(file.name||''),dot=original.lastIndexOf('.'),ext=dot>0?original.slice(dot):String(file.type||'').startsWith('image/')?'.jpg':'.bin',newMark=isNewEvidence(sectionName,attempt)?'NEW EVIDENCE - ':'',base=safeZipName(`${newMark}${file.evidenceName||file.name||`Evidence file ${i+1}`}`);let name=`${base}${ext}`;if(used.has(name.toLowerCase()))name=`${base}-${i+1}${ext}`;used.add(name.toLowerCase());entries.push({name:`${sectionName==='rpl'?'RPL Source':sectionName==='witness'?'Witness':'Supporting'} Evidence Files/${name}`,data:dataUrlBytes(file.data)})});
     const packageName=`${safe||'Learner'}-NVQ-Unit-${unit}-Evidence-Package.zip`;
     if(returnPackage)return {assignmentNumber:assignment.n,pdfName,entries,packageName,previewPages};
     await downloadBlob(makeZipBlob(entries),'application/zip',packageName);
