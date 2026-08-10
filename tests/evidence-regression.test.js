@@ -38,3 +38,22 @@ const nvqPdf=pdf.slice(pdf.indexOf('async function generateNVQEvidencePackPDF'))
 assert.doesNotMatch(nvqPdf,/`AO\$\{|`LS\$\{|`PE\$\{|`VW\$\{|`PD\$\{|`WT\$\{|`SE\$\{/);assert.match(nvqPdf,/Learning Outcome Evidence Matrix/);assert.match(nvqPdf,/Guided Learning Hours/);assert.doesNotMatch(nvqPdf,/K\/S\/B category/);
 assert.match(app,/Home/);assert.match(app,/KSB Matrix/);assert.match(app,/Toolkit/);assert.match(app,/COURSE\.nvqUnits\?'GLH':'OTJ'/);assert.match(app,/LO\/AC|Learning Outcome/);
 console.log('Evidence taxonomy, WTS ratings/no-photo, LRA terminology, Media audit, EP refresh/parity, KSB/NVQ regressions: PASS');
+
+// V2.83 divider and hierarchical NVQ matrix regressions.
+const {compareAssessmentCriterionCodes,assessmentCriteriaForOutcome,buildNvqMatrixGroups,evidencePackTitleModel,estimateNvqMatrixLayout}=require('../pdf-generator.js');
+const completedTitle=evidencePackTitleModel({course:{name:'NVQ Diploma'},assignment:{n:2,unit:'234',title:'Masonry cladding'},profile:{fullName:'Alex Learner'},complete:true,completionDate:'10/08/2026'});
+assert.deepEqual([completedTitle.code,completedTitle.title,completedTitle.learner,completedTitle.completionDate],['234','Masonry cladding','Alex Learner','10/08/2026']);
+const incompleteTitle=evidencePackTitleModel({course:{name:'Standard'},assignment:{n:4,title:'Build safely'},profile:{fullName:'Sam Learner'}});
+assert.equal(incompleteTitle.status,'In Progress');assert.equal(incompleteTitle.completionDate,'','incomplete packs never invent completion dates');
+const nvqAssignment={n:2,unit:'234',title:'Unit',ksbs:[['LO1','First outcome'],['LO2','Second outcome']],criteria:{LO1:[{code:'1.10',text:'Tenth criterion wording'},{code:'1.1',text:'First criterion wording'},{code:'1.11',text:'Eleventh criterion wording'},{code:'1.9',text:'Ninth criterion wording'},{code:'1.2',text:'Second criterion wording'}],LO2:{'2.2':'Second AC','2.1':'First AC'}}};
+assert.deepEqual(['1.1','1.2','1.9','1.10','1.11'].sort(compareAssessmentCriterionCodes),['1.1','1.2','1.9','1.10','1.11']);
+const groups=buildNvqMatrixGroups(nvqAssignment,{LO1:[{ref:'WOS-02',type:'WOS'},{ref:'LRP-03',type:'LRP'}],LO2:[{ref:'RPL',type:'RPL'}]},2);
+assert.deepEqual(groups[0].criteria.map(x=>x.code),['1.1','1.2','1.9','1.10','1.11']);assert.deepEqual(groups[1].criteria.map(x=>x.code),['2.1','2.2']);
+assert.deepEqual(groups[0].criteria[0].references,['WOS-02','LRP-03'],'AC references use only mapped LO evidence');assert.equal(groups[1].criteria[0].references[0],'RPL');assert.equal(groups[1].criteria[0].met,true);
+assert.equal(assessmentCriteriaForOutcome(nvqAssignment,'LO1')[0].text,'First criterion wording','complete stored wording remains in the render model');
+const longGroups=buildNvqMatrixGroups({ksbs:[['LO1','L'.repeat(600)]],criteria:{LO1:[{code:'1.1',text:'A'.repeat(1600)},{code:'1.2',text:'B'.repeat(1600)}]}},{LO1:[]});const layout=estimateNvqMatrixLayout(longGroups,{lineChars:50,linesPerPage:20});assert.ok(layout.pageCount>=3);assert.equal(layout.blocks.length,2,'long ACs remain present at the data/render layer');
+assert.deepEqual(compileFullPortfolioFromUnitPacks(['overall'],[{previewPages:['EP1 divider','EP1 matrix']},{previewPages:['EP2 divider','EP2 matrix']}]),['overall','EP1 divider','EP1 matrix','EP2 divider','EP2 matrix']);
+assert.match(app,/class="nvq-lo-group"/);assert.match(app,/ACs met/);assert.match(app,/nvq-lo-expand/);assert.match(css,/\.nvq-lo-group\[open\]/);
+assert.match(pdf,/LO → AC → Supporting Evidence/);assert.match(pdf,/✓ Met/);assert.match(pdf,/— Not yet met/);assert.match(pdf,/if\(y\+h>H-112\)start\(true\)/);
+assert.match(app,/function assignmentLearningHoursStats/);assert.match(app,/NVQ_ASSESSMENT_CRITERIA/);assert.deepEqual(Object.keys(EVIDENCE_TAXONOMY).filter(code=>code!=='OTJ'),['LRP','LRS','LRV','LRA','DOC','WTS','WOS','WOV','WOA','COS','COV','COA','RPL','GLH']);
+console.log('V2.83 divider, portfolio retention, LO/AC grouping, mapping, RPL, wrapping and collapse regressions: PASS');

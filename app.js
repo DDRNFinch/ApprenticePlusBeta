@@ -248,7 +248,7 @@ function learnerPromptTitle(assignmentNumber,code,fallback){
  return LEARNER_PROMPTS[COURSE.id]?.[assignmentNumber]?.[code]||fallback;
 }
 
-const APP_VERSION='V2.80';
+const APP_VERSION='V2.83';
 function paintPdfPageBackground(ctx,W,H){ctx.fillStyle='#ffffff';ctx.fillRect(0,0,W,H);const r=Math.min(W,H)*0.58,g=ctx.createRadialGradient(0,0,0,0,0,r);g.addColorStop(0,'#DDF3D6');g.addColorStop(.42,'#EFF8EC');g.addColorStop(1,'#FFFFFF');ctx.fillStyle=g;ctx.fillRect(0,0,W,H)}
 
 const PORTFOLIO_UPLOAD_LIMIT_BYTES=1_000_000_000;
@@ -3502,6 +3502,7 @@ function renderAssignmentKnowledgeResult(){
 }
 
 
+function evidencePackAssignmentDefinition(a){if(!COURSE.nvqUnits)return a;const criteria={};for(const row of nvqCriterionRowsForAssignment(a))(criteria[row.lo]||(criteria[row.lo]=[])).push({code:row.code,text:row.text,type:row.type});return {...a,criteria}}
 function nvqCriterionRowsForAssignment(a){
  const rows=NVQ_ASSESSMENT_CRITERIA[String(a?.unit||'')]||[];
  return rows.map(row=>({...row,assignment:a.n,unit:String(a.unit||''),assignmentTitle:a.title}));
@@ -3567,24 +3568,13 @@ function nvqMatrixFilterRows(rows,filter){
 }
 function renderNvqEvidenceMatrix(){
  const all=nvqLiveCriterionMatrix(),filter=state.nvqMatrixFilter||'all',query=String(state.nvqMatrixSearch||'').trim().toLowerCase();
- let filtered=nvqMatrixFilterRows(all,filter);
- if(query)filtered=filtered.filter(r=>`${r.code} ${r.text} ${r.unit} ${r.assignmentTitle}`.toLowerCase().includes(query));
+ let filtered=nvqMatrixFilterRows(all,filter);if(query)filtered=filtered.filter(r=>`${r.code} ${r.text} ${r.unit} ${r.assignmentTitle}`.toLowerCase().includes(query));
  const total=all.length,complete=all.filter(r=>r.complete).length,inProgress=all.filter(r=>r.count>0&&!r.complete).length,outstanding=total-complete,pct=total?Math.round(complete/total*100):0;
- const unitGroups=courseAssignments().filter(a=>!a.selectOptional).map(a=>{
-  const allUnit=all.filter(r=>r.assignment===a.n),rows=filtered.filter(r=>r.assignment===a.n),done=allUnit.filter(r=>r.complete).length;
-  if(!rows.length)return '';
-  return `<details class="nvq-matrix-unit" ${query||filter!=='all'||done<allUnit.length?'open':''}><summary><span><small>UNIT ${esc(a.unit||'')} · ${assignmentCardCode(a)}</small><strong>${esc(a.title)}</strong></span><span class="nvq-matrix-unit-score ${done===allUnit.length?'complete':''}">${done}/${allUnit.length}</span></summary><div class="nvq-matrix-criteria">${rows.map(row=>{
-   const cls=row.complete?'complete':row.count?'progress':'empty',sources=row.sources.length?row.sources.map(s=>`<span>${esc(s)}</span>`).join(''):'<span class="none">No evidence yet</span>';
-   return `<article class="nvq-matrix-row ${cls} ${row.stamp?'direct-evidence':''}"><div class="nvq-matrix-row-main"><div class="nvq-matrix-code"><strong>${esc(row.code)}</strong><span class="nvq-type-pill ${row.type}">${row.type==='theory'?'Theory':'Practical'}</span></div><p>${esc(row.text)}</p></div><div class="nvq-matrix-evidence"><strong>${row.rpl?'RPL':`${row.count}/${row.required}`}</strong><small>${row.complete?'Complete':row.count?'In progress':'Outstanding'}</small><div class="nvq-matrix-sources">${sources}</div></div>${row.stamp?`<span class="nvq-direct-stamp ${row.stamp.toLowerCase()}">${esc(row.stamp)}</span>`:''}</article>`;
-  }).join('')}</div></details>`;
- }).join('');
- app.innerHTML=shell(`<section class="nvq-matrix-head"><div><div class="number">NVQ EVIDENCE MATRIX</div><h2>Assessment criteria</h2><p>Live evidence coverage before portfolio upload. Practical and Theory evidence is mapped back to the official unit criteria.</p></div><div class="nvq-matrix-progress"><strong>${pct}%</strong><span>${complete} of ${total} complete</span></div></section>
- <section class="nvq-matrix-stats"><button data-matrix-filter="complete"><strong>${complete}</strong><span>Complete</span></button><button data-matrix-filter="progress"><strong>${inProgress}</strong><span>In progress</span></button><button data-matrix-filter="outstanding"><strong>${outstanding}</strong><span>Outstanding</span></button><div><strong>${total}</strong><span>Total criteria</span></div></section>
- <section class="nvq-matrix-controls"><div class="nvq-matrix-filters">${[['all','All'],['outstanding','Outstanding'],['progress','In progress'],['complete','Complete'],['practical','Practical'],['theory','Theory']].map(([id,label])=>`<button class="${filter===id?'active':''}" data-matrix-filter="${id}">${label}</button>`).join('')}</div><input class="input" id="nvqMatrixSearch" value="${esc(state.nvqMatrixSearch||'')}" placeholder="Search criterion, unit or Evidence Pack"></section>
- <section class="nvq-matrix-key"><span><i class="complete"></i>Complete</span><span><i class="progress"></i>Part evidenced</span><span><i class="empty"></i>Outstanding</span><small>Practical normally requires 2 evidence forms. Assessor Observation fully verifies covered Practical and Theory criteria. Witness Testimony fully verifies covered Practical criteria only. Theory otherwise requires 1 evidence form.</small></section>
- <section class="nvq-matrix-units">${unitGroups||'<div class="card panel"><div class="panel-body"><h3>No matching criteria</h3><p class="muted">Change the filter or search.</p></div></div>'}</section>`);
- document.querySelectorAll('[data-matrix-filter]').forEach(b=>b.onclick=()=>{state.nvqMatrixFilter=b.dataset.matrixFilter;renderNvqEvidenceMatrix();window.scrollTo(0,0)});
- const search=document.getElementById('nvqMatrixSearch');if(search)search.oninput=()=>{state.nvqMatrixSearch=search.value;clearTimeout(state.nvqMatrixSearchTimer);state.nvqMatrixSearchTimer=setTimeout(()=>renderNvqEvidenceMatrix(),180)};
+ const unitGroups=courseAssignments().filter(a=>!a.selectOptional).map(a=>{const allUnit=all.filter(r=>r.assignment===a.n),rows=filtered.filter(r=>r.assignment===a.n),done=allUnit.filter(r=>r.complete).length;if(!rows.length)return '';
+  const outcomes=(a.ksbs||[]).map(([lo,description])=>({lo,description,rows:rows.filter(row=>row.lo===lo)})).filter(group=>group.rows.length);
+  return `<details class="nvq-matrix-unit" ${query||filter!=='all'?'open':''}><summary><span><small>UNIT ${esc(a.unit||'')} · ${assignmentCardCode(a)}</small><strong>${esc(a.title)}</strong></span><span class="nvq-matrix-unit-score ${done===allUnit.length?'complete':''}">${done}/${allUnit.length}</span></summary><div class="nvq-matrix-criteria">${outcomes.map(group=>{const loDone=group.rows.filter(row=>row.complete).length;return `<details class="nvq-lo-group" ${query||filter!=='all'?'open':''}><summary><span><strong>${esc(group.lo)} · ${esc(group.description)}</strong><small>${loDone}/${group.rows.length} ACs met</small></span><span class="nvq-lo-expand">Expand</span></summary><div>${group.rows.map(row=>{const cls=row.complete?'complete':row.count?'progress':'empty',sources=row.sources.length?row.sources.map(source=>`<span>${esc(source)}</span>`).join(''):'<span class="none">No evidence yet</span>';return `<article class="nvq-matrix-row ${cls} ${row.stamp?'direct-evidence':''}"><div class="nvq-matrix-row-main"><div class="nvq-matrix-code"><strong>${esc(row.code)}</strong><span class="nvq-type-pill ${row.type}">${row.type==='theory'?'Theory':'Practical'}</span></div><p>${esc(row.text)}</p></div><div class="nvq-matrix-evidence"><strong>${row.rpl?'RPL':row.complete?'✓ Met':'— Not yet met'}</strong><small>${row.count}/${row.required} evidence forms</small><div class="nvq-matrix-sources">${sources}</div></div>${row.stamp?`<span class="nvq-direct-stamp ${row.stamp.toLowerCase()}">${esc(row.stamp)}</span>`:''}</article>`}).join('')}</div></details>`}).join('')}</div></details>`}).join('');
+ app.innerHTML=shell(`<section class="nvq-matrix-head"><div><div class="number">NVQ EVIDENCE MATRIX</div><h2>Assessment criteria</h2><p>Live evidence coverage grouped by Unit, Learning Outcome and Assessment Criterion.</p></div><div class="nvq-matrix-progress"><strong>${pct}%</strong><span>${complete} of ${total} complete</span></div></section><section class="nvq-matrix-stats"><button data-matrix-filter="complete"><strong>${complete}</strong><span>Complete</span></button><button data-matrix-filter="progress"><strong>${inProgress}</strong><span>In progress</span></button><button data-matrix-filter="outstanding"><strong>${outstanding}</strong><span>Outstanding</span></button><div><strong>${total}</strong><span>Total criteria</span></div></section><section class="nvq-matrix-controls"><div class="nvq-matrix-filters">${[['all','All'],['outstanding','Outstanding'],['progress','In progress'],['complete','Complete'],['practical','Practical'],['theory','Theory']].map(([id,label])=>`<button class="${filter===id?'active':''}" data-matrix-filter="${id}">${label}</button>`).join('')}</div><input class="input" id="nvqMatrixSearch" value="${esc(state.nvqMatrixSearch||'')}" placeholder="Search criterion, unit or Evidence Pack"></section><section class="nvq-matrix-key"><span><i class="complete"></i>Complete</span><span><i class="progress"></i>Part evidenced</span><span><i class="empty"></i>Outstanding</span><small>Completion rules are unchanged. Expand an LO to read its complete AC wording and evidence status.</small></section><section class="nvq-matrix-units">${unitGroups||'<div class="card panel"><div class="panel-body"><h3>No matching criteria</h3><p class="muted">Change the filter or search.</p></div></div>'}</section>`);
+ document.querySelectorAll('[data-matrix-filter]').forEach(b=>b.onclick=()=>{state.nvqMatrixFilter=b.dataset.matrixFilter;renderNvqEvidenceMatrix();window.scrollTo(0,0)});const search=document.getElementById('nvqMatrixSearch');if(search)search.oninput=()=>{state.nvqMatrixSearch=search.value;clearTimeout(state.nvqMatrixSearchTimer);state.nvqMatrixSearchTimer=setTimeout(()=>renderNvqEvidenceMatrix(),180)};
 }
 function renderNvqCompletion(){
  const p=courseProgressStats(),glh=otjProgressStats(),timePct=courseTimePercent(),glhCompletionTarget=glh.fullExpected*0.60;
@@ -6998,7 +6988,7 @@ function createEpEvidenceMatrixPdf(a,sections,completePdfName){
  return makeImagePDF(pages.map(canvas=>dataUrlBytes(canvas.toDataURL('image/jpeg',.92))),W,H);
 }
 async function buildCompleteEpPortfolio(a,sections){
- const generated=await generateEvidencePackPDF({course:COURSE,assignment:a,profile:state.profile,sections,branding:state.branding,returnPackage:true,newEvidence:{},assignmentRpl:assignmentRPL(a.n),rplKsbCodes:assignmentIndividualRplCodes(a.n),rplEvidence:rplDraft(a.n),learningHours:assignmentLearningHoursPdfPayload(a.n)});
+ const generated=await generateEvidencePackPDF({course:COURSE,assignment:evidencePackAssignmentDefinition(a),profile:state.profile,sections,branding:state.branding,returnPackage:true,newEvidence:{},assignmentRpl:assignmentRPL(a.n),rplKsbCodes:assignmentIndividualRplCodes(a.n),rplEvidence:rplDraft(a.n),learningHours:assignmentLearningHoursPdfPayload(a.n),completionStatus:assignmentComplete(a.n),completionDate:assignmentComplete(a.n)?(state.data[packStatusKey(a.n)]?.completedAt||state.data[packStatusKey(a.n)]?.uploadedAt||''):''});
  const pdfEntry=(generated?.entries||[]).find(entry=>String(entry.name||'').toLowerCase().endsWith('.pdf'));
  if(!pdfEntry?.data)throw new Error(`${assignmentCardCode(a)} complete Evidence Pack PDF was not generated`);
  const completeName=`${assignmentCardCode(a)} - ${safeZipName(a.title)} - Complete Evidence Pack.pdf`;
@@ -7177,14 +7167,14 @@ async function refreshLatestEvidencePackPdf(n){
  const sections={};
  ['practical','photos','statement','discussion','professionalDiscussion','witness','supporting'].forEach(s=>sections[s]=sectionData(n,s).versions.map(v=>structuredClone(v)));
  sections.walkthrough=await collectWalkthroughEvidence(n,a);
- const result=await generateEvidencePackPDF({course:COURSE,assignment:a,profile:state.profile,sections,branding:state.branding,assignmentRpl:assignmentRPL(n),rplKsbCodes:assignmentIndividualRplCodes(n),rplEvidence:rplDraft(n),learningHours:assignmentLearningHoursPdfPayload(n),returnPackage:true});
+ const result=await generateEvidencePackPDF({course:COURSE,assignment:evidencePackAssignmentDefinition(a),profile:state.profile,sections,branding:state.branding,assignmentRpl:assignmentRPL(n),rplKsbCodes:assignmentIndividualRplCodes(n),rplEvidence:rplDraft(n),learningHours:assignmentLearningHoursPdfPayload(n),completionStatus:assignmentComplete(n),completionDate:assignmentComplete(n)?(state.data[packStatusKey(n)]?.completedAt||state.data[packStatusKey(n)]?.uploadedAt||''):'',returnPackage:true});
  const pdfEntry=(result?.entries||[]).find(entry=>String(entry.name||'').toLowerCase().endsWith('.pdf'));
- if(pdfEntry?.data)await putStore(`latestEvidencePackPdf:${COURSE.id}:${n}`,{name:result.pdfName||pdfEntry.name,bytes:Array.from(pdfEntry.data),updatedAt:new Date().toISOString(),learningHours:assignmentLearningHoursPdfPayload(n)});
+ if(pdfEntry?.data)await putStore(`latestEvidencePackPdf:${COURSE.id}:${n}`,{name:result.pdfName||pdfEntry.name,bytes:Array.from(pdfEntry.data),updatedAt:new Date().toISOString(),learningHours:assignmentLearningHoursPdfPayload(n),completionStatus:assignmentComplete(n),completionDate:assignmentComplete(n)?(state.data[packStatusKey(n)]?.completedAt||state.data[packStatusKey(n)]?.uploadedAt||''):''});
  return result;
 }
 async function compileCurrentUnitPack(n){
  const a=assignment(n),sections={};['practical','photos','statement','discussion','professionalDiscussion','witness','supporting'].forEach(section=>sections[section]=sectionData(n,section).versions.map(item=>structuredClone(item)));sections.walkthrough=await collectWalkthroughEvidence(n,a);
- const generated=await generateEvidencePackPDF({course:COURSE,assignment:a,profile:state.profile,sections,branding:state.branding,assignmentRpl:assignmentRPL(n),rplKsbCodes:assignmentIndividualRplCodes(n),rplEvidence:rplDraft(n),learningHours:assignmentLearningHoursPdfPayload(n),returnPackage:true});
+ const generated=await generateEvidencePackPDF({course:COURSE,assignment:evidencePackAssignmentDefinition(a),profile:state.profile,sections,branding:state.branding,assignmentRpl:assignmentRPL(n),rplKsbCodes:assignmentIndividualRplCodes(n),rplEvidence:rplDraft(n),learningHours:assignmentLearningHoursPdfPayload(n),completionStatus:assignmentComplete(n),completionDate:assignmentComplete(n)?(state.data[packStatusKey(n)]?.completedAt||state.data[packStatusKey(n)]?.uploadedAt||''):'',returnPackage:true});
  const compiled=compileUnitPack({assignmentNumber:n,previewPages:generated.previewPages,entries:generated.entries,pdfName:generated.pdfName,evidenceReferences:submittedEvidenceRows(a).map((_,index)=>`EP${n}-${String(index+1).padStart(2,'0')}`)});state.compiledUnitPack=compiled;return compiled;
 }
 async function previewUnitPack(n){
@@ -7203,7 +7193,7 @@ async function downloadPack(n){
  sections.walkthrough=await collectWalkthroughEvidence(n,a);
  try{
   toast('Creating complete evidence package...');
-  const result=await generateEvidencePackPDF({course:COURSE,assignment:a,profile:state.profile,sections,branding:state.branding,assignmentRpl:assignmentRPL(n),rplKsbCodes:assignmentIndividualRplCodes(n),rplEvidence:rplDraft(n),learningHours:assignmentLearningHoursPdfPayload(n)});
+  const result=await generateEvidencePackPDF({course:COURSE,assignment:evidencePackAssignmentDefinition(a),profile:state.profile,sections,branding:state.branding,assignmentRpl:assignmentRPL(n),rplKsbCodes:assignmentIndividualRplCodes(n),rplEvidence:rplDraft(n),learningHours:assignmentLearningHoursPdfPayload(n),completionStatus:assignmentComplete(n),completionDate:assignmentComplete(n)?(state.data[packStatusKey(n)]?.completedAt||state.data[packStatusKey(n)]?.uploadedAt||''):''});
   state.data[packStatusKey(n)]={downloaded:true,uploaded:false,downloadedAt:new Date().toISOString()};
   
   await saveData();render();toast('Evidence package download started — check your Downloads folder');
