@@ -1,6 +1,16 @@
 {
-  "latest": "V2.90",
+  "latest": "V2.91",
   "releases": [
+    {
+      "version": "V2.91",
+      "date": "2026-08-11",
+      "title": "Witness and Uploads",
+      "features": [
+        "Renamed the learner evidence area to Witness and Uploads and labelled the existing RPL upload workflow as Uploads.",
+        "Added an integrity warning before a learner starts a new Witness Testimony.",
+        "Kept existing WTS and RPL evidence, mappings, exports and matrices compatible."
+      ]
+    },
     {
       "version": "V2.90",
       "title": "Learner-owned evidence only",

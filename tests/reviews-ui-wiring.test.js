@@ -39,10 +39,10 @@ test('all four controls on the mounted renderer resolve to validated V2 handlers
 });
 
 test('installed PWA references the repaired assets under a fresh cache',()=>{
- for(const asset of ['app.js?v=2.90','pdf-generator.js?v=2.90','review-transfer.js?v=2.3','styles.css?v=2.90']){
+ for(const asset of ['app.js?v=2.91','pdf-generator.js?v=2.91','review-transfer.js?v=2.3','styles.css?v=2.91']){
   assert.match(indexSource,new RegExp(asset.replace(/[.?]/g,'\\$&')));
   assert.match(workerSource,new RegExp(asset.replace(/[.?]/g,'\\$&')));
  }
- assert.match(workerSource,/apprentice-plus-v2-90-learner-evidence-only/);
+ assert.match(workerSource,/apprentice-plus-v2-91-witness-and-uploads/);
  assert.doesNotMatch(workerSource,/apprentice-plus-v2-85|apprentice-plus-v2-86/);
 });
