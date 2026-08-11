@@ -178,13 +178,6 @@ window.COURSE_DATA = {
       "description": "Write a clear account explaining how the assessment criteria were met."
     },
     {
-      "key": "observation",
-      "icon": "\ud83d\udc77",
-      "title": "Assessor Observation",
-      "requirement": "Assessor checklist and sign-off",
-      "description": "Record what was observed, add notes, make a judgement and sign."
-    },
-    {
       "key": "supporting",
       "icon": "\ud83d\udcce",
       "title": "Supporting Evidence",
