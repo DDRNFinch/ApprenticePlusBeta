@@ -1,31 +1,39 @@
 (() => {
   'use strict';
 
-  const BOB_VERSION = '0.1.2';
+  const BOB_VERSION = '0.1.3';
   const IDLE_MIN = 18000;
   const IDLE_MAX = 24000;
   const state = { mounted:false, open:false, step:'idle', idleTimer:0, lastAnimation:'' };
 
   const styles = `
-  .bob-launch{display:flex!important;align-items:center!important;justify-content:center!important;padding:0!important;overflow:visible!important;cursor:pointer;touch-action:manipulation}
-  .bob-launch .bob-mascot{width:100%;height:100%;transform:scale(1.08)}
+  .bob-launch{display:flex!important;align-items:center!important;justify-content:center!important;padding:0!important;overflow:visible!important;cursor:pointer;touch-action:manipulation;perspective:180px}
+  .bob-launch .bob-mascot{width:100%;height:100%;transform:scale(1.08);transform-origin:50% 55%;transform-style:preserve-3d}
   .bob-launch:focus-visible{box-shadow:0 0 0 3px rgba(20,120,115,.28)}
-  .bob-mascot{width:100%;height:100%;overflow:visible;filter:drop-shadow(0 1px 1px rgba(0,0,0,.08))}
-  .bob-head{transform-origin:50% 58%}
-  .bob-eye,.bob-pupil,.bob-mouth,.bob-hat,.bob-prop{transform-box:fill-box;transform-origin:center}
+  .bob-mascot{width:100%;height:100%;overflow:visible;filter:drop-shadow(0 1px 1px rgba(0,0,0,.08));transform-style:preserve-3d}
+  .bob-head{transform-box:fill-box;transform-origin:50% 58%;transform-style:preserve-3d}
+  .bob-eye,.bob-mouth,.bob-hat,.bob-prop{transform-box:fill-box;transform-origin:center}
   .bob-prop{opacity:0;transition:opacity .18s ease}
   .bob-launch[data-bob-animation='wink'] .bob-eye-right{animation:bobWink 1.15s ease}
-  .bob-launch[data-bob-animation='look'] .bob-pupils{animation:bobLook 2s ease}
-  .bob-launch[data-bob-animation='spin'] .bob-head{animation:bobSpin 1.25s cubic-bezier(.2,.8,.2,1)}
-  .bob-launch[data-bob-animation='plan'] .bob-plan{opacity:1;animation:bobPlan 2.8s ease}
-  .bob-launch[data-bob-animation='tape'] .bob-tape{opacity:1;animation:bobTape 2.7s ease}
-  .bob-launch[data-bob-animation='trowel'] .bob-trowel{opacity:1;animation:bobTrowel 2.4s ease}
-  @keyframes bobWink{0%,18%,65%,100%{transform:scaleY(1)}32%,50%{transform:scaleY(.08)}}
-  @keyframes bobLook{0%,100%{transform:translateX(0)}28%{transform:translateX(-4px)}62%{transform:translateX(4px)}}
-  @keyframes bobSpin{0%{transform:rotate(0)}55%{transform:rotate(380deg)}78%{transform:rotate(350deg)}100%{transform:rotate(360deg)}}
-  @keyframes bobPlan{0%,100%{transform:translateY(8px) scale(.8);opacity:0}18%,82%{transform:translateY(0) scale(1);opacity:1}}
-  @keyframes bobTape{0%,100%{transform:translateX(-6px) rotate(-8deg);opacity:0}20%,80%{transform:translateX(0) rotate(0);opacity:1}}
-  @keyframes bobTrowel{0%,100%{transform:translateY(8px) rotate(18deg);opacity:0}20%,80%{transform:translateY(0) rotate(-8deg);opacity:1}}
+  .bob-launch[data-bob-animation='wink'] .bob-head{animation:bobWinkTilt 1.15s ease}
+  .bob-launch[data-bob-animation='look'] .bob-head{animation:bobLook3d 2.35s ease-in-out}
+  .bob-launch[data-bob-animation='spin'] .bob-mascot{animation:bobSpin3d 1.7s cubic-bezier(.2,.8,.2,1)}
+  .bob-launch[data-bob-animation='plan'] .bob-plan{opacity:1;animation:bobPlan 3s ease}
+  .bob-launch[data-bob-animation='plan'] .bob-head{animation:bobReadPlan 3s ease}
+  .bob-launch[data-bob-animation='tape'] .bob-tape{opacity:1;animation:bobTape 2.9s ease}
+  .bob-launch[data-bob-animation='tape'] .bob-head{animation:bobMeasureLook 2.9s ease}
+  .bob-launch[data-bob-animation='trowel'] .bob-trowel{opacity:1;animation:bobTrowel 2.7s ease}
+  .bob-launch[data-bob-animation='trowel'] .bob-head{animation:bobToolLean 2.7s ease}
+  @keyframes bobWink{0%,18%,65%,100%{transform:scaleY(1)}32%,50%{transform:scaleY(.05)}}
+  @keyframes bobWinkTilt{0%,100%{transform:rotate(0) translateY(0)}35%,55%{transform:rotate(-7deg) translateY(1px)}}
+  @keyframes bobLook3d{0%,100%{transform:translateX(0) scaleX(1) skewY(0)}20%{transform:translateX(-2px) scaleX(.88) skewY(2deg)}43%{transform:translateX(-1px) scaleX(.95) skewY(0)}68%{transform:translateX(2px) scaleX(.88) skewY(-2deg)}85%{transform:translateX(1px) scaleX(.96) skewY(0)}}
+  @keyframes bobSpin3d{0%{transform:scale(1.08) scaleX(1) rotate(0)}20%{transform:scale(1.03) scaleX(.52) rotate(-4deg)}42%{transform:scale(.98) scaleX(.12) rotate(1deg)}61%{transform:scale(1.02) scaleX(-.55) rotate(4deg)}82%{transform:scale(1.08) scaleX(-1) rotate(0)}93%{transform:scale(1.08) scaleX(.45) rotate(-2deg)}100%{transform:scale(1.08) scaleX(1) rotate(0)}}
+  @keyframes bobPlan{0%,100%{transform:translate(11px,10px) rotateY(18deg) rotateZ(8deg) scale(.72);opacity:0}16%,82%{transform:translate(0,0) rotateY(-8deg) rotateZ(-4deg) scale(1);opacity:1}48%{transform:translate(-2px,-1px) rotateY(7deg) rotateZ(2deg) scale(1.04);opacity:1}}
+  @keyframes bobReadPlan{0%,100%{transform:translate(0,0) rotate(0) scaleX(1)}20%{transform:translate(2px,2px) rotate(6deg) scaleX(.94)}48%{transform:translate(3px,3px) rotate(9deg) scaleX(.9)}76%{transform:translate(1px,2px) rotate(5deg) scaleX(.95)}}
+  @keyframes bobTape{0%,100%{transform:translate(-10px,8px) rotate(-18deg) scale(.75);opacity:0}18%{transform:translate(-1px,1px) rotate(-7deg) scale(1);opacity:1}43%{transform:translate(2px,-1px) rotate(2deg) scale(1.05);opacity:1}70%{transform:translate(-1px,0) rotate(-3deg) scale(.98);opacity:1}84%{opacity:1}}
+  @keyframes bobMeasureLook{0%,100%{transform:translate(0,0) rotate(0) scaleX(1)}24%{transform:translate(-2px,1px) rotate(-7deg) scaleX(.92)}52%{transform:translate(-3px,2px) rotate(-10deg) scaleX(.88)}75%{transform:translate(-1px,1px) rotate(-4deg) scaleX(.96)}}
+  @keyframes bobTrowel{0%,100%{transform:translate(8px,9px) rotate(24deg) scale(.72);opacity:0}20%{transform:translate(1px,1px) rotate(-12deg) scale(1);opacity:1}44%{transform:translate(-3px,-2px) rotate(-28deg) scale(1.08);opacity:1}67%{transform:translate(2px,1px) rotate(8deg) scale(.97);opacity:1}84%{opacity:1}}
+  @keyframes bobToolLean{0%,100%{transform:translate(0,0) rotate(0) scaleX(1)}27%{transform:translate(2px,1px) rotate(7deg) scaleX(.93)}52%{transform:translate(3px,0) rotate(10deg) scaleX(.9)}73%{transform:translate(1px,1px) rotate(4deg) scaleX(.97)}}
   @media (prefers-reduced-motion:reduce){.bob-launch *{animation:none!important;transition:none!important}}
 
   .bob-chat-backdrop{position:fixed;inset:0;z-index:10040;background:rgba(10,20,25,.38);opacity:0;pointer-events:none;transition:opacity .18s ease}
@@ -66,15 +74,15 @@
           <path d="M23 49h74c4 0 7 3 7 6H16c0-3 3-6 7-6z" fill="#ffd326" stroke="#111" stroke-width="5" stroke-linejoin="round"/>
           <path d="M54 20v24M66 20v24" stroke="#111" stroke-width="4" stroke-linecap="round"/>
         </g>
-        <g class="bob-pupils">
-          <g class="bob-eye bob-eye-left"><ellipse cx="46" cy="66" rx="7" ry="10" fill="#111"/><ellipse class="bob-pupil" cx="48" cy="63" rx="2" ry="3" fill="#fff"/></g>
-          <g class="bob-eye bob-eye-right"><ellipse cx="74" cy="66" rx="7" ry="10" fill="#111"/><ellipse class="bob-pupil" cx="76" cy="63" rx="2" ry="3" fill="#fff"/></g>
+        <g class="bob-eyes">
+          <ellipse class="bob-eye bob-eye-left" cx="46" cy="66" rx="7" ry="10" fill="#fff" stroke="#111" stroke-width="5"/>
+          <ellipse class="bob-eye bob-eye-right" cx="74" cy="66" rx="7" ry="10" fill="#fff" stroke="#111" stroke-width="5"/>
         </g>
         <path class="bob-mouth" d="M48 84c7 7 17 7 24 0" fill="none" stroke="#111" stroke-width="4" stroke-linecap="round"/>
       </g>
-      <g class="bob-prop bob-plan"><rect x="72" y="78" width="31" height="24" rx="2" fill="#fff" stroke="#111" stroke-width="3"/><path d="M78 86h18M78 92h13M92 82v16" stroke="#5c8fa7" stroke-width="2"/></g>
-      <g class="bob-prop bob-tape"><rect x="8" y="80" width="25" height="20" rx="5" fill="#ffd326" stroke="#111" stroke-width="3"/><circle cx="20" cy="90" r="4" fill="#fff" stroke="#111" stroke-width="2"/><path d="M33 88h26" stroke="#f4d66d" stroke-width="5"/><path d="M33 88h26" stroke="#111" stroke-width="1.4" stroke-dasharray="3 3"/></g>
-      <g class="bob-prop bob-trowel"><path d="M88 80l17 8-15 8z" fill="#c8d0cf" stroke="#111" stroke-width="3"/><path d="M89 88L76 100" stroke="#111" stroke-width="5" stroke-linecap="round"/></g>
+      <g class="bob-prop bob-plan"><rect x="72" y="78" width="31" height="24" rx="2" fill="#fff" stroke="#111" stroke-width="3"/><path d="M78 86h18M78 92h13M92 82v16" fill="none" stroke="#111" stroke-width="2"/></g>
+      <g class="bob-prop bob-tape"><rect x="8" y="80" width="25" height="20" rx="5" fill="#fff" stroke="#111" stroke-width="3"/><circle cx="20" cy="90" r="4" fill="#fff" stroke="#111" stroke-width="2"/><path d="M33 88h26" fill="none" stroke="#111" stroke-width="3"/><path d="M38 84v8M45 84v8M52 84v8" stroke="#111" stroke-width="1.3"/></g>
+      <g class="bob-prop bob-trowel"><path d="M88 80l17 8-15 8z" fill="#fff" stroke="#111" stroke-width="3"/><path d="M89 88L76 100" stroke="#111" stroke-width="5" stroke-linecap="round"/></g>
     </svg>`;
   }
 
@@ -88,7 +96,7 @@
     const action=choices[Math.floor(Math.random()*choices.length)];state.lastAnimation=action;
     const launch=document.querySelector('.bob-launch');if(!launch||state.open)return scheduleIdle();
     launch.dataset.bobAnimation=action;
-    window.setTimeout(()=>{if(launch.dataset.bobAnimation===action)launch.dataset.bobAnimation='';}, action==='spin'?1400:3000);
+    window.setTimeout(()=>{if(launch.dataset.bobAnimation===action)launch.dataset.bobAnimation='';}, action==='spin'?1800:3200);
     scheduleIdle();
   }
 
