@@ -1,12 +1,12 @@
 (() => {
   'use strict';
 
-  const BRAIN_VERSION='0.3.0';
-  const memory={activeAssignment:null,lastIntent:null,lastMatch:null};
-  const stopWords=new Set(['a','an','and','are','at','be','been','being','but','by','can','do','doing','for','from','got','have','i','im','in','is','it','me','my','of','on','or','that','the','this','to','today','we','what','with','work','working']);
+  const BRAIN_VERSION='0.4.0';
+  const memory={activeAssignment:null,lastIntent:null,lastMatch:null,lastTopic:null};
+  const stopWords=new Set(['a','an','and','are','at','be','been','being','but','by','can','do','doing','for','from','got','have','i','im','in','is','it','me','my','of','on','or','that','the','this','to','today','we','what','with','work','working','house','site']);
   const aliases={
     'solid wall':['solid wall','solid brick','english bond','flemish bond','one brick wall'],
-    'cavity':['cavity wall','cavity','insulation','wall tie','wall ties','dpc','cavity tray'],
+    'cavity':['cavity wall','cavity','insulation','wall tie','wall ties','dpc','cavity tray','weep hole','weep holes'],
     'joint':['jointing','pointing','mortar joint','bucket handle','weather struck'],
     'mortar':['mortar','mixing mortar','mix mortar','cement','sand'],
     'setting out':['setting out','set out','datum','profiles','gauge','line and level'],
@@ -52,7 +52,7 @@
     const title=String(a?.title||`Evidence Pack ${a?.n||''}`).trim();
     const corpus=normalise([title,...flattenStrings(a)].join(' '));
     const codes=[...new Set((corpus.match(/\b(?:k|s|b)\d+\b/g)||[]).map(x=>x.toUpperCase()))];
-    return {n:Number(a?.n)||null,title,complete:isComplete(a),corpus,codes,raw:a};
+    return {n:Number(a?.n)||null,title,unit:String(a?.unit||''),complete:isComplete(a),corpus,codes,raw:a};
   }
   function allAssignments(){return assignments().map(assignmentInfo)}
 
@@ -62,30 +62,48 @@
     return [...terms];
   }
 
+  function findByTitle(rows,phrases){return rows.find(row=>phrases.some(p=>normalise(row.title).includes(normalise(p))))||null}
+  function directTradeMatch(message,rows){
+    const q=normalise(message),nvq=!!appCourse()?.nvqUnits;
+    if(nvq){
+      if(/\b(cavity wall|cavity walling|blockwork|solid wall|solid walling|brick and block|brickwork)\b/.test(q)&&!/cladding|timber frame|steel frame|concrete frame|brick slip/.test(q))return findByTitle(rows,['erecting masonry structures']);
+      if(/\b(cladding|brick slip|brick slips|timber frame|steel frame|concrete frame)\b/.test(q))return findByTitle(rows,['masonry cladding']);
+      if(/\b(setting out|set out|datum|profiles|profile|transferring levels|transfer levels)\b/.test(q))return findByTitle(rows,['setting out to form masonry structures']);
+      if(/\b(arch|arches|chimney|fireplace|curved wall|decorative|architectural|splayed)\b/.test(q))return findByTitle(rows,['architectural and decorative']);
+      if(/\b(health and safety|health safety|ppe|rpe|welfare|site safety)\b/.test(q))return findByTitle(rows,['health, safety and welfare']);
+      if(/\b(method of work|work method|method statement|methods of work)\b/.test(q))return findByTitle(rows,['occupational method of work']);
+      if(/\b(work programme|plan the sequence|resources required|work activities and resources)\b/.test(q))return findByTitle(rows,['work activities and resources']);
+      if(/\b(teamwork|working relationship|working relationships|colleagues|communication)\b/.test(q))return findByTitle(rows,['working relationships']);
+      if(/\b(repair|repoint|repointing|replace brick|maintenance)\b/.test(q))return findByTitle(rows,['repairing and maintaining']);
+    }else{
+      if(/\b(cavity wall|cavity walling|cavity)\b/.test(q))return findByTitle(rows,['cavity walling']);
+      if(/\b(solid wall|solid walling|english bond|flemish bond)\b/.test(q))return findByTitle(rows,['solid walling']);
+      if(/\b(jointing|pointing|mixing mortar|mix mortar)\b/.test(q))return findByTitle(rows,['jointing','mortar']);
+      if(/\b(setting out|set out|datum|profiles)\b/.test(q))return findByTitle(rows,['preparation','setting out']);
+      if(/\b(repair|replace brick|protection)\b/.test(q))return findByTitle(rows,['repair']);
+    }
+    return null;
+  }
+
   function matchAssignment(message){
     const q=normalise(message),terms=expandedTerms(message),rows=allAssignments();
     const epMatch=q.match(/\b(?:ep|evidence pack|assignment)\s*(\d{1,2})\b/);
     if(epMatch){const direct=rows.find(row=>row.n===Number(epMatch[1]));if(direct)return {...direct,score:100,confidence:'high',alternatives:[]}}
+    const unitMatch=q.match(/\bunit\s*(\d{2,3})\b/);
+    if(unitMatch){const direct=rows.find(row=>row.unit===unitMatch[1]);if(direct)return {...direct,score:100,confidence:'high',alternatives:[]}}
+    const trade=directTradeMatch(message,rows);if(trade)return {...trade,score:90,confidence:'high',alternatives:[]};
     const scored=rows.map(row=>{
-      let score=0;
-      if(q&&row.corpus.includes(q))score+=14;
-      if(row.title&&q.includes(normalise(row.title)))score+=18;
-      terms.forEach(term=>{
-        const t=normalise(term);if(!t)return;
-        if(normalise(row.title).includes(t))score+=5;
-        else if(row.corpus.includes(t))score+=2;
-      });
-      Object.entries(aliases).forEach(([root,list])=>{
-        if(!list.some(p=>q.includes(normalise(p))))return;
-        if(row.corpus.includes(normalise(root)))score+=8;
-        list.forEach(p=>{if(row.corpus.includes(normalise(p)))score+=2});
-      });
+      let score=0,title=normalise(row.title);
+      if(q&&row.corpus.includes(q))score+=10;
+      if(title&&q.includes(title))score+=20;
+      terms.forEach(term=>{const t=normalise(term);if(!t)return;if(title.includes(t))score+=6;else if(row.corpus.includes(t))score+=1});
       return {...row,score};
     }).sort((a,b)=>b.score-a.score);
     const best=scored[0],second=scored[1];
-    if(!best||best.score<4)return null;
-    const confidence=best.score>=10&&(!second||best.score-second.score>=3)?'high':best.score>=6?'medium':'low';
-    return {...best,confidence,alternatives:scored.slice(1,3).filter(x=>x.score>=Math.max(4,best.score-3))};
+    if(!best||best.score<5)return null;
+    if(second&&best.score-second.score<2&&best.score<12)return null;
+    const confidence=best.score>=12&&(!second||best.score-second.score>=3)?'high':best.score>=7?'medium':'low';
+    return {...best,confidence,alternatives:scored.slice(1,3).filter(x=>x.score>=Math.max(5,best.score-2))};
   }
 
   function firstName(){const p=appState()?.profile||{};return String(p.fullName||document.querySelector('.learner-progress-button')?.textContent||'').trim().split(/\s+/)[0]||'there'}
@@ -96,24 +114,17 @@
     const done=Number(p.ksbCompleted),total=Number(p.ksbTotal);if(Number.isFinite(done)&&Number.isFinite(total)&&total>0)return Math.round(done/total*100);
     return null;
   }
-
-  function codeDescription(info,code){
-    const pair=(info?.raw?.ksbs||[]).find(item=>String(item?.[0]||'').toUpperCase()===String(code||'').toUpperCase());
-    return String(pair?.[1]||'').trim();
-  }
+  function codeDescription(info,code){const pair=(info?.raw?.ksbs||[]).find(item=>String(item?.[0]||'').toUpperCase()===String(code||'').toUpperCase());return String(pair?.[1]||'').trim()}
 
   function preferredSources(code,nvq=false){
-    if(nvq)return ['Photographic evidence','Learner statement','Video walkthrough','Professional discussion','Witness testimony','Uploaded evidence'];
+    if(nvq)return ['Photographic evidence','Video walkthrough','Witness testimony','Professional discussion','Learner statement','Uploaded evidence'];
     const type=String(code||'').charAt(0).toUpperCase();
     if(type==='S')return ['Photographic evidence','Witness testimony','Uploaded evidence'];
     if(type==='K')return ['Learner statement','Video walkthrough','Professional discussion','Uploaded evidence'];
     if(type==='B')return ['Witness testimony','Professional discussion','Uploaded evidence'];
     return ['Uploaded evidence'];
   }
-
-  function friendlySource(source){
-    return ({'Photographic evidence':'take photos','Learner statement':'write about it','Video walkthrough':'record a video','Professional discussion':'talk about it','Witness testimony':'get it verified by someone else','Uploaded evidence':'upload supporting evidence'}[source]||String(source||'add another evidence type'));
-  }
+  function friendlySource(source){return ({'Photographic evidence':'photos','Learner statement':'a written statement','Video walkthrough':'a short video','Professional discussion':'a recorded discussion','Witness testimony':'a witness testimony','Uploaded evidence':'supporting documents'}[source]||String(source||'another evidence type'))}
 
   function evidenceStatus(n){
     const info=allAssignments().find(x=>x.n===Number(n));if(!info)return null;
@@ -128,61 +139,73 @@
     return {info,required,summary,learningHours:lh,complete:info.complete,missing};
   }
 
+  function shortPackName(info){return info?.unit?`Unit ${info.unit}`:`EP${info?.n}`}
+  function allZero(missing){return missing.length>0&&missing.every(item=>item.count===0)}
   function evidenceGapReply(n,{compact=false}={}){
-    const status=evidenceStatus(n);if(!status)return `I can't read that evidence pack yet.`;
+    const status=evidenceStatus(n);if(!status)return `I can't read that pack at the moment.`;
     const {info,summary,missing,learningHours:lh}=status;
-    if(!summary)return `I can match EP${info.n} ${info.title}, but I can't read its saved evidence coverage reliably yet.`;
+    if(!summary)return `I know which pack you mean, but I can't read its saved evidence properly at the moment.`;
     if(!missing.length){
-      if(lh&&!lh.complete&&Number(lh.target)>0)return `EP${info.n} ${info.title} has all of its ${appCourse()?.nvqUnits?'Learning Outcome':'KSB'} evidence requirements covered. The remaining gap is ${appCourse()?.nvqUnits?'GLH':'OTJ'}: ${Number(lh.total||0).toFixed(1)} of ${Number(lh.target||0).toFixed(1)} hours are recorded.`;
-      return `EP${info.n} ${info.title} has all of its evidence requirements covered${info.complete?' and the pack is marked complete':''}.`;
+      if(lh&&!lh.complete&&Number(lh.target)>0)return `Your evidence is covered for ${shortPackName(info)}. The bit still outstanding is ${appCourse()?.nvqUnits?'GLH':'OTJ'} — you're at ${Number(lh.total||0).toFixed(1)} of ${Number(lh.target||0).toFixed(1)} hours.`;
+      return `${shortPackName(info)} is covered for evidence${info.complete?' and is showing as complete':''}.`;
     }
-    const shown=missing.slice(0,compact?3:6);
-    const lines=shown.map(item=>{
-      const existing=item.sources.length?` You already have ${item.sources.join(' + ')}.`:' You do not have a counted evidence type against it yet.';
-      const next=item.nextSource?` Next best step: ${friendlySource(item.nextSource)}.`:'';
-      const desc=!compact&&item.description?` — ${item.description}`:'';
-      return `${item.code} ${item.count}/${item.required}${desc}.${existing}${next}`;
+    if(appCourse()?.nvqUnits&&allZero(missing)){
+      const practical=/masonry structures|masonry cladding|architectural|setting out/i.test(info.title);
+      const advice=practical?`Start with the job you're doing now: get a few clear photos or a short video that shows the work properly. For masonry work, try to capture the wall itself plus things like line/level, bond, ties, insulation, DPC or trays, openings and joint finish where they apply.`:`Start with one good piece of practical evidence from the job you're doing now, then we can build the theory around it.`;
+      const hours=lh&&!lh.complete&&Number(lh.target)>0?` Your ${appCourse()?.nvqUnits?'GLH':'OTJ'} is also at ${Number(lh.total||0).toFixed(1)} of ${Number(lh.target||0).toFixed(1)} hours.`:'';
+      return `There isn't any counted evidence in ${shortPackName(info)} yet. ${advice}${hours}`;
+    }
+    const partly=missing.filter(x=>x.count>0),empty=missing.filter(x=>x.count===0);
+    if(compact){
+      const next=partly[0]||empty[0];
+      if(!next)return `You've still got a little evidence to finish in ${shortPackName(info)}.`;
+      const have=next.sources.length?`You've already got ${next.sources.map(friendlySource).join(' and ')} for ${next.code}. `:'';
+      return `${missing.length} ${appCourse()?.nvqUnits?'learning outcome':'KSB'}${missing.length===1?' is':'s are'} still short. ${have}The next useful piece for ${next.code} would be ${friendlySource(next.nextSource)}.`;
+    }
+    const examples=missing.slice(0,3).map(item=>{
+      if(item.count===0)return `${item.code} has nothing counted yet — ${friendlySource(item.nextSource)} would be a good start.`;
+      return `${item.code} is ${item.count}/${item.required}; you've got ${item.sources.map(friendlySource).join(' and ')}, so add ${friendlySource(item.nextSource)}.`;
     });
-    const remainder=missing.length-shown.length;
-    const header=`For EP${info.n} ${info.title}, ${missing.length} ${appCourse()?.nvqUnits?'Learning Outcome':'KSB'}${missing.length===1?' is':'s are'} still short of the ${status.required}-evidence requirement.`;
-    const hoursGap=lh&&!lh.complete&&Number(lh.target)>0?` ${appCourse()?.nvqUnits?'GLH':'OTJ'} is also at ${Number(lh.total||0).toFixed(1)}/${Number(lh.target||0).toFixed(1)} hours.`:'';
-    return `${header}\n${lines.join('\n')}${remainder>0?`\nAnd ${remainder} more.`:''}${hoursGap}`;
+    const more=missing.length>3?` There are ${missing.length-3} more after that.`:'';
+    return `You've still got ${missing.length} ${appCourse()?.nvqUnits?'learning outcome':'KSB'}${missing.length===1?'':'s'} to finish in ${shortPackName(info)}. ${examples.join(' ')}${more}`;
   }
 
   function progressReply(){
     const p=progress(),pct=percentageFromProgress(p),rows=allAssignments(),complete=rows.filter(x=>x.complete),left=rows.filter(x=>!x.complete);
-    const bits=[];
-    if(pct!==null)bits.push(`You're ${pct}% through your ${appCourse()?.nvqUnits?'Learning Outcomes':'KSB'} progress.`);
-    if(rows.length)bits.push(`${complete.length} of ${rows.length} evidence packs are complete.`);
-    if(left.length){const next=left.slice(0,3).map(x=>`EP${x.n} ${x.title}`).join(', ');bits.push(`Still open: ${next}${left.length>3?` and ${left.length-3} more`:''}.`)}
-    return bits.length?bits.join(' '):`I can see ${courseName()}, but I can't read a reliable progress figure yet.`;
+    if(pct!==null)return `You're at about ${pct}% for ${appCourse()?.nvqUnits?'learning outcomes':'KSBs'}, with ${complete.length} of ${rows.length} evidence packs complete.${left.length?` You've got ${left.length} still open.`:''}`;
+    return `I can see your course, but I can't get a reliable progress percentage right now.`;
   }
+  function remainingReply(){const left=allAssignments().filter(x=>!x.complete);if(!left.length)return `You haven't got any incomplete evidence packs showing.`;return `You've got ${left.length} evidence pack${left.length===1?'':'s'} still open. Tell me the pack or the job you're working on and I'll narrow it down.`}
+  function listReply(){const rows=allAssignments();if(!rows.length)return `I can't read the evidence-pack list right now.`;return rows.map(x=>`${x.unit?`Unit ${x.unit}`:`EP${x.n}`} · ${x.title}${x.complete?' ✓':''}`).join('\n')}
 
-  function remainingReply(){
-    const left=allAssignments().filter(x=>!x.complete);
-    if(!left.length)return `From the evidence-pack status I can read, you don't currently have any incomplete evidence packs.`;
-    const names=left.slice(0,6).map(x=>`EP${x.n} ${x.title}`).join(', ');
-    return `You've got ${left.length} evidence pack${left.length===1?'':'s'} still open: ${names}${left.length>6?` and ${left.length-6} more`:''}. Tell me which pack you want to check and I'll tell you exactly which evidence requirements are still short.`;
+  function topicQuestion(message,match){
+    const q=normalise(message);
+    if(/cavity wall|cavity walling/.test(q))return `What part are you on right now — setting out, laying the brick/block, ties and insulation, DPC/trays, an opening, or jointing?`;
+    if(/solid wall|english bond|flemish bond/.test(q))return `What are you doing on it right now — setting out, laying, bonding, cutting, checking line/level, or jointing?`;
+    if(/setting out|set out/.test(q))return `What are you setting out — straight lines, corners, openings, levels, profiles, or something else?`;
+    if(/repair|repoint|replace brick/.test(q))return `What repair are you doing — replacing bricks, repointing, forming an opening, or something else?`;
+    return `What part of the job are you doing right now?`;
   }
-
-  function listReply(){const rows=allAssignments();if(!rows.length)return `I can't read the evidence-pack list yet.`;return rows.map(x=>`EP${x.n} ${x.title}${x.complete?' ✓':''}`).join('\n')}
 
   function activityReply(message){
     const match=matchAssignment(message);if(!match)return null;
     memory.activeAssignment=match.n;memory.lastMatch=match;
-    const prefix=match.complete?`That matches EP${match.n} ${match.title}, which is already marked complete.`:`That looks like EP${match.n} ${match.title}.`;
-    const solid=/solid wall|solid brick|english bond|flemish bond/.test(normalise(message))||/solid wall/.test(normalise(match.title));
-    const gap=!match.complete?evidenceGapReply(match.n,{compact:true}):'';
-    if(solid){memory.lastIntent='solid-wall';return `${prefix} What are you doing on the wall right now — setting out, laying, bonding, jointing, cutting, or something else?${gap?`\n\n${gap}`:''}`}
-    return `${prefix}${gap?`\n\n${gap}`:''}\n\nTell me a little more about what you're doing and I'll point you at the most useful missing evidence.`;
+    const q=normalise(message);memory.lastTopic=/cavity/.test(q)?'cavity':/solid wall|english bond|flemish bond/.test(q)?'solid':null;
+    if(match.complete)return `That fits ${shortPackName(match)}, but you've already completed that pack. ${topicQuestion(message,match)}`;
+    const label=appCourse()?.nvqUnits?`${shortPackName(match)} — ${match.title}`:`EP${match.n} — ${match.title}`;
+    memory.lastIntent='activity';
+    return `That fits ${label}. ${topicQuestion(message,match)}`;
   }
 
   function followUpReply(message){
     const active=allAssignments().find(x=>x.n===memory.activeAssignment);if(!active)return null;
     const q=normalise(message);
-    if(memory.lastIntent==='solid-wall'&&/(lay|bond|joint|set|cut|brick|mortar|level|plumb|gauge)/.test(q)){
-      memory.lastIntent='evidence';
-      return `Yes — that sounds useful for EP${active.n} ${active.title}.\n\n${evidenceGapReply(active.n)}`;
+    if(memory.lastIntent==='activity'&&/(lay|bond|joint|set|cut|brick|block|mortar|level|plumb|gauge|tie|ties|insulation|dpc|tray|opening|lintel|weep)/.test(q)){
+      memory.lastIntent='detail';
+      return `Good — that's useful evidence for ${shortPackName(active)}. If you can, capture it while you're doing it rather than just the finished wall. A few clear photos or a short video will give you much stronger evidence. Want me to tell you exactly what to show?`;
+    }
+    if(memory.lastIntent==='detail'&&/^(yes|yeah|yep|please|go on|sure)\b/.test(q)){
+      return `Show the work clearly, then include enough detail to prove what you did: line and level, bond, corners or openings, and any ties, insulation, DPC, trays or lintels that are part of the job. One wider shot plus a couple of close-ups is usually better than lots of nearly identical photos.`;
     }
     return null;
   }
@@ -191,29 +214,26 @@
     const q=normalise(message);
     const asksEvidence=/(what.*missing|what.*need|need.*evidence|missing.*evidence|evidence.*missing|have i got enough|enough evidence|what should i collect|what should i get|check.*evidence|evidence.*left)/.test(q);
     if(!asksEvidence)return null;
-    const explicit=matchAssignment(message);
-    const n=explicit?.n||memory.activeAssignment;
-    if(!n)return `Tell me which evidence pack or job you're asking about, and I'll check its saved evidence against the actual course requirements.`;
+    const explicit=matchAssignment(message),n=explicit?.n||memory.activeAssignment;
+    if(!n)return `Which job or evidence pack do you mean?`;
     if(explicit){memory.activeAssignment=explicit.n;memory.lastMatch=explicit}
     memory.lastIntent='evidence-gap';
     return evidenceGapReply(n);
   }
 
   function reply(message){
-    const q=normalise(message);memory.lastIntent=memory.lastIntent||null;
-    if(!q)return `Tell me what you're working on.`;
-    if(/^(hi|hello|hey|morning|afternoon|evening)\b/.test(q))return `Hi ${firstName()}. Tell me what you're working on and I'll match it to your actual ${courseName()} course.`;
+    const q=normalise(message);if(!q)return `What are you working on?`;
+    if(/^(hi|hello|hey|morning|afternoon|evening)\b/.test(q))return `Hi ${firstName()}. What are you working on today?`;
     if(/how far|progress|percentage|percent|through my course|course progress/.test(q)){memory.lastIntent='progress';return progressReply()}
     const evidenceQuestion=evidenceQuestionReply(message);if(evidenceQuestion)return evidenceQuestion;
     if(/what.*left|still need|need to do|incomplete|not complete|outstanding|remaining/.test(q)){memory.lastIntent='remaining';return remainingReply()}
     if(/list.*(pack|assignment)|show.*(pack|assignment)|evidence packs|my assignments/.test(q)){memory.lastIntent='list';return listReply()}
     const follow=followUpReply(message);if(follow)return follow;
-    const activity=activityReply(message);if(activity){memory.lastIntent=memory.lastIntent||'activity';return activity}
-    if(/photo|picture|camera|video/.test(q))return `Tell me what the photo or video is showing first. I'll match the activity to your course and check whether that evidence type fills one of the actual gaps.`;
-    return `I understand what you've said, but I can't confidently match that to one of your course areas yet. Tell me a little more about the job — for example what you're building, repairing, setting out or preparing.`;
+    const activity=activityReply(message);if(activity)return activity;
+    if(/photo|picture|camera|video/.test(q))return `Tell me what the photo or video is showing and I'll match it to the right part of your course.`;
+    return `Tell me a bit more about the job itself — what are you building, repairing, setting out or fitting?`;
   }
 
-  function snapshot(){const p=progress(),h=hours(),e=epa();return {version:BRAIN_VERSION,learner:firstName(),course:courseName(),nvq:!!appCourse()?.nvqUnits,progress:p,hours:h,epa:e,assignments:allAssignments().map(({n,title,complete,codes})=>({n,title,complete,codes,evidence:evidenceStatus(n)})),memory:{...memory}}}
-
-  window.BobCourseBrain={version:BRAIN_VERSION,reply,snapshot,matchAssignment,evidenceStatus,evidenceGapReply,getAssignments:()=>allAssignments().map(({n,title,complete,codes})=>({n,title,complete,codes})),reset:()=>{memory.activeAssignment=null;memory.lastIntent=null;memory.lastMatch=null}};
+  function snapshot(){const p=progress(),h=hours(),e=epa();return {version:BRAIN_VERSION,learner:firstName(),course:courseName(),nvq:!!appCourse()?.nvqUnits,progress:p,hours:h,epa:e,assignments:allAssignments().map(({n,title,unit,complete,codes})=>({n,title,unit,complete,codes})),memory:{...memory}}}
+  window.BobCourseBrain={version:BRAIN_VERSION,reply,snapshot,matchAssignment,evidenceStatus,getAssignments:()=>allAssignments().map(({n,title,unit,complete,codes})=>({n,title,unit,complete,codes})),reset:()=>{memory.activeAssignment=null;memory.lastIntent=null;memory.lastMatch=null;memory.lastTopic=null}};
 })();
