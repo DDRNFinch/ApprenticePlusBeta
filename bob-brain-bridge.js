@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const BRIDGE_VERSION='0.6.0';
+  const BRIDGE_VERSION='0.8.0';
   const DB_NAME='apprenticeplus-bob';
   const DB_VERSION=1;
   const STORE='messages';
@@ -162,11 +162,10 @@
     const text=field.value.trim();if(!text)return true;
     busy=true;field.value='';add(text,'user');field.disabled=true;button.disabled=true;typing(true);
     const delay=1000+Math.random()*1000;
-    window.setTimeout(()=>{
-      typing(false);
+    window.setTimeout(async()=>{
       let reply;
-      try{reply=window.BobCourseBrain.reply(text)}catch(error){console.warn('Bob brain reply failed',error);reply='I lost my train of thought for a second. Try that again for me.'}
-      add(reply,'bot');busy=false;field.disabled=false;button.disabled=false;field.focus();
+      try{reply=await Promise.resolve(window.BobCourseBrain.reply(text))}catch(error){console.warn('Bob brain reply failed',error);reply='I lost my train of thought for a second. Try that again for me.'}
+      typing(false);await add(reply,'bot');busy=false;field.disabled=false;button.disabled=false;field.focus();
     },delay);
     return true;
   }
@@ -190,16 +189,27 @@
     if(handle()){event.preventDefault();event.stopImmediatePropagation()}
   },true);
 
-  function loadEvidenceBridge(){
-    if(document.getElementById('bobEvidenceBridgeScript'))return;
-    const script=document.createElement('script');script.id='bobEvidenceBridgeScript';script.src='bob-evidence-bridge.js?v=0.6.0';script.onerror=error=>console.warn('Bob evidence bridge could not load',error);document.head.appendChild(script);
+  function loadScript(src,id){
+    return new Promise((resolve,reject)=>{
+      if(document.getElementById(id))return resolve();
+      const script=document.createElement('script');script.id=id;script.src=src;script.onload=resolve;script.onerror=reject;document.head.appendChild(script);
+    });
   }
 
-  function init(){
+  async function loadEnhancements(){
+    try{
+      await loadScript('bob-language-brain.js?v=0.7.0','bobLanguageBrainScript');
+      await loadScript('bob-semantic-brain.js?v=0.8.0','bobSemanticBrainScript');
+      await loadScript('bob-evidence-bridge.js?v=0.6.1','bobEvidenceBridgeScript');
+    }catch(error){console.warn('One of Bob’s enhancement modules could not load; core coaching remains available',error)}
+  }
+
+  async function init(){
     ensureMemoryStyles();
     const box=messages();if(!box){window.setTimeout(init,80);return}
     observer.observe(box,{childList:true});
-    hydrateHistory();loadEvidenceBridge();
+    await hydrateHistory();
+    await loadEnhancements();
   }
 
   window.BobBrainBridge={version:BRIDGE_VERSION,hydrate:hydrateHistory,history:loadRecords,addExternal,saveRecord};
