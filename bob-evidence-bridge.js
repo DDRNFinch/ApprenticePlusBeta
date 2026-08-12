@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const VERSION='0.6.0';
+  const VERSION='0.6.1';
   let capturing=false;
 
   const normalise=s=>String(s||'').toLowerCase().replace(/[’']/g,'').replace(/[^a-z0-9]+/g,' ').replace(/\s+/g,' ').trim();
@@ -17,7 +17,7 @@
   async function recentContext(){
     try{
       const rows=await window.BobBrainBridge?.history?.();
-      return (rows||[]).filter(x=>x.type==='user'&&x.text).slice(-8).map(x=>x.text).join(' ');
+      return (rows||[]).filter(x=>x.type==='user'&&x.text&&x.kind!=='photo').slice(-8).map(x=>x.text).join(' ');
     }catch{return ''}
   }
 
@@ -100,7 +100,7 @@
       await window.BobBrainBridge?.addExternal?.(`Photo · ${shortName(a)} ${a.title||''}`,'user',{kind:'photo',evidenceId,assignment:n});
       const mapped=codes.length?` I’ve linked it to ${codes.join(' and ')} based on what we’ve been talking about.`:` I’ve put it in the right evidence pack, but I haven’t guessed a KSB/LO for it.`;
       const count=d.photos.length;
-      const submit=count>=3?' You’ve now got at least three photos in this photo-evidence draft; it will still need the learner signature before it can be submitted and counted.':'';
+      const submit=count>=3?' You’ve now got at least three photos in this photo-evidence draft; it will still need your signature before it can be submitted and counted.':'';
       await window.BobBrainBridge?.addExternal?.(`Got it. I’ve saved that in ${shortName(a)} — ${a.title}.${mapped}${submit}`,'bot');
       return {evidenceId,assignment:n,codes};
     }catch(error){
@@ -114,7 +114,8 @@
     if(document.getElementById('bobEvidenceStyles'))return;
     const style=document.createElement('style');style.id='bobEvidenceStyles';style.textContent=`
       .bob-composer{grid-template-columns:auto 1fr auto!important}
-      .bob-camera{border:0;border-radius:50%;width:44px;height:44px;background:#eef3f1;color:#1d5d56;display:grid;place-items:center;cursor:pointer;font-size:20px;line-height:1;padding:0}
+      .bob-camera{border:0;border-radius:50%;width:44px;height:44px;background:#eef3f1;color:#1d5d56;display:grid;place-items:center;cursor:pointer;line-height:1;padding:0}
+      .bob-camera svg{width:21px;height:21px}
       .bob-camera:disabled{opacity:.45}
       .bob-message.bob-photo-message{padding:6px;overflow:hidden;min-width:170px}
       .bob-photo-thumb{display:block;width:min(240px,62vw);max-height:220px;object-fit:cover;border-radius:10px;background:#e7ecea}
@@ -126,7 +127,8 @@
     const composer=document.querySelector('#bobChat .bob-composer');
     if(!composer||document.getElementById('bobCameraButton'))return false;
     styles();
-    const button=document.createElement('button');button.type='button';button.id='bobCameraButton';button.className='bob-camera';button.setAttribute('aria-label','Take a photo for Bob');button.textContent='⌁';
+    const button=document.createElement('button');button.type='button';button.id='bobCameraButton';button.className='bob-camera';button.setAttribute('aria-label','Take a photo for Bob');
+    try{button.innerHTML=typeof appIcon==='function'?appIcon('camera','button-icon'):'Camera'}catch{button.textContent='Camera'}
     const input=document.createElement('input');input.type='file';input.accept='image/*';input.capture='environment';input.id='bobCameraInput';input.hidden=true;
     composer.prepend(button,input);
     button.addEventListener('click',async()=>{
@@ -149,12 +151,23 @@
     node.append(img,cap);if(time)node.appendChild(time);
   }
 
+  async function restorePhotoBubbles(){
+    try{
+      const rows=await window.BobBrainBridge?.history?.();
+      (rows||[]).filter(r=>r.kind==='photo').forEach(record=>{
+        const node=document.querySelector(`.bob-message[data-bob-id="${CSS.escape(record.id)}"]`);
+        if(node)enhancePhotoRecord(record,node);
+      });
+    }catch(error){console.warn('Bob could not restore photo messages',error)}
+  }
+
   const observer=new MutationObserver(()=>installCamera());
   function init(){
     if(!installCamera())window.setTimeout(init,100);
     observer.observe(document.body,{childList:true,subtree:true});
     window.addEventListener('bob:record-rendered',event=>enhancePhotoRecord(event.detail?.record,event.detail?.node));
     window.BobEvidenceBridge={version:VERSION,savePhoto,resolvePhoto:findPhotoByBobId};
+    window.setTimeout(restorePhotoBubbles,160);
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();
