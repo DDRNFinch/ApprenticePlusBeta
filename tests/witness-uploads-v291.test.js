@@ -34,7 +34,7 @@ assert.match(fs.readFileSync('review-transfer.js','utf8'),/function makeSnapshot
 assert.equal(notes.latest,'V2.91');
 assert.equal(notes.releases[0].version,'V2.91');
 assert.match(worker,/CURRENT_VERSION='V2\.91'/);
-assert.match(worker,/apprentice-plus-v2-91-witness-and-uploads/);
+assert.match(worker,/apprentice-plus-v2-91-bob-planner-012/);
 for(const asset of ['styles.css?v=2.91','pdf-generator.js?v=2.91','app.js?v=2.91']){
  assert.match(index,new RegExp(asset.replace(/[.?]/g,'\\$&')));
  assert.match(worker,new RegExp(asset.replace(/[.?]/g,'\\$&')));
