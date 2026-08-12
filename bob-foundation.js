@@ -1,16 +1,16 @@
 (() => {
   'use strict';
 
-  const BOB_VERSION = '0.1.0';
+  const BOB_VERSION = '0.1.1';
   const IDLE_MIN = 18000;
   const IDLE_MAX = 24000;
   const state = { mounted:false, open:false, step:'idle', idleTimer:0, lastAnimation:'' };
 
   const styles = `
-  .combined-progress-ring{position:relative}
-  .bob-launch{position:absolute;inset:24%;z-index:4;display:flex;align-items:center;justify-content:center;border-radius:50%;cursor:pointer;touch-action:manipulation;outline:none}
+  .bob-launch{display:flex!important;align-items:center!important;justify-content:center!important;padding:0!important;overflow:visible!important;cursor:pointer;touch-action:manipulation}
+  .bob-launch .bob-mascot{width:100%;height:100%;transform:scale(1.08)}
   .bob-launch:focus-visible{box-shadow:0 0 0 3px rgba(20,120,115,.28)}
-  .bob-mascot{width:100%;height:100%;overflow:visible;filter:drop-shadow(0 2px 2px rgba(0,0,0,.08))}
+  .bob-mascot{width:100%;height:100%;overflow:visible;filter:drop-shadow(0 1px 1px rgba(0,0,0,.08))}
   .bob-head{transform-origin:50% 58%}
   .bob-eye,.bob-pupil,.bob-mouth,.bob-hat,.bob-prop{transform-box:fill-box;transform-origin:center}
   .bob-prop{opacity:0;transition:opacity .18s ease}
@@ -96,14 +96,21 @@
   }
 
   function mountMascot(){
-    const ring=document.getElementById('openProgressPage');
-    if(!ring||ring.querySelector('.bob-launch'))return;
-    const launch=document.createElement('span');launch.className='bob-launch';launch.setAttribute('role','button');launch.setAttribute('tabindex','0');launch.setAttribute('aria-label','Open Bob, your AI coach');launch.dataset.bobAnimation='';launch.innerHTML=mascotSvg();
-    launch.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();openChat();});
-    launch.addEventListener('pointerdown',event=>event.stopPropagation());
-    launch.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();event.stopPropagation();openChat();}});
-    ring.appendChild(launch);
-    if(!state.mounted){state.mounted=true;window.setTimeout(()=>{launch.dataset.bobAnimation='wink';window.setTimeout(()=>launch.dataset.bobAnimation='',1250);},650);scheduleIdle();}
+    document.querySelectorAll('#openProgressPage .bob-launch').forEach(node=>node.remove());
+    const help=document.getElementById('pageHelpButton');
+    if(!help)return;
+    if(help.dataset.bobMounted==='1')return;
+    help.dataset.bobMounted='1';
+    help.classList.add('bob-launch');
+    help.innerHTML=mascotSvg();
+    help.setAttribute('aria-label','Open Bob, your AI coach');
+    help.removeAttribute('title');
+    help.onclick=null;
+    const replacement=help.cloneNode(true);
+    help.replaceWith(replacement);
+    replacement.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();openChat();});
+    replacement.addEventListener('pointerdown',event=>event.stopPropagation());
+    if(!state.mounted){state.mounted=true;window.setTimeout(()=>{replacement.dataset.bobAnimation='wink';window.setTimeout(()=>replacement.dataset.bobAnimation='',1250);},650);scheduleIdle();}
   }
 
   function ensureChat(){
