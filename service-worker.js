@@ -1,11 +1,11 @@
-const CACHE='apprentice-plus-v2-91-bob-evidence-060';
+const CACHE='apprentice-plus-v2-91-bob-language-070';
 const CURRENT_VERSION='V2.91';
 const RELEASE_NOTES_URL='./release-notes.json';
 const FALLBACK_UPDATE_INFO={
  version:CURRENT_VERSION,
  features:['This update includes Apprentice+ improvements and fixes.']
 };
-const APP_SHELL=['./','./index.html','./styles.css?v=2.91','./qrcode-browser.js?v=1.1','./pdf-generator.js?v=2.91','./specification-sheet.js?v=1.1','./functional-skills-bank.js?v=1.1','./trade-courses-bank.js?v=1.1','./mcq-question-bank.js?v=1.1','./mcq-engine.js?v=1.1','./app.js?v=2.91','./review-transfer.js?v=2.3','./bob-foundation.js?v=0.1.1','./bob-course-brain.js?v=0.4.0','./bob-brain-bridge.js?v=0.6.0','./bob-evidence-bridge.js?v=0.6.0','./release-notes.json','./technical-drawing-viewer.html','./cadmate.html','./drawings/BWKAS1.png','./drawings/BWKAS2.png','./drawings/BWKAS3.png','./drawings/PMOAS9.png','./manifest.json','./manifest.webmanifest','./logo-apprentice-plus.png','./icon-192.png','./icon-512.png','./icon-1024.png','./apple-touch-icon.png','./favicon-32.png','./favicon-64.png'];
+const APP_SHELL=['./','./index.html','./styles.css?v=2.91','./qrcode-browser.js?v=1.1','./pdf-generator.js?v=2.91','./specification-sheet.js?v=1.1','./functional-skills-bank.js?v=1.1','./trade-courses-bank.js?v=1.1','./mcq-question-bank.js?v=1.1','./mcq-engine.js?v=1.1','./app.js?v=2.91','./review-transfer.js?v=2.3','./bob-foundation.js?v=0.1.1','./bob-course-brain.js?v=0.4.0','./bob-brain-bridge.js?v=0.6.0','./bob-evidence-bridge.js?v=0.7.0','./bob-language-brain.js?v=0.7.0','./release-notes.json','./technical-drawing-viewer.html','./cadmate.html','./drawings/BWKAS1.png','./drawings/BWKAS2.png','./drawings/BWKAS3.png','./drawings/PMOAS9.png','./manifest.json','./manifest.webmanifest','./logo-apprentice-plus.png','./icon-192.png','./icon-512.png','./icon-1024.png','./apple-touch-icon.png','./favicon-32.png','./favicon-64.png'];
 
 async function loadUpdateInfo(){
  try{
@@ -51,7 +51,7 @@ self.addEventListener('fetch',event=>{
  const url=new URL(event.request.url);
  if(url.origin!==self.location.origin)return;
  const isCoreFile=url.pathname.endsWith('/')||['index.html','app.js','functional-skills-bank.js',
-  'trade-courses-bank.js','review-transfer.js','bob-foundation.js','bob-course-brain.js','bob-brain-bridge.js','bob-evidence-bridge.js','mcq-question-bank.js','mcq-engine.js','qrcode-browser.js','pdf-generator.js','specification-sheet.js','styles.css','cadmate.html','manifest.json','manifest.webmanifest','release-notes.json','service-worker.js'].some(name=>url.pathname.endsWith('/'+name));
+  'trade-courses-bank.js','review-transfer.js','bob-foundation.js','bob-course-brain.js','bob-brain-bridge.js','bob-evidence-bridge.js','bob-language-brain.js','mcq-question-bank.js','mcq-engine.js','qrcode-browser.js','pdf-generator.js','specification-sheet.js','styles.css','cadmate.html','manifest.json','manifest.webmanifest','release-notes.json','service-worker.js'].some(name=>url.pathname.endsWith('/'+name));
  if(isCoreFile){
   event.respondWith(
    fetch(event.request,{cache:'no-store'})
