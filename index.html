@@ -4,6 +4,10 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#58b51f">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Apprentice+">
+  <meta name="format-detection" content="telephone=no">
   <meta name="description" content="Apprentice+ local evidence pack builder">
   <link rel="manifest" href="manifest.json">
   <link rel="icon" href="favicon-32.png" type="image/png" sizes="32x32">
@@ -13,6 +17,8 @@
   <script>
   (() => {
     const desktopQuery = window.matchMedia('(min-width: 960px) and (pointer: fine)');
+    const appleMobile = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    document.documentElement.classList.toggle('ios-device', appleMobile);
     const applyDesktopMode = () => {
       const desktop = desktopQuery.matches;
       const width = window.innerWidth || document.documentElement.clientWidth || 0;

@@ -43,7 +43,7 @@ test('installed PWA references the repaired assets under a fresh cache',()=>{
   assert.match(indexSource,new RegExp(asset.replace(/[.?]/g,'\\$&')));
   assert.match(workerSource,new RegExp(asset.replace(/[.?]/g,'\\$&')));
  }
- assert.match(workerSource,/apprentice-plus-v2-91-review-files-only-013/);
+ assert.match(workerSource,/apprentice-plus-v2-91-mobile-parity-014/);
  assert.doesNotMatch(indexSource,/bob-[a-z-]+\.js/i);
  assert.doesNotMatch(workerSource,/bob-[a-z-]+\.js/i);
  assert.doesNotMatch(workerSource,/apprentice-plus-v2-85|apprentice-plus-v2-86/);
