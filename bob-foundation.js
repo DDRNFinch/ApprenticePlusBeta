@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const BOB_VERSION = '0.1.3';
+  const BOB_VERSION = '0.2.0';
   const IDLE_MIN = 18000;
   const IDLE_MAX = 24000;
   const state = { mounted:false, open:false, step:'idle', idleTimer:0, lastAnimation:'' };
@@ -165,13 +165,14 @@
   function hideTyping(){document.getElementById('bobTyping')?.remove();}
 
   function replyFor(text){
+    if(window.BobCourseBrain){try{return window.BobCourseBrain.reply(text)}catch(error){console.warn('Bob course brain failed',error)}}
     const q=text.toLowerCase().trim();
     if(/solid\s*wall|solid brick|english bond|flemish bond/.test(q)){state.step='solid-wall';return 'Great. Solid Walling is one of your course areas. What are you doing on the wall right now — setting out, laying, bonding, jointing, cutting, or something else?';}
     if(state.step==='solid-wall'&&/lay|bond|joint|set|cut|brick|mortar|level|plumb/.test(q)){state.step='solid-evidence';return `That sounds useful for your Solid Walling evidence. The next step will be for me to let you take a photo here, check what it shows, and only add it to your portfolio after you confirm it.`;}
-    if(/progress|how far|course/.test(q))return 'I can use the Apprentice+ course data to explain your progress. In the next foundation stage I will read the actual KSB and evidence gaps rather than guess from the chat.';
+    if(/progress|how far|course/.test(q))return 'I can use the Apprentice+ course data to explain your progress. My course brain is loading, so try that again in a moment.';
     if(/photo|picture|camera/.test(q))return 'Photo capture is next on the build. I will ask for the photo inside this chat, keep the original evidence, suggest the relevant course area, and ask you before saving it.';
     if(/hello|hi|hey|morning|afternoon/.test(q))return `Hi ${learnerName()}. Tell me what you are working on and I’ll help you turn the job into useful course evidence.`;
-    return 'Got it. I am listening. The foundation is working; next I will be connected to your actual course and portfolio data so I can decide what evidence or question would be useful from what you tell me.';
+    return 'Got it. I am listening. Tell me a little more about the job and I will try to match it to your course.';
   }
 
   function sendMessage(){
@@ -180,7 +181,10 @@
     const delay=1000+Math.random()*1000;window.setTimeout(()=>{hideTyping();addBot(replyFor(text));send.disabled=false;input.disabled=false;input.focus();window.setTimeout(syncVisualViewport,60);},delay);
   }
 
+  function loadScript(src,id){return new Promise((resolve,reject)=>{if(document.getElementById(id))return resolve();const s=document.createElement('script');s.id=id;s.src=src;s.onload=resolve;s.onerror=reject;document.head.appendChild(s)})}
+  function loadBrain(){return loadScript('bob-course-brain.js?v=0.2.0','bobCourseBrainScript').then(()=>loadScript('bob-brain-bridge.js?v=0.2.0','bobBrainBridgeScript')).catch(error=>console.warn('Bob brain scripts could not load',error))}
+
   const observer=new MutationObserver(()=>mountMascot());
-  function init(){injectStyles();ensureChat();syncVisualViewport();mountMascot();observer.observe(document.getElementById('app')||document.body,{childList:true,subtree:true});window.addEventListener('keydown',e=>{if(e.key==='Escape'&&state.open)closeChat();});window.addEventListener('resize',syncVisualViewport,{passive:true});window.visualViewport?.addEventListener('resize',syncVisualViewport,{passive:true});window.visualViewport?.addEventListener('scroll',syncVisualViewport,{passive:true});window.BobFoundation={version:BOB_VERSION,open:openChat,close:closeChat};}
+  function init(){injectStyles();ensureChat();syncVisualViewport();mountMascot();loadBrain();observer.observe(document.getElementById('app')||document.body,{childList:true,subtree:true});window.addEventListener('keydown',e=>{if(e.key==='Escape'&&state.open)closeChat();});window.addEventListener('resize',syncVisualViewport,{passive:true});window.visualViewport?.addEventListener('resize',syncVisualViewport,{passive:true});window.visualViewport?.addEventListener('scroll',syncVisualViewport,{passive:true});window.BobFoundation={version:BOB_VERSION,open:openChat,close:closeChat};}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();
