@@ -1,12 +1,12 @@
 (() => {
   'use strict';
 
-  const BRIDGE_VERSION='0.10.0';
+  const BRIDGE_VERSION='0.11.0';
   const DB_NAME='apprenticeplus-bob';
   const DB_VERSION=1;
   const STORE='messages';
   const FALLBACK_KEY='apprenticeplus.bob.chat.v1';
-  let busy=false, hydrating=false, dbPromise=null, observer=null;
+  let busy=false, hydrating=false, dbPromise=null, observer=null, coachPromise=null;
 
   const timeLabel=value=>new Intl.DateTimeFormat('en-GB',{hour:'2-digit',minute:'2-digit'}).format(value?new Date(value):new Date());
   const dateKey=value=>{const d=new Date(value);return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`};
@@ -34,16 +34,26 @@
   function replayContext(records){if(!window.BobCourseBrain)return;const recent=records.filter(x=>x.type==='user'&&x.kind!=='photo').slice(-24);try{recent.forEach(item=>window.BobCourseBrain.reply(item.text))}catch(error){console.warn('Bob could not rebuild recent context',error)}}
   async function hydrateHistory(){const box=messages();if(!box)return;hydrating=true;await captureExistingMessages();const records=await loadRecords();box.innerHTML='';records.forEach(record=>renderRecord(record,{scroll:false}));replayContext(records);box.scrollTop=box.scrollHeight;hydrating=false}
 
-  function handle(){if(busy||!window.BobCourseBrain)return false;const field=input(),button=send();if(!field||!button)return false;const text=field.value.trim();if(!text)return true;busy=true;field.value='';add(text,'user');field.disabled=true;button.disabled=true;typing(true);window.setTimeout(async()=>{let reply;try{reply=await Promise.resolve(window.BobCourseBrain.reply(text))}catch(error){console.warn('Bob brain reply failed',error);reply='I lost my train of thought for a second. Try that again for me.'}typing(false);await add(reply,'bot');busy=false;field.disabled=false;button.disabled=false;field.focus()},900+Math.random()*700);return true}
+  function loadScript(src,id){return new Promise((resolve,reject)=>{if(document.getElementById(id))return resolve();const script=document.createElement('script');script.id=id;script.src=src;script.onload=resolve;script.onerror=reject;document.head.appendChild(script)})}
+  async function loadEvidenceCoach(){if(window.BobEvidenceCoach)return window.BobEvidenceCoach;if(coachPromise)return coachPromise;coachPromise=loadScript('bob-evidence-coach.js?v=0.11.0','bobEvidenceCoachScript').then(()=>window.BobEvidenceCoach||null).catch(error=>{coachPromise=null;console.warn('Bob evidence coach could not load',error);return null});return coachPromise}
+  function evidenceIntent(text){return /\b(written statement|write about it|written evidence|statement help|audio evidence|voice recording|talk about it|spoken evidence|video evidence|record a video|video walkthrough|video help)\b/i.test(String(text||''))}
+  async function bobReply(text){
+    let coach=window.BobEvidenceCoach;
+    if(coach?.session?.().mode){const handled=await coach.handle(text);if(handled)return handled}
+    if(!coach&&evidenceIntent(text))coach=await loadEvidenceCoach();
+    if(coach){const mode=coach.intent?.(text);if(mode)return coach.begin(mode)}
+    return Promise.resolve(window.BobCourseBrain.reply(text));
+  }
+
+  function handle(){if(busy||!window.BobCourseBrain)return false;const field=input(),button=send();if(!field||!button)return false;const text=field.value.trim();if(!text)return true;busy=true;field.value='';add(text,'user');field.disabled=true;button.disabled=true;typing(true);window.setTimeout(async()=>{let reply;try{reply=await bobReply(text)}catch(error){console.warn('Bob brain reply failed',error);reply='I lost my train of thought for a second. Try that again for me.'}typing(false);await add(reply,'bot');busy=false;field.disabled=false;button.disabled=false;field.focus()},900+Math.random()*700);return true}
 
   function observeMessages(){const box=messages();if(!box)return false;observer?.disconnect();observer=new MutationObserver(mutations=>{if(hydrating)return;for(const mutation of mutations){for(const node of mutation.addedNodes){if(!(node instanceof HTMLElement)||!node.classList.contains('bob-message')||node.dataset.bobPersisted==='1')continue;const text=visibleText(node);if(!text)continue;const record={id:makeId(),type:node.classList.contains('user')?'user':'bot',text,timestamp:new Date().toISOString()};node.dataset.bobPersisted='1';node.dataset.bobId=record.id;node.dataset.bobTime=record.timestamp;saveRecord(record)}}});observer.observe(box,{childList:true});return true}
 
   document.addEventListener('click',event=>{if(!event.target.closest('#bobSend'))return;if(handle()){event.preventDefault();event.stopImmediatePropagation()}},true);
   document.addEventListener('keydown',event=>{if(event.key!=='Enter'||event.shiftKey||!event.target.closest('#bobInput'))return;if(handle()){event.preventDefault();event.stopImmediatePropagation()}},true);
 
-  function loadScript(src,id){return new Promise((resolve,reject)=>{if(document.getElementById(id))return resolve();const script=document.createElement('script');script.id=id;script.src=src;script.onload=resolve;script.onerror=reject;document.head.appendChild(script)})}
   async function loadEnhancements(){try{await loadScript('bob-language-brain.js?v=0.7.0','bobLanguageBrainScript');await loadScript('bob-evidence-bridge.js?v=0.9.0','bobEvidenceBridgeScript')}catch(error){console.warn('A local Bob module could not load; core coaching remains available',error)}}
   async function init(){ensureMemoryStyles();const box=messages();if(!box){window.setTimeout(init,100);return}observeMessages();await hydrateHistory();await loadEnhancements()}
-  window.BobBrainBridge={version:BRIDGE_VERSION,hydrate:hydrateHistory,history:loadRecords,addExternal,saveRecord};
+  window.BobBrainBridge={version:BRIDGE_VERSION,hydrate:hydrateHistory,history:loadRecords,addExternal,saveRecord,loadEvidenceCoach};
   init();
 })();
