@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const BRIDGE_VERSION='0.5.0';
+  const BRIDGE_VERSION='0.6.0';
   const DB_NAME='apprenticeplus-bob';
   const DB_VERSION=1;
   const STORE='messages';
@@ -105,13 +105,17 @@
     div.dataset.bobPersisted='1';div.dataset.bobId=record.id;div.dataset.bobTime=record.timestamp;
     div.textContent=record.text;
     const t=document.createElement('span');t.className='bob-message-time';t.textContent=timeLabel(record.timestamp);div.appendChild(t);
-    box.appendChild(div);if(scroll)box.scrollTop=box.scrollHeight;return div;
+    box.appendChild(div);
+    window.dispatchEvent(new CustomEvent('bob:record-rendered',{detail:{record,node:div}}));
+    if(scroll)box.scrollTop=box.scrollHeight;return div;
   }
 
-  async function add(text,type,timestamp=new Date().toISOString()){
-    const record={id:makeId(),type,text:String(text||''),timestamp};
-    renderRecord(record);saveRecord(record);return record;
+  async function add(text,type,timestamp=new Date().toISOString(),meta={}){
+    const record={id:makeId(),type,text:String(text||''),timestamp,...(meta&&typeof meta==='object'?meta:{})};
+    const node=renderRecord(record);await saveRecord(record);return {record,node};
   }
+
+  async function addExternal(text,type='bot',meta={}){return add(text,type,new Date().toISOString(),meta)}
 
   function typing(show){
     const old=document.getElementById('bobBrainTyping');if(old)old.remove();if(!show)return;
@@ -136,7 +140,7 @@
 
   function replayContext(records){
     if(!window.BobCourseBrain)return;
-    const recent=records.filter(x=>x.type==='user').slice(-60);
+    const recent=records.filter(x=>x.type==='user'&&x.kind!=='photo').slice(-60);
     try{recent.forEach(item=>window.BobCourseBrain.reply(item.text))}catch(error){console.warn('Bob could not rebuild conversation context',error)}
   }
 
@@ -186,13 +190,18 @@
     if(handle()){event.preventDefault();event.stopImmediatePropagation()}
   },true);
 
+  function loadEvidenceBridge(){
+    if(document.getElementById('bobEvidenceBridgeScript'))return;
+    const script=document.createElement('script');script.id='bobEvidenceBridgeScript';script.src='bob-evidence-bridge.js?v=0.6.0';script.onerror=error=>console.warn('Bob evidence bridge could not load',error);document.head.appendChild(script);
+  }
+
   function init(){
     ensureMemoryStyles();
     const box=messages();if(!box){window.setTimeout(init,80);return}
     observer.observe(box,{childList:true});
-    hydrateHistory();
+    hydrateHistory();loadEvidenceBridge();
   }
 
-  window.BobBrainBridge={version:BRIDGE_VERSION,hydrate:hydrateHistory,history:loadRecords};
+  window.BobBrainBridge={version:BRIDGE_VERSION,hydrate:hydrateHistory,history:loadRecords,addExternal,saveRecord};
   init();
 })();
