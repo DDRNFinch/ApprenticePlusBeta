@@ -22,18 +22,18 @@ test('the real Reviews navigation route mounts the simple Reviews renderer',()=>
  assert.match(mount,/reviewScreen\(rows\)/);
 });
 
-test('the renderer mounted by the route has all learner actions and no legacy labels',()=>{
+test('the renderer mounted by the route uses file transfer and no review QR actions',()=>{
  const screen=transferSource.slice(transferSource.indexOf('function reviewScreen'),transferSource.indexOf('function progressMetric'));
- for(const label of ['SHARE MY PROGRESS','SHOW QR','SHARE FILE','RECEIVED A REVIEW?','SCAN QR','OPEN FILE','REVIEW HISTORY'])assert.match(screen,new RegExp(label.replace(/[?]/g,'\\?'),'i'));
+ for(const label of ['SHARE MY PROGRESS','SHARE FILE','RECEIVED A REVIEW?','OPEN FILE','REVIEW HISTORY'])assert.match(screen,new RegExp(label.replace(/[?]/g,'\\?'),'i'));
+ assert.doesNotMatch(screen,/SHOW QR|SCAN QR|data-v2-show-qr|data-v2-scan/i);
  assert.doesNotMatch(screen,/Live Targets/i);
  assert.equal(screen.includes('Reviews+'),false);
 });
 
-test('all four controls on the mounted renderer resolve to validated V2 handlers',()=>{
- assert.match(transferSource,/data-v2-show-qr[^\n]+showSnapshotQr/);
+test('both file controls on the mounted renderer resolve to validated V2 handlers',()=>{
  assert.match(transferSource,/data-v2-share[^\n]+shareSnapshot/);
- assert.match(transferSource,/data-v2-scan[^\n]+showScanner/);
  assert.match(transferSource,/data-v2-import[^\n]+receive/);
+ assert.doesNotMatch(transferSource,/showSnapshotQr|showScanner|reviewQrScanner|data-v2-qr-image/);
  assert.match(transferSource,/function snapshot\(\)\{const value=snapshotFromApp\(\);validate\(value,TYPE_SNAPSHOT\)/);
  assert.match(transferSource,/TYPE_SNAPSHOT='progress-snapshot',TYPE_SUMMARY='learner-review-summary'/);
 });
@@ -43,6 +43,8 @@ test('installed PWA references the repaired assets under a fresh cache',()=>{
   assert.match(indexSource,new RegExp(asset.replace(/[.?]/g,'\\$&')));
   assert.match(workerSource,new RegExp(asset.replace(/[.?]/g,'\\$&')));
  }
- assert.match(workerSource,/apprentice-plus-v2-91-witness-and-uploads/);
+ assert.match(workerSource,/apprentice-plus-v2-91-review-files-only-013/);
+ assert.doesNotMatch(indexSource,/bob-[a-z-]+\.js/i);
+ assert.doesNotMatch(workerSource,/bob-[a-z-]+\.js/i);
  assert.doesNotMatch(workerSource,/apprentice-plus-v2-85|apprentice-plus-v2-86/);
 });

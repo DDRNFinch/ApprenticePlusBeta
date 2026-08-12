@@ -5,7 +5,7 @@ This is a working standalone review-transfer module, not a merge into the full A
 It demonstrates:
 
 - generating a pseudonymised Apprentice+ -> Assessor+ snapshot;
-- creating a QR code and `.apreview` file;
+- creating a pseudonymised `.apreview` file;
 - excluding direct personal identifiers;
 - importing the completed Assessor+ -> Apprentice+ review outcome;
 - displaying the agreed targets and next review date.

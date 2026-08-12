@@ -16,8 +16,8 @@ test('legacy ReviewMate outcome data is preserved and exposed under Reviews',()=
 test('only latest authoritative V2 review drives Home targets while history stays additive',()=>{
  const {api,values}=freshStore({'apprenticePlus:receivedReviewOutcomes:v1':JSON.stringify([{reviewId:'legacy',reviewDate:'2026-01-01',targets:Array.from({length:5},(_,i)=>({text:`Old ${i}`}))}])});
  assert.equal(api.latest(),null);
- api.importSummary(summary(),{learnerLinkId:'link-1'});
- const newer=summary({reviewId:'review-2',reviewDate:'2026-08-05',targets:Array.from({length:5},(_,i)=>({targetId:`new${i}`,title:`New ${i+1}`,destination:'HOMEWORK'}))});newer.transferId='tx-2';api.importSummary(newer,{learnerLinkId:'link-1'});
+ api.importSummary(summary(),{learnerLinkId:'link-1',now:Date.parse('2026-08-10T12:00:00Z')});
+ const newer=summary({reviewId:'review-2',reviewDate:'2026-08-05',targets:Array.from({length:5},(_,i)=>({targetId:`new${i}`,title:`New ${i+1}`,destination:'HOMEWORK'}))});newer.transferId='tx-2';api.importSummary(newer,{learnerLinkId:'link-1',now:Date.parse('2026-08-10T12:00:00Z')});
  assert.equal(api.history().length,3);
  assert.equal(api.latest().reviewId,'review-2');
  assert.deepEqual(api.latest().targets.map(x=>x.title),['New 1','New 2','New 3','New 4','New 5']);
@@ -25,8 +25,8 @@ test('only latest authoritative V2 review drives Home targets while history stay
 });
 
 test('learner-facing errors remain enforceable for duplicate, learner and expiry rules',()=>{
- const {api}=freshStore();api.importSummary(summary(),{learnerLinkId:'link-1'});
- assert.throws(()=>api.importSummary(summary(),{learnerLinkId:'link-1'}),/already/i);
- assert.throws(()=>api.importSummary(summary({reviewId:'other'}),{learnerLinkId:'link-2'}),/different learner/i);
+ const {api}=freshStore(),now=Date.parse('2026-08-10T12:00:00Z');api.importSummary(summary(),{learnerLinkId:'link-1',now});
+ assert.throws(()=>api.importSummary(summary(),{learnerLinkId:'link-1',now}),/already/i);
+ assert.throws(()=>api.importSummary(summary({reviewId:'other'}),{learnerLinkId:'link-2',now}),/different learner/i);
  assert.throws(()=>api.importSummary(summary({reviewId:'expired'}),{learnerLinkId:'link-1',now:Date.parse('2026-08-12')}),/expired/i);
 });
